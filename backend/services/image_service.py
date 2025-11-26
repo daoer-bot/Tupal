@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 from generators.factory import get_image_generator
+from generators.base_generator import BaseGenerator
 from .progress_service import ProgressService
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,8 @@ class ImageService:
     def __init__(
         self,
         generator_type: str = 'mock',
-        max_workers: int = 25
+        max_workers: int = 25,
+        model_config: Dict[str, Any] = None
     ):
         """
         初始化服务
@@ -28,13 +30,15 @@ class ImageService:
         Args:
             generator_type: 生成器类型 (mock/image_api/openai)
             max_workers: 最大并发数
+            model_config: 模型配置 (url, apiKey, model)
         """
         self.generator_type = generator_type
         self.max_workers = max_workers
+        self.model_config = model_config or {}
         self.generator = None
         self.progress_service = ProgressService()
         
-        logger.info(f"图片生成服务已初始化: 生成器={generator_type}, 最大并发={max_workers}")
+        logger.info(f"图片生成服务已初始化: 生成器={generator_type}, 最大并发={max_workers}, 配置={bool(model_config)}")
     
     def generate_batch(
         self,
@@ -88,8 +92,8 @@ class ImageService:
             # 启动任务
             self.progress_service.start_task(task_id)
             
-            # 获取生成器
-            self.generator = get_image_generator(self.generator_type)
+            # 获取生成器（传递模型配置）
+            self.generator = self._create_generator_with_config()
             
             if not self.generator:
                 error_msg = f'无法创建生成器: {self.generator_type}'
@@ -200,15 +204,27 @@ class ImageService:
             # 构建提示词
             prompt = self._build_prompt(page)
             
-            # 生成图片
-            result = self.generator.generate_image(
+            # 生成图片 - 使用统一的 generate 接口
+            from generators.base_generator import ContentType
+            generation_result = self.generator.generate(
+                content_type=ContentType.IMAGE,
                 prompt=prompt,
                 width=width,
                 height=height,
                 reference_image=reference_image
             )
             
-            return result
+            # 转换为旧格式以保持兼容性
+            if generation_result.success:
+                return {
+                    'success': True,
+                    'image_url': generation_result.url
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': generation_result.error
+                }
             
         except Exception as e:
             logger.error(f"生成图片失败: {e}", exc_info=True)
@@ -313,3 +329,36 @@ class ImageService:
                     return False, f'第{i+1}页的{field}不能为空'
         
         return True, ''
+    
+    def _create_generator_with_config(self) -> Optional[BaseGenerator]:
+        """
+        根据配置创建生成器
+        
+        Returns:
+            生成器实例
+        """
+        try:
+            # 如果有自定义配置，使用自定义配置创建生成器
+            if self.model_config and self.model_config.get('url') and self.model_config.get('apiKey'):
+                logger.info(f"使用自定义配置创建生成器: {self.generator_type}")
+                
+                if self.generator_type == 'image_api':
+                    from generators.image_api_generator import ImageAPIGenerator
+                    return ImageAPIGenerator(
+                        api_key=self.model_config['apiKey'],
+                        api_url=self.model_config['url']
+                    )
+                elif self.generator_type == 'openai':
+                    from generators.openai_generator import OpenAIGenerator
+                    return OpenAIGenerator(
+                        api_key=self.model_config['apiKey'],
+                        base_url=self.model_config['url']
+                    )
+            
+            # 否则使用默认配置
+            logger.info(f"使用默认配置创建生成器: {self.generator_type}")
+            return get_image_generator(self.generator_type)
+            
+        except Exception as e:
+            logger.error(f"创建生成器失败: {e}", exc_info=True)
+            return None

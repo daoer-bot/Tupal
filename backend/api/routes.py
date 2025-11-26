@@ -21,13 +21,19 @@ def generate_outline():
     请求体:
     {
         "topic": "主题描述",
-        "reference_image": "参考图片URL（可选）"
+        "reference_image": "参考图片URL（可选）",
+        "text_model_config": {
+            "url": "API URL",
+            "apiKey": "API Key",
+            "model": "模型名称"
+        }
     }
     """
     try:
         data = request.get_json()
         topic = data.get('topic')
         reference_image = data.get('reference_image')
+        text_model_config = data.get('text_model_config', {})
         
         if not topic:
             return jsonify({
@@ -36,9 +42,13 @@ def generate_outline():
             }), 400
         
         logger.info(f'Generating outline for topic: {topic}')
+        logger.info(f'Text model config: {text_model_config}')
         
         from services.outline_service import OutlineService
-        outline_service = OutlineService(generator_type='openai')
+        outline_service = OutlineService(
+            generator_type='openai',
+            model_config=text_model_config
+        )
         result = outline_service.generate(topic, reference_image)
         
         if result['success']:
@@ -68,16 +78,15 @@ def generate_images():
     请求体:
     {
         "task_id": "任务ID",
-        "pages": [
-            {
-                "page_number": 1,
-                "title": "标题",
-                "description": "描述"
-            }
-        ],
+        "pages": [...],
         "topic": "主题（可选）",
         "reference_image": "参考图片URL（可选）",
-        "generator_type": "生成器类型（可选，默认mock）"
+        "generator_type": "生成器类型（可选，默认mock）",
+        "image_model_config": {
+            "url": "API URL",
+            "apiKey": "API Key",
+            "model": "模型名称"
+        }
     }
     """
     try:
@@ -87,6 +96,7 @@ def generate_images():
         topic = data.get('topic', '')
         reference_image = data.get('reference_image')
         generator_type = data.get('generator_type', 'mock')
+        image_model_config = data.get('image_model_config', {})
         
         if not task_id or not pages:
             return jsonify({
@@ -96,11 +106,16 @@ def generate_images():
         
         logger.info(f'Starting image generation for task: {task_id}, pages: {len(pages)}')
         
+        logger.info(f'Image model config: {image_model_config}')
+        
         # 导入图片生成服务
         from services.image_service import ImageService
         
         # 创建服务实例
-        image_service = ImageService(generator_type=generator_type)
+        image_service = ImageService(
+            generator_type=generator_type,
+            model_config=image_model_config
+        )
         
         # 验证页面数据
         is_valid, error_msg = image_service.validate_pages(pages)

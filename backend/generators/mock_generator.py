@@ -146,8 +146,20 @@ class MockGenerator(BaseGenerator):
         # 模拟API调用延迟
         time.sleep(0.3)
         
-        # 返回占位图片URL
-        placeholder_url = f"https://via.placeholder.com/{width}x{height}/667eea/ffffff?text=Mock+Image"
+        # 使用 base64 编码的小图片作为占位符（避免跨域和墙的问题）
+        # 这是一个简单的渐变色图片
+        placeholder_url = (
+            "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4MCIgaGVpZ2h0PSIxNDQwIiB4bWxucz0iaHR0cDov"
+            "L3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZCIgeDE9IjAlIiB5MT0iMCUi"
+            "IHgyPSIwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM2NjdlZWE7c3RvcC1v"
+            "cGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNzY0YmE4O3N0b3Atb3BhY2l0"
+            "eToxIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9"
+            "InVybCgjZ3JhZCkiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBm"
+            "b250LXNpemU9IjQ4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZvbnQtd2VpZ2h0"
+            "PSJib2xkIj5Nb2NrIEltYWdlPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNh"
+            "bnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSIg"
+            "b3BhY2l0eT0iMC44Ij57fXgge308L3RleHQ+PC9zdmc+"
+        ).format(width, height)
         
         return self._create_success_result(
             content_type=ContentType.IMAGE,

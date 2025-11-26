@@ -14,14 +14,16 @@ logger = logging.getLogger(__name__)
 class OutlineService:
     """大纲生成服务类"""
     
-    def __init__(self, generator_type: str = 'gemini'):
+    def __init__(self, generator_type: str = 'gemini', model_config: Dict[str, Any] = None):
         """
         初始化服务
         
         Args:
             generator_type: 生成器类型
+            model_config: 模型配置 (url, apiKey, model)
         """
         self.generator_type = generator_type
+        self.model_config = model_config or {}
         self.generator = None
     
     def generate(
@@ -47,8 +49,8 @@ class OutlineService:
                     'error': '主题不能为空'
                 }
             
-            # 获取生成器
-            self.generator = get_outline_generator(self.generator_type)
+            # 获取生成器（传递模型配置）
+            self.generator = self._create_generator_with_config()
             
             if not self.generator:
                 return {
@@ -134,3 +136,36 @@ class OutlineService:
         from generators.factory import GeneratorFactory
         available = GeneratorFactory.get_available_generators()
         return available.get('outline_generators', [])
+    
+    def _create_generator_with_config(self):
+        """
+        根据配置创建生成器
+        
+        Returns:
+            生成器实例
+        """
+        try:
+            # 如果有自定义配置，使用自定义配置创建生成器
+            if self.model_config and self.model_config.get('url') and self.model_config.get('apiKey'):
+                logger.info(f"使用自定义配置创建大纲生成器: {self.generator_type}")
+                
+                if self.generator_type == 'openai':
+                    from generators.openai_generator import OpenAIGenerator
+                    return OpenAIGenerator(
+                        api_key=self.model_config['apiKey'],
+                        base_url=self.model_config['url'],
+                        model=self.model_config.get('model', 'gpt-4')
+                    )
+                elif self.generator_type == 'gemini':
+                    from generators.gemini_generator import GeminiGenerator
+                    return GeminiGenerator(
+                        api_key=self.model_config['apiKey']
+                    )
+            
+            # 否则使用默认配置
+            logger.info(f"使用默认配置创建大纲生成器: {self.generator_type}")
+            return get_outline_generator(self.generator_type)
+            
+        except Exception as e:
+            logger.error(f"创建大纲生成器失败: {e}", exc_info=True)
+            return None

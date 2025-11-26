@@ -14,6 +14,12 @@ export interface Outline {
   pages: Page[]
 }
 
+export interface ModelConfig {
+  url: string
+  apiKey: string
+  model: string
+}
+
 export const useAppStore = defineStore('app', () => {
   // 当前大纲
   const currentOutline = ref<Outline | null>(null)
@@ -25,6 +31,19 @@ export const useAppStore = defineStore('app', () => {
   
   // 参考图片
   const referenceImage = ref<string | null>(null)
+  
+  // 模型配置
+  const textModelConfig = ref<ModelConfig>({
+    url: '',
+    apiKey: '',
+    model: ''
+  })
+  
+  const imageModelConfig = ref<ModelConfig>({
+    url: '',
+    apiKey: '',
+    model: ''
+  })
   
   // 设置大纲
   const setOutline = (outline: Outline) => {
@@ -47,6 +66,16 @@ export const useAppStore = defineStore('app', () => {
     referenceImage.value = url
   }
   
+  // 设置语言模型配置
+  const setTextModelConfig = (config: ModelConfig) => {
+    textModelConfig.value = config
+  }
+  
+  // 设置图片模型配置
+  const setImageModelConfig = (config: ModelConfig) => {
+    imageModelConfig.value = config
+  }
+  
   // 重置状态
   const reset = () => {
     currentOutline.value = null
@@ -61,10 +90,14 @@ export const useAppStore = defineStore('app', () => {
     isGenerating,
     progressMessage,
     referenceImage,
+    textModelConfig,
+    imageModelConfig,
     setOutline,
     updateProgress,
     setGenerating,
     setReferenceImage,
+    setTextModelConfig,
+    setImageModelConfig,
     reset
   }
 })

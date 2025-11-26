@@ -56,7 +56,9 @@ class GeneratorFactory:
                 if not api_key:
                     logger.error("OPENAI_API_KEY 未配置")
                     return None
+                logger.info(f"创建 OpenAI 生成器: api_key={api_key[:10]}..., base_url={base_url}")
                 generator = OpenAIGenerator(api_key=api_key, base_url=base_url)
+                logger.info("OpenAI 生成器创建成功")
             elif provider == 'image_api':
                 api_key = current_app.config.get('IMAGE_API_KEY')
                 api_url = current_app.config.get('IMAGE_API_URL')

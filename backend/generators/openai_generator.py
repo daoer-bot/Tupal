@@ -24,17 +24,45 @@ class OpenAIGenerator(BaseGenerator):
     # 声明支持的内容类型（OpenAI同时支持文本和图片）
     SUPPORTED_TYPES = {ContentType.TEXT, ContentType.IMAGE}
     
-    def __init__(self, api_key: str, base_url: str = None, **kwargs):
-        super().__init__(api_key, **kwargs)
-        
+    def __init__(self, api_key: str, base_url: str = None, model: str = None, **kwargs):
         if OpenAI is None:
             raise ImportError("openai 未安装，请运行: pip install openai")
         
+        # 调试：打印接收到的所有参数
+        logger.info(f"OpenAIGenerator.__init__ 接收到的 kwargs: {kwargs}")
+        
+        # OpenAI SDK 支持的参数列表
+        supported_params = ['timeout', 'max_retries', 'default_headers', 'default_query', 'http_client']
+        
+        # 过滤 kwargs，只保留支持的参数
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k in supported_params}
+        
+        logger.info(f"过滤后的 kwargs: {filtered_kwargs}")
+        
+        # 调用父类初始化，只传递过滤后的参数
+        super().__init__(api_key, **filtered_kwargs)
+        
         self.base_url = base_url or "https://api.openai.com/v1"
-        self.client = OpenAI(
-            api_key=self.api_key,
-            base_url=self.base_url
-        )
+        self.text_model = model or "gpt-4"  # 默认文本模型
+        self.image_model = "dall-e-3"  # 图片模型
+        
+        # 构建 OpenAI 客户端参数
+        client_kwargs = {
+            'api_key': self.api_key,
+            'base_url': self.base_url
+        }
+        
+        # 添加支持的可选参数
+        for param in supported_params:
+            if param in filtered_kwargs:
+                client_kwargs[param] = filtered_kwargs[param]
+        
+        logger.info(f"传递给 OpenAI 客户端的参数: {list(client_kwargs.keys())}")
+        
+        # 创建 OpenAI 客户端（此时 client_kwargs 只包含支持的参数）
+        self.client = OpenAI(**client_kwargs)
+        
+        logger.info("OpenAI 客户端创建成功")
     
     def generate(
         self,
@@ -85,8 +113,10 @@ class OpenAIGenerator(BaseGenerator):
         try:
             full_prompt = self._build_outline_prompt(prompt)
             
+            logger.info(f"使用文本模型: {self.text_model}")
+            
             response = self.client.chat.completions.create(
-                model="gemini-2.5-flash-lite-preview-09-2025",
+                model=self.text_model,
                 messages=[
                     {"role": "system", "content": "你是一个专业的小红书内容策划专家。请务必返回有效的JSON格式。"},
                     {"role": "user", "content": full_prompt}
@@ -127,6 +157,10 @@ class OpenAIGenerator(BaseGenerator):
         """
         使用 DALL-E 3 生成图片
         
+        注意：此功能需要真实的 OpenAI API 密钥和 DALL-E 3 访问权限。
+        如果你使用的是第三方 API，可能不支持图片生成功能。
+        建议使用 'image_api' 或 'mock' 生成器。
+        
         Args:
             prompt: 图片描述
             width: 宽度
@@ -141,18 +175,23 @@ class OpenAIGenerator(BaseGenerator):
             # DALL-E 3 支持的尺寸
             size = self._get_dalle_size(width, height)
             
+            logger.info(f"尝试使用 {self.image_model} 生成图片: {prompt[:50]}...")
+            
             # 调用 DALL-E API
             response = self.client.images.generate(
-                model="dall-e-3",
+                model=self.image_model,
                 prompt=prompt,
                 size=size,
                 quality="standard",
                 n=1
             )
             
+            image_url = response.data[0].url
+            logger.info(f"DALL-E 3 图片生成成功: {image_url[:100]}...")
+            
             return self._create_success_result(
                 content_type=ContentType.IMAGE,
-                url=response.data[0].url,
+                url=image_url,
                 format="png",
                 width=width,
                 height=height,
@@ -160,8 +199,19 @@ class OpenAIGenerator(BaseGenerator):
             )
             
         except Exception as e:
-            logger.error(f"OpenAI 图片生成失败: {e}")
-            return self._create_error_result(ContentType.IMAGE, str(e))
+            error_msg = str(e)
+            logger.error(f"OpenAI 图片生成失败: {error_msg}", exc_info=True)
+            
+            # 提供更友好的错误提示
+            if "does not support" in error_msg or "image" in error_msg.lower():
+                friendly_msg = (
+                    "当前 API 不支持图片生成功能。"
+                    "请在前端选择 'image_api' 或 'mock' 生成器来生成图片。"
+                )
+            else:
+                friendly_msg = f"图片生成失败: {error_msg}"
+            
+            return self._create_error_result(ContentType.IMAGE, friendly_msg)
     
     
     def _extract_and_parse_json(self, content: str) -> list:
@@ -246,24 +296,23 @@ class OpenAIGenerator(BaseGenerator):
     
     def _build_outline_prompt(self, topic: str) -> str:
         """构建大纲生成提示词"""
-        return f"""请根据以下主题，生成一个6-9页的小红书图文内容大纲。
+        return f"""请根据以下主题，生成一个1页的小红书图文内容。
 
 主题: {topic}
 
 要求：
-1. 生成6-9页的内容结构
-2. 第一页必须是封面页，包含吸引眼球的标题
-3. 中间页面展开主题，提供实用价值
-4. 最后一页总结并呼吁行动
-5. 每页需要有标题和详细描述
+1. 只生成1页内容
+2. 标题要吸引眼球，适合小红书风格
+3. 描述要详细具体，适合用于生成图片的提示词
+4. 描述中要包含视觉元素、色彩、风格等信息
 
-请以JSON格式返回：
+请严格以JSON格式返回，不要有任何其他文字：
 ```json
 [
   {{
     "page_number": 1,
-    "title": "页面标题",
-    "description": "页面详细描述"
+    "title": "吸引人的标题",
+    "description": "详细的页面描述，包含视觉元素、色彩、构图等信息，用于图片生成"
   }}
 ]
 ```"""

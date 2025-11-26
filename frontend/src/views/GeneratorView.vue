@@ -6,9 +6,20 @@
     <div v-if="store.currentOutline && !isGenerating" class="outline-section">
       <div class="section-header">
         <h3>内容大纲：{{ store.currentOutline.topic }}</h3>
-        <button @click="startGeneration" class="btn btn-primary">
-          开始生成图片
-        </button>
+        <div class="header-actions">
+          <!-- 生成器选择 -->
+          <div class="generator-selector">
+            <label for="generator-type">图片生成器：</label>
+            <select id="generator-type" v-model="selectedGenerator" class="generator-select">
+              <option value="mock">Mock (测试用占位图)</option>
+              <option value="image_api">Image API (真实图片生成)</option>
+              <option value="openai">OpenAI DALL-E 3</option>
+            </select>
+          </div>
+          <button @click="startGeneration" class="btn btn-primary">
+            开始生成图片
+          </button>
+        </div>
       </div>
       
       <div class="pages-grid">
@@ -156,6 +167,7 @@ const isGenerating = ref(false)
 const isCompleted = ref(false)
 const error = ref('')
 const eventSource = ref<EventSource | null>(null)
+const selectedGenerator = ref('image_api') // 默认使用 image_api（支持大多数第三方API）
 
 // 进度数据
 const progressData = ref<ProgressData>({
@@ -188,7 +200,8 @@ const startGeneration = async () => {
       pages: store.currentOutline.pages,
       topic: store.currentOutline.topic,
       reference_image: store.referenceImage || undefined,
-      generator_type: 'mock' // 使用mock生成器进行测试
+      generator_type: selectedGenerator.value, // 使用用户选择的生成器
+      image_model_config: store.imageModelConfig // 传递图片模型配置
     })
     
     if (response.success) {
@@ -210,8 +223,21 @@ const subscribeToProgress = (taskId: string) => {
     taskId,
     // 进度回调
     (data: ProgressData) => {
-      progressData.value = data
-      store.updateProgress(data.progress, data.message)
+      console.log('收到进度更新:', data) // 添加调试日志
+      
+      // 如果是 done 消息，保留之前的 images 数据
+      if (data.done) {
+        console.log('任务完成，保留现有图片数据')
+        // 不更新 progressData，保留之前的数据
+      } else {
+        progressData.value = {
+          ...progressData.value, // 保留之前的数据
+          ...data,
+          images: data.images || progressData.value.images || [], // 优先使用新数据，否则保留旧数据
+          failed_pages: data.failed_pages || progressData.value.failed_pages || []
+        }
+        store.updateProgress(data.progress || progressData.value.progress, data.message || progressData.value.message)
+      }
     },
     // 错误回调
     (err: Error) => {
@@ -224,7 +250,7 @@ const subscribeToProgress = (taskId: string) => {
       isCompleted.value = true
       
       // 更新store中的大纲，添加图片URL
-      if (store.currentOutline) {
+      if (store.currentOutline && progressData.value.images && Array.isArray(progressData.value.images)) {
         progressData.value.images.forEach(img => {
           const page = store.currentOutline!.pages.find(
             p => p.page_number === img.page_number
@@ -241,7 +267,7 @@ const subscribeToProgress = (taskId: string) => {
             topic: store.currentOutline.topic,
             pages: store.currentOutline.pages,
             reference_image: store.referenceImage || undefined,
-            generator_type: 'mock',
+            generator_type: selectedGenerator.value,
             status: progressData.value.failed_pages && progressData.value.failed_pages.length > 0
               ? 'completed'
               : 'completed'
@@ -270,6 +296,10 @@ const goHome = () => {
 
 // 下载全部（简单实现）
 const downloadAll = () => {
+  if (!progressData.value.images || !Array.isArray(progressData.value.images)) {
+    console.error('没有可下载的图片')
+    return
+  }
   progressData.value.images.forEach(image => {
     const link = document.createElement('a')
     link.href = image.url
@@ -326,11 +356,60 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .section-header h3 {
   margin: 0;
   color: #333;
+  flex: 1;
+  min-width: 200px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.generator-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.generator-selector label {
+  font-size: 0.9rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.generator-select {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+
+.generator-select:hover {
+  border-color: #667eea;
+}
+
+.generator-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .pages-grid {
