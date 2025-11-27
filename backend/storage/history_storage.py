@@ -155,14 +155,14 @@ class HistoryStorage:
         offset: int = 0
     ) -> List[Dict[str, Any]]:
         """
-        获取所有历史记录（摘要）
+        获取所有历史记录（完整数据）
         
         Args:
             limit: 限制数量
             offset: 偏移量
             
         Returns:
-            历史记录列表
+            历史记录列表（包含完整的pages数据）
         """
         try:
             index = self._load_index()
@@ -172,9 +172,23 @@ class HistoryStorage:
             
             # 分页
             if limit:
-                return index[offset:offset + limit]
+                index_items = index[offset:offset + limit]
             else:
-                return index[offset:]
+                index_items = index[offset:]
+            
+            # 加载每个记录的完整数据
+            full_records = []
+            for index_item in index_items:
+                history_id = index_item.get('id')
+                if history_id:
+                    full_data = self.get(history_id)
+                    if full_data:
+                        full_records.append(full_data)
+                    else:
+                        # 如果无法加载完整数据，使用索引数据作为后备
+                        full_records.append(index_item)
+            
+            return full_records
                 
         except Exception as e:
             logger.error(f"获取历史记录列表失败: {e}", exc_info=True)

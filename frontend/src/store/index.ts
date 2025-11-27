@@ -6,6 +6,7 @@ export interface Page {
   title: string
   description: string
   image_url?: string
+  xiaohongshu_content?: string
 }
 
 export interface Outline {

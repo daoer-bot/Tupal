@@ -320,13 +320,25 @@ class ImageService:
             if not isinstance(page, dict):
                 return False, f'第{i+1}页数据格式错误'
             
-            required_fields = ['page_number', 'title', 'description']
-            for field in required_fields:
-                if field not in page:
-                    return False, f'第{i+1}页缺少必需字段: {field}'
+            # 检查必需字段是否存在
+            if 'page_number' not in page:
+                return False, f'第{i+1}页缺少必需字段: page_number'
+            
+            if 'title' not in page:
+                return False, f'第{i+1}页缺少必需字段: title'
                 
-                if not page[field]:
-                    return False, f'第{i+1}页的{field}不能为空'
+            if 'description' not in page:
+                return False, f'第{i+1}页缺少必需字段: description'
+            
+            # 验证字段值（page_number 可以为 0，但 title 和 description 不能为空）
+            if page['page_number'] is None:
+                return False, f'第{i+1}页的page_number不能为None'
+            
+            if not page['title'] or not isinstance(page['title'], str) or not page['title'].strip():
+                return False, f'第{i+1}页的title不能为空'
+            
+            if not page['description'] or not isinstance(page['description'], str) or not page['description'].strip():
+                return False, f'第{i+1}页的description不能为空'
         
         return True, ''
     

@@ -140,6 +140,10 @@
                     <div class="form-group">
                       <label>模型名称</label>
                       <input v-model="model.model" placeholder="dall-e-3" class="form-input" @click.stop />
+                      <p class="field-hint">
+                        支持: dall-e-3, dall-e-2, stable-diffusion-xl, flux-pro 等<br>
+                        <span class="warning-text">⚠️ Gemini 模型不支持图片生成</span>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -513,6 +517,18 @@ const saveConfig = () => {
   border-radius: 1rem;
   border: 2px dashed var(--border-color);
   color: var(--text-secondary);
+}
+
+.field-hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.warning-text {
+  color: #f59e0b;
+  font-weight: 500;
 }
 
 /* 动画 */

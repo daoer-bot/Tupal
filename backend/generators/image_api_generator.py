@@ -18,15 +18,66 @@ class ImageAPIGenerator(BaseGenerator):
     # 声明支持的内容类型（仅支持图片）
     SUPPORTED_TYPES = {ContentType.IMAGE}
     
+    # 支持的模型列表（用于验证）
+    SUPPORTED_MODELS = {
+        'dall-e-3', 'dall-e-2', 'dalle-3', 'dalle-2',
+        'dall-e-3-hd', 'stable-diffusion-xl', 'sdxl',
+        'midjourney', 'flux-pro', 'flux-dev'
+    }
+    
+    # 默认回退模型
+    DEFAULT_MODEL = 'dall-e-3'
+    
     def __init__(self, api_key: str, api_url: str = None, model: str = None, **kwargs):
         super().__init__(api_key, **kwargs)
         self.api_url = api_url or kwargs.get('url', '')
-        self.model = model or kwargs.get('model', 'dall-e-3')  # 默认模型
+        requested_model = model or kwargs.get('model', self.DEFAULT_MODEL)
+        
+        # 验证并清理模型名称
+        self.model = self._validate_and_normalize_model(requested_model)
         
         if not self.api_url:
             raise ValueError("Image API URL 不能为空")
         
         logger.info(f"ImageAPIGenerator 初始化: URL={self.api_url}, Model={self.model}")
+        if self.model != requested_model:
+            logger.warning(f"模型 '{requested_model}' 不受支持，已回退到 '{self.model}'")
+    
+    def _validate_and_normalize_model(self, model: str) -> str:
+        """
+        验证并规范化模型名称
+        
+        Args:
+            model: 原始模型名称
+            
+        Returns:
+            验证后的模型名称
+        """
+        if not model or not isinstance(model, str):
+            logger.warning(f"无效的模型名称: {model}，使用默认模型: {self.DEFAULT_MODEL}")
+            return self.DEFAULT_MODEL
+        
+        # 转换为小写进行比较
+        model_lower = model.lower().strip()
+        
+        # 检查是否在支持列表中
+        if model_lower in self.SUPPORTED_MODELS:
+            return model_lower
+        
+        # 检查是否包含支持的关键词（部分匹配）
+        for supported_model in self.SUPPORTED_MODELS:
+            if supported_model in model_lower or model_lower in supported_model:
+                logger.info(f"模型 '{model}' 部分匹配 '{supported_model}'，使用 '{supported_model}'")
+                return supported_model
+        
+        # 检查是否是 Gemini 模型（不支持图片生成）
+        if 'gemini' in model_lower:
+            logger.warning(f"Gemini 模型 '{model}' 不支持图片生成，回退到 {self.DEFAULT_MODEL}")
+            return self.DEFAULT_MODEL
+        
+        # 如果都不匹配，回退到默认模型
+        logger.warning(f"不支持的模型 '{model}'，回退到默认模型: {self.DEFAULT_MODEL}")
+        return self.DEFAULT_MODEL
     
     def generate(
         self,
@@ -80,14 +131,12 @@ class ImageAPIGenerator(BaseGenerator):
             # 确保 API URL 包含完整的端点路径
             api_endpoint = self.api_url
             
-            # 检查是否已经包含端点路径（支持 /images/generations 和 /images/edits）
-            has_endpoint = (api_endpoint.endswith('/images/generations') or
-                           api_endpoint.endswith('/images/edits'))
+            # 检查是否已经包含端点路径
+            has_endpoint = api_endpoint.endswith('/images/generations')
             
             if not has_endpoint:
-                # 根据是否有参考图片选择端点
-                # 有参考图片使用 edits 端点，否则使用 generations 端点
-                endpoint_suffix = '/images/edits' if reference_image else '/images/generations'
+                # DALL-E 3 只支持 generations 端点，不支持 edits 或参考图片
+                endpoint_suffix = '/images/generations'
                 
                 # 标准化 URL 拼接
                 if api_endpoint.endswith('/v1'):
@@ -97,24 +146,34 @@ class ImageAPIGenerator(BaseGenerator):
                 else:
                     api_endpoint = f"{api_endpoint}{endpoint_suffix}"
             
+            # 如果提供了参考图片，记录警告但继续生成（不使用参考图片）
+            if reference_image:
+                logger.warning(f"DALL-E 模型不支持参考图片功能，将忽略 reference_image 参数: {reference_image}")
+            
             logger.info(f"使用 Image API 生成图片: {api_endpoint}")
             logger.info(f"提示词: {prompt[:100]}...")
+            
+            # 如果是 dall-e-3 模型，需要转换为支持的尺寸
+            size = f"{width}x{height}"
+            if self.model.lower() in ['dall-e-3', 'dalle-3', 'dall-e-3-hd']:
+                size = self._get_dalle_size(width, height)
+                logger.info(f"将尺寸 {width}x{height} 转换为 DALL-E 3 支持的尺寸: {size}")
             
             # 构建请求数据
             payload = {
                 'model': self.model,  # 添加模型参数
                 'prompt': prompt,
-                'size': f"{width}x{height}",  # 使用标准格式
+                'size': size,  # 使用转换后的尺寸
                 'n': 1,
                 'response_format': 'url'
             }
             
-            # 也支持原始格式以兼容不同的 API
-            if reference_image:
-                payload['reference_image'] = reference_image
+            # 注意: DALL-E 不支持 reference_image 参数
+            # 如果 API 支持其他参数，可以通过 kwargs 传递
             
-            # 添加自定义参数（会覆盖默认值）
-            payload.update(kwargs)
+            # 添加自定义参数（会覆盖默认值），但排除 reference_image
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k != 'reference_image'}
+            payload.update(filtered_kwargs)
             
             logger.info(f"请求参数: {payload}")
             
@@ -192,6 +251,27 @@ class ImageAPIGenerator(BaseGenerator):
             logger.error(f"Image API 生成失败: {e}", exc_info=True)
             return self._create_error_result(ContentType.IMAGE, f"生成失败: {str(e)}")
     
+    
+    def _get_dalle_size(self, width: int, height: int) -> str:
+        """
+        将尺寸转换为 DALL-E 支持的格式
+        
+        Args:
+            width: 宽度
+            height: 高度
+            
+        Returns:
+            DALL-E 尺寸字符串 (1024x1024, 1024x1792, 或 1792x1024)
+        """
+        # DALL-E 3 支持: 1024x1024, 1024x1792, 1792x1024
+        ratio = width / height
+        
+        if ratio > 1.2:
+            return "1792x1024"  # 横向
+        elif ratio < 0.8:
+            return "1024x1792"  # 竖向
+        else:
+            return "1024x1024"  # 正方形
     
     def generate_batch(
         self,

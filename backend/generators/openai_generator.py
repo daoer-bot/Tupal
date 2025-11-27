@@ -129,17 +129,39 @@ class OpenAIGenerator(BaseGenerator):
             logger.debug(f"OpenAI 原始响应: {content[:200]}...")
             
             # 提取并解析 JSON
-            pages = self._extract_and_parse_json(content)
+            result_data = self._extract_and_parse_json(content)
             
-            if not pages or not isinstance(pages, list):
-                raise ValueError("解析结果不是有效的列表格式")
+            # 验证数据结构
+            if not isinstance(result_data, dict):
+                raise ValueError("解析结果不是有效的字典格式")
+            
+            if 'xiaohongshu_content' not in result_data or 'image_prompts' not in result_data:
+                raise ValueError("缺少必要的字段: xiaohongshu_content 或 image_prompts")
+            
+            xiaohongshu_content = result_data['xiaohongshu_content']
+            image_prompts = result_data['image_prompts']
+            
+            if not isinstance(image_prompts, list) or len(image_prompts) == 0:
+                raise ValueError("image_prompts 必须是非空列表")
+            
+            # 将小红书文案添加到每个页面中
+            pages = []
+            for prompt_item in image_prompts:
+                page = {
+                    'page_number': prompt_item.get('page_number'),
+                    'title': prompt_item.get('title'),
+                    'description': prompt_item.get('description'),
+                    'xiaohongshu_content': xiaohongshu_content  # 所有页面共享同一个文案
+                }
+                pages.append(page)
             
             return self._create_success_result(
                 content_type=ContentType.TEXT,
                 url="",
                 format="json",
                 pages=pages,
-                topic=prompt
+                topic=prompt,
+                xiaohongshu_content=xiaohongshu_content  # 额外返回文案
             )
             
         except Exception as e:
@@ -214,7 +236,7 @@ class OpenAIGenerator(BaseGenerator):
             return self._create_error_result(ContentType.IMAGE, friendly_msg)
     
     
-    def _extract_and_parse_json(self, content: str) -> list:
+    def _extract_and_parse_json(self, content: str):
         """
         从响应中提取并解析 JSON
         
@@ -222,35 +244,40 @@ class OpenAIGenerator(BaseGenerator):
             content: 响应内容
             
         Returns:
-            解析后的列表
+            解析后的字典或列表
         """
-        # 策略1: 提取 markdown 代码块中的 JSON
-        json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', content, re.DOTALL)
+        # 策略1: 提取 markdown 代码块中的 JSON（对象或数组）
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```', content, re.DOTALL)
         if json_match:
             try:
                 return json.loads(json_match.group(1))
             except json.JSONDecodeError:
                 logger.debug("策略1失败: markdown 代码块解析失败")
         
-        # 策略2: 提取第一个 JSON 数组
+        # 策略2: 提取第一个 JSON 对象
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except json.JSONDecodeError:
+                logger.debug("策略2失败: JSON 对象提取失败")
+        
+        # 策略3: 提取第一个 JSON 数组（向后兼容）
         json_match = re.search(r'\[.*\]', content, re.DOTALL)
         if json_match:
             try:
                 return json.loads(json_match.group(0))
             except json.JSONDecodeError:
-                logger.debug("策略2失败: JSON 数组提取失败")
+                logger.debug("策略3失败: JSON 数组提取失败")
         
-        # 策略3: 尝试直接解析整个内容
+        # 策略4: 尝试直接解析整个内容
         try:
             result = json.loads(content)
-            if isinstance(result, list):
-                return result
-            elif isinstance(result, dict) and 'pages' in result:
-                return result['pages']
+            return result
         except json.JSONDecodeError:
-            logger.debug("策略3失败: 直接解析失败")
+            logger.debug("策略4失败: 直接解析失败")
         
-        # 策略4: 清理并重试
+        # 策略5: 清理并重试
         cleaned = content.strip()
         # 移除可能的前后缀文本
         if cleaned.startswith('```'):
@@ -258,13 +285,9 @@ class OpenAIGenerator(BaseGenerator):
             cleaned = re.sub(r'\s*```$', '', cleaned)
         
         try:
-            result = json.loads(cleaned)
-            if isinstance(result, list):
-                return result
-            elif isinstance(result, dict) and 'pages' in result:
-                return result['pages']
+            return json.loads(cleaned)
         except json.JSONDecodeError:
-            logger.debug("策略4失败: 清理后解析失败")
+            logger.debug("策略5失败: 清理后解析失败")
         
         # 所有策略都失败
         raise json.JSONDecodeError(
@@ -296,23 +319,36 @@ class OpenAIGenerator(BaseGenerator):
     
     def _build_outline_prompt(self, topic: str) -> str:
         """构建大纲生成提示词"""
-        return f"""请根据以下主题，生成一个1页的小红书图文内容。
+        return f"""请根据以下主题，生成小红书图文内容。
 
 主题: {topic}
 
 要求：
-1. 只生成1页内容
-2. 标题要吸引眼球，适合小红书风格
-3. 描述要详细具体，适合用于生成图片的提示词
-4. 描述中要包含视觉元素、色彩、风格等信息
+1. 生成 3-5 个图片生成提示词（用于AI生成图片）
+2. 生成 1 个小红书文案（最终展示给用户）
+3. 每个图片提示词要详细描述视觉元素、色彩、构图、风格等
+4. 小红书文案要有emoji表情、分段排版、吸引眼球，适合小红书平台风格
 
-请严格以JSON格式返回，不要有任何其他文字：
+请严格以JSON格式返回：
 ```json
-[
-  {{
-    "page_number": 1,
-    "title": "吸引人的标题",
-    "description": "详细的页面描述，包含视觉元素、色彩、构图等信息，用于图片生成"
-  }}
-]
+{{
+  "xiaohongshu_content": "这里是完整的小红书文案内容，带emoji和排版📱✨\n\n第一段内容...\n\n第二段内容...",
+  "image_prompts": [
+    {{
+      "page_number": 1,
+      "title": "封面图",
+      "description": "详细的图片生成提示词，包含视觉元素、色彩、构图等信息"
+    }},
+    {{
+      "page_number": 2,
+      "title": "内容图1",
+      "description": "详细的图片生成提示词"
+    }},
+    {{
+      "page_number": 3,
+      "title": "内容图2",
+      "description": "详细的图片生成提示词"
+    }}
+  ]
+}}
 ```"""
