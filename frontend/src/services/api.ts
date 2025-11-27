@@ -35,6 +35,8 @@ api.interceptors.response.use(
 export interface GenerateOutlineParams {
   topic: string
   reference_image?: string
+  generator_type?: string  // 新增：生成器类型
+  text_model_config?: any  // 新增：文本模型配置
 }
 
 export interface GenerateImagesParams {
@@ -43,6 +45,7 @@ export interface GenerateImagesParams {
   topic?: string
   reference_image?: string
   generator_type?: string
+  image_model_config?: any  // 新增：图片模型配置
 }
 
 export interface ProgressData {

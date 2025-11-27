@@ -38,6 +38,14 @@
                     <button class="delete-btn" @click.stop="deleteTextModel(index)">🗑️</button>
                   </div>
                   <div class="model-fields">
+                    <select
+                      v-model="model.generatorType"
+                      class="model-input"
+                      @click.stop
+                    >
+                      <option value="openai">OpenAI</option>
+                      <option value="mock">Mock (测试)</option>
+                    </select>
                     <input
                       v-model="model.url"
                       placeholder="API URL"
@@ -92,6 +100,15 @@
                     <button class="delete-btn" @click.stop="deleteImageModel(index)">🗑️</button>
                   </div>
                   <div class="model-fields">
+                    <select
+                      v-model="model.generatorType"
+                      class="model-input"
+                      @click.stop
+                    >
+                      <option value="image_api">Image API</option>
+                      <option value="openai">OpenAI DALL-E</option>
+                      <option value="mock">Mock (测试)</option>
+                    </select>
                     <input
                       v-model="model.url"
                       placeholder="API URL"
@@ -136,6 +153,7 @@ interface ModelConfig {
   url: string
   apiKey: string
   model: string
+  generatorType: string  // 新增：生成器类型
 }
 
 const props = defineProps<{
@@ -185,7 +203,8 @@ const addTextModel = () => {
     name: `文本模型 ${textModels.value.length + 1}`,
     url: '',
     apiKey: '',
-    model: ''
+    model: '',
+    generatorType: 'openai'
   })
 }
 
@@ -194,7 +213,8 @@ const addImageModel = () => {
     name: `图片模型 ${imageModels.value.length + 1}`,
     url: '',
     apiKey: '',
-    model: ''
+    model: '',
+    generatorType: 'image_api'
   })
 }
 

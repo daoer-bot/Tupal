@@ -174,6 +174,7 @@ const handleGenerate = async () => {
     const response = await generateOutline({
       topic: topic.value,
       reference_image: store.referenceImage || undefined,
+      generator_type: store.textModelConfig.generatorType || 'openai',  // 新增：传递生成器类型
       text_model_config: store.textModelConfig
     })
     

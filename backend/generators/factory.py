@@ -7,7 +7,6 @@ from typing import Optional, Dict, Any, List
 from flask import current_app
 
 from .base_generator import BaseGenerator, ContentType
-from .gemini_generator import GeminiGenerator
 from .openai_generator import OpenAIGenerator
 from .image_api_generator import ImageAPIGenerator
 from .mock_generator import MockGenerator
@@ -20,7 +19,6 @@ class GeneratorFactory:
     
     # 支持的生成器类型映射
     GENERATOR_TYPES = {
-        'gemini': GeminiGenerator,
         'openai': OpenAIGenerator,
         'image_api': ImageAPIGenerator,
         'mock': MockGenerator
@@ -35,7 +33,7 @@ class GeneratorFactory:
         统一的生成器创建接口
         
         Args:
-            provider: 服务商名称 ('gemini', 'openai', 'image_api', 'mock')
+            provider: 服务商名称 ('openai', 'image_api', 'mock')
             content_type: 需要支持的内容类型（可选，用于验证）
             
         Returns:
@@ -44,12 +42,6 @@ class GeneratorFactory:
         try:
             if provider == 'mock':
                 generator = MockGenerator()
-            elif provider == 'gemini':
-                api_key = current_app.config.get('GEMINI_API_KEY')
-                if not api_key:
-                    logger.error("GEMINI_API_KEY 未配置")
-                    return None
-                generator = GeminiGenerator(api_key=api_key)
             elif provider == 'openai':
                 api_key = current_app.config.get('OPENAI_API_KEY')
                 base_url = current_app.config.get('OPENAI_BASE_URL')
@@ -99,8 +91,6 @@ class GeneratorFactory:
             if content_type in generator_class.SUPPORTED_TYPES:
                 # 进一步检查配置是否完整
                 if provider == 'mock':
-                    available.append(provider)
-                elif provider == 'gemini' and current_app.config.get('GEMINI_API_KEY'):
                     available.append(provider)
                 elif provider == 'openai' and current_app.config.get('OPENAI_API_KEY'):
                     available.append(provider)
@@ -162,7 +152,7 @@ class GeneratorFactory:
 
 # ========== 便捷函数（向后兼容） ==========
 
-def get_outline_generator(generator_type: str = 'gemini') -> Optional[BaseGenerator]:
+def get_outline_generator(generator_type: str = 'openai') -> Optional[BaseGenerator]:
     """
     获取大纲生成器（兼容旧接口）
     

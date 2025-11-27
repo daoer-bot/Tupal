@@ -18,6 +18,7 @@ export interface ModelConfig {
   url: string
   apiKey: string
   model: string
+  generatorType?: string  // 新增：生成器类型
 }
 
 export const useAppStore = defineStore('app', () => {
@@ -36,13 +37,15 @@ export const useAppStore = defineStore('app', () => {
   const textModelConfig = ref<ModelConfig>({
     url: '',
     apiKey: '',
-    model: ''
+    model: '',
+    generatorType: 'openai'  // 默认使用 openai
   })
   
   const imageModelConfig = ref<ModelConfig>({
     url: '',
     apiKey: '',
-    model: ''
+    model: '',
+    generatorType: 'image_api'  // 默认使用 image_api
   })
   
   // 设置大纲

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class OutlineService:
     """大纲生成服务类"""
     
-    def __init__(self, generator_type: str = 'gemini', model_config: Dict[str, Any] = None):
+    def __init__(self, generator_type: str = 'openai', model_config: Dict[str, Any] = None):
         """
         初始化服务
         
@@ -155,11 +155,6 @@ class OutlineService:
                         api_key=self.model_config['apiKey'],
                         base_url=self.model_config['url'],
                         model=self.model_config.get('model', 'gpt-4')
-                    )
-                elif self.generator_type == 'gemini':
-                    from generators.gemini_generator import GeminiGenerator
-                    return GeminiGenerator(
-                        api_key=self.model_config['apiKey']
                     )
             
             # 否则使用默认配置

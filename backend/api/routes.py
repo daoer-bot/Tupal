@@ -22,6 +22,7 @@ def generate_outline():
     {
         "topic": "主题描述",
         "reference_image": "参考图片URL（可选）",
+        "generator_type": "生成器类型（可选，默认openai）",
         "text_model_config": {
             "url": "API URL",
             "apiKey": "API Key",
@@ -33,6 +34,7 @@ def generate_outline():
         data = request.get_json()
         topic = data.get('topic')
         reference_image = data.get('reference_image')
+        generator_type = data.get('generator_type', 'openai')  # 新增：支持动态选择生成器
         text_model_config = data.get('text_model_config', {})
         
         if not topic:
@@ -42,11 +44,12 @@ def generate_outline():
             }), 400
         
         logger.info(f'Generating outline for topic: {topic}')
+        logger.info(f'Text generator type: {generator_type}')
         logger.info(f'Text model config: {text_model_config}')
         
         from services.outline_service import OutlineService
         outline_service = OutlineService(
-            generator_type='openai',
+            generator_type=generator_type,  # 修改：使用动态传入的生成器类型
             model_config=text_model_config
         )
         result = outline_service.generate(topic, reference_image)

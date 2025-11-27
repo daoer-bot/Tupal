@@ -167,7 +167,7 @@ const isGenerating = ref(false)
 const isCompleted = ref(false)
 const error = ref('')
 const eventSource = ref<EventSource | null>(null)
-const selectedGenerator = ref('image_api') // 默认使用 image_api（支持大多数第三方API）
+const selectedGenerator = ref(store.imageModelConfig.generatorType || 'image_api') // 从 store 获取默认生成器
 
 // 进度数据
 const progressData = ref<ProgressData>({
@@ -194,13 +194,16 @@ const startGeneration = async () => {
     isGenerating.value = true
     error.value = ''
     
+    // 使用 store 中的生成器类型（优先使用用户在配置中选择的）
+    const generatorType = store.imageModelConfig.generatorType || selectedGenerator.value
+    
     // 调用生成接口
     const response = await generateImages({
       task_id: store.currentOutline.task_id,
       pages: store.currentOutline.pages,
       topic: store.currentOutline.topic,
       reference_image: store.referenceImage || undefined,
-      generator_type: selectedGenerator.value, // 使用用户选择的生成器
+      generator_type: generatorType, // 使用配置中的生成器类型
       image_model_config: store.imageModelConfig // 传递图片模型配置
     })
     

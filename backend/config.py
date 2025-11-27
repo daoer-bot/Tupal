@@ -30,7 +30,6 @@ class Config:
     HISTORY_FOLDER = PROJECT_ROOT / 'history'
     
     # AI服务配置
-    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
     OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
     
