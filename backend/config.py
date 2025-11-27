@@ -32,10 +32,12 @@ class Config:
     # AI服务配置
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
     OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+    OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4')
     
     # 图片生成配置
     IMAGE_API_KEY = os.getenv('IMAGE_API_KEY', '')
     IMAGE_API_URL = os.getenv('IMAGE_API_URL', '')
+    IMAGE_MODEL = os.getenv('IMAGE_MODEL', 'dall-e-3')
     
     # 并发配置
     MAX_CONCURRENT_GENERATIONS = int(os.getenv('MAX_CONCURRENT_GENERATIONS', '25'))

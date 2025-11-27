@@ -4,23 +4,32 @@
       <div v-if="show" class="modal-overlay" @click="closeModal">
         <div class="modal-container" @click.stop>
           <div class="modal-header">
-            <h2>🔧 模型配置管理</h2>
+            <div class="header-title">
+              <h2>模型配置</h2>
+              <p>管理你的 AI 模型参数</p>
+            </div>
             <button class="close-btn" @click="closeModal">✕</button>
           </div>
           
           <div class="modal-body">
             <!-- 文本模型配置 -->
             <div class="config-section">
-              <div class="section-title">
-                <h3>📝 文本模型（生成大纲）</h3>
-                <button class="add-btn" @click="addTextModel">+ 添加模型</button>
+              <div class="section-header">
+                <div class="section-info">
+                  <span class="section-icon">📝</span>
+                  <h3>文本模型</h3>
+                  <span class="badge">生成大纲</span>
+                </div>
+                <button class="btn btn-sm btn-outline" @click="addTextModel">
+                  + 添加模型
+                </button>
               </div>
               
-              <div v-if="textModels.length === 0" class="empty-state">
-                暂无配置，点击"添加模型"开始配置
+              <div v-if="textModels.length === 0" class="empty-config">
+                暂无配置，点击上方按钮添加
               </div>
               
-              <div v-else class="models-list">
+              <div v-else class="models-grid">
                 <div
                   v-for="(model, index) in textModels"
                   :key="index"
@@ -28,61 +37,66 @@
                   :class="{ active: selectedTextIndex === index }"
                   @click="selectedTextIndex = index"
                 >
-                  <div class="model-header">
+                  <div class="card-header">
                     <input
                       v-model="model.name"
                       placeholder="配置名称"
                       class="model-name-input"
                       @click.stop
                     />
-                    <button class="delete-btn" @click.stop="deleteTextModel(index)">🗑️</button>
+                    <div class="card-actions">
+                      <span v-if="selectedTextIndex === index" class="active-tag">当前使用</span>
+                      <button class="delete-btn" @click.stop="deleteTextModel(index)">🗑️</button>
+                    </div>
                   </div>
-                  <div class="model-fields">
-                    <select
-                      v-model="model.generatorType"
-                      class="model-input"
-                      @click.stop
-                    >
-                      <option value="openai">OpenAI</option>
-                      <option value="mock">Mock (测试)</option>
-                    </select>
-                    <input
-                      v-model="model.url"
-                      placeholder="API URL"
-                      class="model-input"
-                      @click.stop
-                    />
-                    <input
-                      v-model="model.apiKey"
-                      type="password"
-                      placeholder="API Key"
-                      class="model-input"
-                      @click.stop
-                    />
-                    <input
-                      v-model="model.model"
-                      placeholder="模型名称 (如: gpt-4)"
-                      class="model-input"
-                      @click.stop
-                    />
+                  
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label>生成器类型</label>
+                      <select v-model="model.generatorType" class="form-input" @click.stop>
+                        <option value="openai">OpenAI</option>
+                        <option value="gemini">Google Gemini</option>
+                        <option value="mock">Mock (测试)</option>
+                      </select>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>API URL</label>
+                      <input v-model="model.url" placeholder="https://api.openai.com/v1" class="form-input" @click.stop />
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>API Key</label>
+                      <input v-model="model.apiKey" type="password" placeholder="sk-..." class="form-input" @click.stop />
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>模型名称</label>
+                      <input v-model="model.model" placeholder="gpt-4" class="form-input" @click.stop />
+                    </div>
                   </div>
-                  <div v-if="selectedTextIndex === index" class="active-badge">✓ 当前使用</div>
                 </div>
               </div>
             </div>
             
             <!-- 图片模型配置 -->
             <div class="config-section">
-              <div class="section-title">
-                <h3>🎨 图片模型（生成图片）</h3>
-                <button class="add-btn" @click="addImageModel">+ 添加模型</button>
+              <div class="section-header">
+                <div class="section-info">
+                  <span class="section-icon">🎨</span>
+                  <h3>图片模型</h3>
+                  <span class="badge">生成图片</span>
+                </div>
+                <button class="btn btn-sm btn-outline" @click="addImageModel">
+                  + 添加模型
+                </button>
               </div>
               
-              <div v-if="imageModels.length === 0" class="empty-state">
-                暂无配置，点击"添加模型"开始配置
+              <div v-if="imageModels.length === 0" class="empty-config">
+                暂无配置，点击上方按钮添加
               </div>
               
-              <div v-else class="models-list">
+              <div v-else class="models-grid">
                 <div
                   v-for="(model, index) in imageModels"
                   :key="index"
@@ -90,46 +104,44 @@
                   :class="{ active: selectedImageIndex === index }"
                   @click="selectedImageIndex = index"
                 >
-                  <div class="model-header">
+                  <div class="card-header">
                     <input
                       v-model="model.name"
                       placeholder="配置名称"
                       class="model-name-input"
                       @click.stop
                     />
-                    <button class="delete-btn" @click.stop="deleteImageModel(index)">🗑️</button>
+                    <div class="card-actions">
+                      <span v-if="selectedImageIndex === index" class="active-tag">当前使用</span>
+                      <button class="delete-btn" @click.stop="deleteImageModel(index)">🗑️</button>
+                    </div>
                   </div>
-                  <div class="model-fields">
-                    <select
-                      v-model="model.generatorType"
-                      class="model-input"
-                      @click.stop
-                    >
-                      <option value="image_api">Image API</option>
-                      <option value="openai">OpenAI DALL-E</option>
-                      <option value="mock">Mock (测试)</option>
-                    </select>
-                    <input
-                      v-model="model.url"
-                      placeholder="API URL"
-                      class="model-input"
-                      @click.stop
-                    />
-                    <input
-                      v-model="model.apiKey"
-                      type="password"
-                      placeholder="API Key"
-                      class="model-input"
-                      @click.stop
-                    />
-                    <input
-                      v-model="model.model"
-                      placeholder="模型名称 (如: dall-e-3)"
-                      class="model-input"
-                      @click.stop
-                    />
+                  
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label>生成器类型</label>
+                      <select v-model="model.generatorType" class="form-input" @click.stop>
+                        <option value="image_api">Image API</option>
+                        <option value="openai">OpenAI DALL-E</option>
+                        <option value="mock">Mock (测试)</option>
+                      </select>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>API URL</label>
+                      <input v-model="model.url" placeholder="API 地址" class="form-input" @click.stop />
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>API Key</label>
+                      <input v-model="model.apiKey" type="password" placeholder="API Key" class="form-input" @click.stop />
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>模型名称</label>
+                      <input v-model="model.model" placeholder="dall-e-3" class="form-input" @click.stop />
+                    </div>
                   </div>
-                  <div v-if="selectedImageIndex === index" class="active-badge">✓ 当前使用</div>
                 </div>
               </div>
             </div>
@@ -153,7 +165,7 @@ interface ModelConfig {
   url: string
   apiKey: string
   model: string
-  generatorType: string  // 新增：生成器类型
+  generatorType: string
 }
 
 const props = defineProps<{
@@ -261,6 +273,7 @@ const saveConfig = () => {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -270,240 +283,242 @@ const saveConfig = () => {
 
 .modal-container {
   background: white;
-  border-radius: 16px;
-  max-width: 900px;
+  border-radius: 1.5rem;
   width: 100%;
-  max-height: 90vh;
+  max-width: 1000px;
+  height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
 }
 
 .modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  border-bottom: 2px solid #f0f0f0;
+  align-items: flex-start;
+  background: #f9fafb;
 }
 
-.modal-header h2 {
-  margin: 0;
+.header-title h2 {
+  margin: 0 0 0.25rem;
   font-size: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
+}
+
+.header-title p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 1.5rem;
+  color: var(--text-secondary);
   cursor: pointer;
-  color: #999;
-  transition: color 0.3s;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  line-height: 1;
 }
 
 .close-btn:hover {
-  color: #333;
+  background: #e5e7eb;
+  color: var(--text-primary);
 }
 
 .modal-body {
   flex: 1;
   overflow-y: auto;
   padding: 2rem;
+  background: #f3f4f6;
 }
 
 .config-section {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
-.config-section:last-child {
-  margin-bottom: 0;
-}
-
-.section-title {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.section-title h3 {
+.section-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-icon {
+  font-size: 1.5rem;
+}
+
+.section-header h3 {
   margin: 0;
-  font-size: 1.2rem;
-  color: #333;
+  font-size: 1.25rem;
+  color: var(--text-primary);
 }
 
-.add-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+.badge {
+  background: #e0e7ff;
+  color: var(--primary-color);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.add-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
 }
 
-.empty-state {
-  text-align: center;
-  padding: 2rem;
-  color: #999;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border: 2px dashed #ddd;
+.btn-outline:hover {
+  background: #eef2ff;
 }
 
-.models-list {
+.models-grid {
   display: grid;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .model-card {
-  background: #f9f9f9;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 1rem;
+  background: white;
+  border-radius: 1rem;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: all 0.3s;
-  position: relative;
+  transition: all 0.2s;
+  overflow: hidden;
 }
 
 .model-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .model-card.active {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-color: #667eea;
-  border-width: 3px;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.model-header {
+.card-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  background: #f9fafb;
 }
 
 .model-name-input {
-  flex: 1;
-  font-size: 1rem;
-  font-weight: 600;
   border: none;
   background: transparent;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: background 0.3s;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  width: 100%;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
 }
 
 .model-name-input:focus {
-  outline: none;
   background: white;
+  outline: 2px solid var(--primary-color);
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.active-tag {
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  font-weight: 600;
+  background: #eef2ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
 }
 
 .delete-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  transition: transform 0.2s;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  padding: 0.25rem;
 }
 
 .delete-btn:hover {
-  transform: scale(1.2);
+  opacity: 1;
 }
 
-.model-fields {
+.card-body {
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
-.model-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  background: white;
-  transition: border-color 0.3s;
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.model-input:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-.active-badge {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+.form-group label {
   font-size: 0.8rem;
-  font-weight: 600;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-input {
+  padding: 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  padding: 1.5rem 2rem;
-  border-top: 2px solid #f0f0f0;
-}
-
-.btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
 }
 
-.btn-secondary:hover {
-  background: #f5f7ff;
+.empty-config {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 1rem;
+  border: 2px dashed var(--border-color);
+  color: var(--text-secondary);
 }
 
-/* 过渡动画 */
+/* 动画 */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.3s;
+  transition: opacity 0.3s ease;
 }
 
 .modal-enter-from,
@@ -513,11 +528,11 @@ const saveConfig = () => {
 
 .modal-enter-active .modal-container,
 .modal-leave-active .modal-container {
-  transition: transform 0.3s;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
-  transform: scale(0.9);
+  transform: scale(0.95) translateY(10px);
 }
 </style>

@@ -14,7 +14,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5030',
+        // 代理到后端服务（后端端口在 backend/.env 中配置）
+        target: 'http://localhost:5000',
         changeOrigin: true
       }
     }

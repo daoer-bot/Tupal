@@ -145,11 +145,30 @@ class OutlineService:
             生成器实例
         """
         try:
-            # 如果有自定义配置，使用自定义配置创建生成器
-            if self.model_config and self.model_config.get('url') and self.model_config.get('apiKey'):
+            # 检查是否有有效的自定义配置（非空字符串）
+            has_custom_config = (
+                self.model_config and
+                self.model_config.get('url') and
+                self.model_config.get('url').strip() and
+                self.model_config.get('apiKey') and
+                self.model_config.get('apiKey').strip()
+            )
+            
+            if has_custom_config:
                 logger.info(f"使用自定义配置创建大纲生成器: {self.generator_type}")
+                logger.info(f"自定义配置 - URL: {self.model_config['url']}, Model: {self.model_config.get('model', 'gpt-4')}")
                 
                 if self.generator_type == 'openai':
+                    from generators.openai_generator import OpenAIGenerator
+                    # 只传递 OpenAIGenerator 需要的参数
+                    return OpenAIGenerator(
+                        api_key=self.model_config['apiKey'],
+                        base_url=self.model_config['url'],
+                        model=self.model_config.get('model', 'gpt-4')
+                    )
+                elif self.generator_type == 'gemini':
+                    # 如果有 gemini 生成器，在这里处理
+                    logger.warning(f"Gemini 生成器暂未实现，使用 OpenAI 替代")
                     from generators.openai_generator import OpenAIGenerator
                     return OpenAIGenerator(
                         api_key=self.model_config['apiKey'],
@@ -157,7 +176,7 @@ class OutlineService:
                         model=self.model_config.get('model', 'gpt-4')
                     )
             
-            # 否则使用默认配置
+            # 否则使用默认配置（从环境变量）
             logger.info(f"使用默认配置创建大纲生成器: {self.generator_type}")
             return get_outline_generator(self.generator_type)
             

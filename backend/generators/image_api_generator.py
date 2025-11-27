@@ -18,12 +18,15 @@ class ImageAPIGenerator(BaseGenerator):
     # 声明支持的内容类型（仅支持图片）
     SUPPORTED_TYPES = {ContentType.IMAGE}
     
-    def __init__(self, api_key: str, api_url: str = None, **kwargs):
+    def __init__(self, api_key: str, api_url: str = None, model: str = None, **kwargs):
         super().__init__(api_key, **kwargs)
         self.api_url = api_url or kwargs.get('url', '')
+        self.model = model or kwargs.get('model', 'dall-e-3')  # 默认模型
         
         if not self.api_url:
             raise ValueError("Image API URL 不能为空")
+        
+        logger.info(f"ImageAPIGenerator 初始化: URL={self.api_url}, Model={self.model}")
     
     def generate(
         self,
@@ -76,20 +79,30 @@ class ImageAPIGenerator(BaseGenerator):
         try:
             # 确保 API URL 包含完整的端点路径
             api_endpoint = self.api_url
-            if not api_endpoint.endswith('/images/generations'):
-                # 如果 URL 是 v1 结尾，添加图片生成端点
+            
+            # 检查是否已经包含端点路径（支持 /images/generations 和 /images/edits）
+            has_endpoint = (api_endpoint.endswith('/images/generations') or
+                           api_endpoint.endswith('/images/edits'))
+            
+            if not has_endpoint:
+                # 根据是否有参考图片选择端点
+                # 有参考图片使用 edits 端点，否则使用 generations 端点
+                endpoint_suffix = '/images/edits' if reference_image else '/images/generations'
+                
+                # 标准化 URL 拼接
                 if api_endpoint.endswith('/v1'):
-                    api_endpoint = f"{api_endpoint}/images/generations"
+                    api_endpoint = f"{api_endpoint}{endpoint_suffix}"
                 elif api_endpoint.endswith('/'):
-                    api_endpoint = f"{api_endpoint}images/generations"
+                    api_endpoint = f"{api_endpoint.rstrip('/')}{endpoint_suffix}"
                 else:
-                    api_endpoint = f"{api_endpoint}/images/generations"
+                    api_endpoint = f"{api_endpoint}{endpoint_suffix}"
             
             logger.info(f"使用 Image API 生成图片: {api_endpoint}")
             logger.info(f"提示词: {prompt[:100]}...")
             
             # 构建请求数据
             payload = {
+                'model': self.model,  # 添加模型参数
                 'prompt': prompt,
                 'size': f"{width}x{height}",  # 使用标准格式
                 'n': 1,
@@ -100,7 +113,7 @@ class ImageAPIGenerator(BaseGenerator):
             if reference_image:
                 payload['reference_image'] = reference_image
             
-            # 添加自定义参数
+            # 添加自定义参数（会覆盖默认值）
             payload.update(kwargs)
             
             logger.info(f"请求参数: {payload}")

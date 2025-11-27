@@ -45,19 +45,22 @@ class GeneratorFactory:
             elif provider == 'openai':
                 api_key = current_app.config.get('OPENAI_API_KEY')
                 base_url = current_app.config.get('OPENAI_BASE_URL')
+                model = current_app.config.get('OPENAI_MODEL', 'gpt-4')
                 if not api_key:
                     logger.error("OPENAI_API_KEY 未配置")
                     return None
-                logger.info(f"创建 OpenAI 生成器: api_key={api_key[:10]}..., base_url={base_url}")
-                generator = OpenAIGenerator(api_key=api_key, base_url=base_url)
+                logger.info(f"创建 OpenAI 生成器: api_key={api_key[:10]}..., base_url={base_url}, model={model}")
+                generator = OpenAIGenerator(api_key=api_key, base_url=base_url, model=model)
                 logger.info("OpenAI 生成器创建成功")
             elif provider == 'image_api':
                 api_key = current_app.config.get('IMAGE_API_KEY')
                 api_url = current_app.config.get('IMAGE_API_URL')
+                model = current_app.config.get('IMAGE_MODEL', 'dall-e-3')
                 if not api_key or not api_url:
                     logger.error("IMAGE_API_KEY 或 IMAGE_API_URL 未配置")
                     return None
-                generator = ImageAPIGenerator(api_key=api_key, api_url=api_url)
+                logger.info(f"创建 Image API 生成器: api_key={api_key[:10]}..., api_url={api_url}, model={model}")
+                generator = ImageAPIGenerator(api_key=api_key, api_url=api_url, model=model)
             else:
                 logger.error(f"不支持的生成器类型: {provider}")
                 return None

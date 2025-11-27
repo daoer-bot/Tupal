@@ -1,25 +1,23 @@
 <template>
   <div class="generator">
-    <h2>图片生成器</h2>
+    <ProcessSteps :current-step="2" />
+
+    <div class="page-header">
+      <h2>文案大纲确认</h2>
+      <div class="header-actions" v-if="store.currentOutline && !isGenerating && !isCompleted">
+        <button @click="startGeneration" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l-.249 1.74" />
+          </svg>
+          开始生成图片
+        </button>
+      </div>
+    </div>
     
     <!-- 大纲预览和编辑区 -->
     <div v-if="store.currentOutline && !isGenerating" class="outline-section">
-      <div class="section-header">
+      <div class="section-title">
         <h3>内容大纲：{{ store.currentOutline.topic }}</h3>
-        <div class="header-actions">
-          <!-- 生成器选择 -->
-          <div class="generator-selector">
-            <label for="generator-type">图片生成器：</label>
-            <select id="generator-type" v-model="selectedGenerator" class="generator-select">
-              <option value="mock">Mock (测试用占位图)</option>
-              <option value="image_api">Image API (真实图片生成)</option>
-              <option value="openai">OpenAI DALL-E 3</option>
-            </select>
-          </div>
-          <button @click="startGeneration" class="btn btn-primary">
-            开始生成图片
-          </button>
-        </div>
       </div>
       
       <div class="pages-grid">
@@ -28,7 +26,7 @@
           :key="page.page_number"
           class="page-card"
         >
-          <div class="page-number">{{ page.page_number }}</div>
+          <div class="page-number">P{{ page.page_number }}</div>
           <h4>{{ page.title }}</h4>
           <p>{{ page.description }}</p>
         </div>
@@ -37,21 +35,22 @@
     
     <!-- 生成进度区 -->
     <div v-if="isGenerating" class="generation-section">
-      <h3>正在生成图片...</h3>
-      
-      <!-- 进度条 -->
-      <div class="progress-bar-container">
-        <div class="progress-bar" :style="{ width: `${progressData.progress}%` }">
-          <span class="progress-text">{{ progressData.progress }}%</span>
+      <div class="progress-container">
+        <div class="progress-header">
+          <h3>正在生成图片...</h3>
+          <span class="progress-percentage">{{ progressData.progress }}%</span>
         </div>
-      </div>
-      
-      <!-- 状态信息 -->
-      <div class="progress-info">
-        <p class="progress-message">{{ progressData.message }}</p>
-        <p class="progress-detail">
-          {{ progressData.completed_pages }} / {{ progressData.total_pages }} 页已完成
-        </p>
+        
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" :style="{ width: `${progressData.progress}%` }"></div>
+        </div>
+        
+        <div class="progress-info">
+          <p class="progress-message">{{ progressData.message }}</p>
+          <p class="progress-detail">
+            {{ progressData.completed_pages }} / {{ progressData.total_pages }} 页已完成
+          </p>
+        </div>
       </div>
       
       <!-- 已生成的图片预览 -->
@@ -83,7 +82,6 @@
               <span class="failed-page-time">{{ formatTime(failed.failed_at) }}</span>
             </div>
             <div class="failed-page-error">
-              <span class="error-icon">❌</span>
               <span class="error-text">{{ failed.error }}</span>
             </div>
           </div>
@@ -94,22 +92,13 @@
     <!-- 完成状态 -->
     <div v-if="isCompleted" class="completion-section">
       <div class="success-message">
-        <span class="success-icon">✓</span>
-        <h3>图片生成完成！</h3>
-      </div>
-      
-      <div class="images-grid">
-        <div
-          v-for="image in progressData.images"
-          :key="image.page_number"
-          class="image-item"
-        >
-          <img :src="image.url" :alt="`页面 ${image.page_number}`" />
-          <div class="image-label">
-            页面 {{ image.page_number }}
-            <a :href="image.url" target="_blank" class="download-link">下载</a>
-          </div>
+        <div class="success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
+        <h3>图片生成完成！</h3>
+        <p>所有页面已生成完毕，请前往结果页查看详情。</p>
       </div>
       
       <!-- 失败的页面信息（完成状态） -->
@@ -126,7 +115,6 @@
               <span class="failed-page-time">{{ formatTime(failed.failed_at) }}</span>
             </div>
             <div class="failed-page-error">
-              <span class="error-icon">❌</span>
               <span class="error-text">{{ failed.error }}</span>
             </div>
           </div>
@@ -135,7 +123,7 @@
       
       <div class="actions">
         <button @click="goHome" class="btn btn-secondary">返回首页</button>
-        <button @click="downloadAll" class="btn btn-primary">下载全部</button>
+        <button @click="viewResult" class="btn btn-primary">查看生成结果</button>
       </div>
     </div>
     
@@ -158,6 +146,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
 import { generateImages, subscribeProgress, saveHistory, type ProgressData } from '../services/api'
+import ProcessSteps from '../components/ProcessSteps.vue'
 
 const router = useRouter()
 const store = useAppStore()
@@ -297,18 +286,9 @@ const goHome = () => {
   router.push('/')
 }
 
-// 下载全部（简单实现）
-const downloadAll = () => {
-  if (!progressData.value.images || !Array.isArray(progressData.value.images)) {
-    console.error('没有可下载的图片')
-    return
-  }
-  progressData.value.images.forEach(image => {
-    const link = document.createElement('a')
-    link.href = image.url
-    link.download = `page_${image.page_number}.jpg`
-    link.click()
-  })
+// 查看结果
+const viewResult = () => {
+  router.push('/result')
 }
 
 // 格式化时间
@@ -349,171 +329,155 @@ onMounted(() => {
   padding: 2rem 1rem;
 }
 
-/* 大纲区域 */
-.outline-section {
-  margin-bottom: 2rem;
-}
-
-.section-header {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.section-header h3 {
+.page-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0;
-  color: #333;
-  flex: 1;
-  min-width: 200px;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+/* 大纲区域 */
+.outline-section {
+  margin-bottom: 3rem;
 }
 
-.generator-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: white;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.section-title {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.generator-selector label {
-  font-size: 0.9rem;
-  color: #666;
-  white-space: nowrap;
-}
-
-.generator-select {
-  padding: 0.5rem 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  color: #333;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 200px;
-}
-
-.generator-select:hover {
-  border-color: #667eea;
-}
-
-.generator-select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.section-title h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .pages-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .page-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
 }
 
 .page-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-hover);
 }
 
 .page-number {
   display: inline-block;
-  background: #667eea;
-  color: white;
+  background: var(--primary-light);
+  color: var(--primary-color);
   padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
 .page-card h4 {
-  margin: 0.5rem 0;
-  color: #333;
-  font-size: 1rem;
+  margin: 0 0 0.75rem;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .page-card p {
   margin: 0;
-  color: #666;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 /* 生成进度区域 */
 .generation-section {
-  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.generation-section h3 {
-  color: #667eea;
+.progress-container {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
   margin-bottom: 2rem;
 }
 
-.progress-bar-container {
-  background: #f0f0f0;
-  border-radius: 25px;
-  height: 50px;
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progress-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.progress-percentage {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+.progress-bar-bg {
+  background: var(--bg-color);
+  border-radius: 9999px;
+  height: 0.75rem;
   overflow: hidden;
   margin-bottom: 1.5rem;
-  position: relative;
 }
 
-.progress-bar {
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+.progress-bar-fill {
+  background: var(--primary-color);
   height: 100%;
-  border-radius: 25px;
+  border-radius: 9999px;
   transition: width 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.progress-text {
-  color: white;
-  font-weight: bold;
-  font-size: 1.1rem;
 }
 
 .progress-info {
-  margin-bottom: 2rem;
+  text-align: center;
 }
 
 .progress-message {
-  font-size: 1.1rem;
-  color: #333;
+  font-size: 1rem;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 
 .progress-detail {
-  color: #666;
-  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 /* 图片预览 */
 .images-preview h4,
 .completion-section h4 {
-  text-align: left;
-  color: #333;
+  color: var(--text-primary);
   margin: 2rem 0 1rem 0;
+  font-size: 1.1rem;
 }
 
 .images-grid {
@@ -524,39 +488,44 @@ onMounted(() => {
 }
 
 .image-item {
-  background: white;
-  border-radius: 8px;
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
 }
 
 .image-item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .image-item img {
   width: 100%;
-  height: 300px;
+  height: 320px;
   object-fit: cover;
   display: block;
 }
 
 .image-label {
-  padding: 0.75rem;
-  text-align: center;
-  color: #333;
+  padding: 1rem;
+  color: var(--text-primary);
   font-weight: 500;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.9rem;
 }
 
 .download-link {
-  color: #667eea;
+  color: var(--primary-color);
   text-decoration: none;
   font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .download-link:hover {
@@ -570,163 +539,120 @@ onMounted(() => {
 
 .success-message {
   background: #f0fdf4;
-  border: 2px solid #86efac;
-  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-lg);
   padding: 2rem;
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .success-icon {
-  display: inline-block;
-  width: 60px;
-  height: 60px;
-  line-height: 60px;
-  background: #22c55e;
-  color: white;
+  width: 4rem;
+  height: 4rem;
+  background: #dcfce7;
+  color: #16a34a;
   border-radius: 50%;
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 1rem;
 }
 
 .success-message h3 {
   margin: 0;
-  color: #166534;
+  color: #15803d;
+  font-size: 1.25rem;
 }
 
 .actions {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  margin-top: 2rem;
+  margin-top: 3rem;
 }
 
 /* 错误提示 */
 .error-message {
   background: #fef2f2;
-  border: 2px solid #fca5a5;
-  border-radius: 8px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   text-align: center;
   margin: 2rem 0;
 }
 
 .error-message p {
-  color: #991b1b;
+  color: #b91c1c;
   margin: 0 0 1rem 0;
+  font-weight: 500;
 }
 
-/* 空状态 */
 /* 失败页面区域 */
 .failed-pages-section {
   margin-top: 2rem;
   padding: 1.5rem;
-  background: #fef2f2;
-  border: 2px solid #fca5a5;
-  border-radius: 8px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: var(--radius-lg);
 }
 
 .failed-pages-section h4 {
-  color: #991b1b;
+  color: #be123c;
   margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .failed-pages-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .failed-page-item {
   background: white;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #fda4af;
 }
 
 .failed-page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .failed-page-number {
   font-weight: 600;
-  color: #dc2626;
-  font-size: 1rem;
+  color: #e11d48;
+  font-size: 0.9rem;
 }
 
 .failed-page-time {
-  color: #666;
-  font-size: 0.875rem;
+  color: #881337;
+  font-size: 0.8rem;
+  opacity: 0.7;
 }
 
 .failed-page-error {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: #fef2f2;
-  border-radius: 4px;
-  border-left: 3px solid #dc2626;
-}
-
-.error-icon {
-  flex-shrink: 0;
-  font-size: 1rem;
-}
-
-.error-text {
-  flex: 1;
-  color: #7f1d1d;
+  color: #9f1239;
   font-size: 0.875rem;
-  line-height: 1.5;
-  word-break: break-word;
 }
 
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 6rem 2rem;
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-color);
 }
 
 .empty-state p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin-bottom: 2rem;
-}
-
-/* 按钮样式 */
-.btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
-  background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
-}
-
-.btn-secondary:hover {
-  background: #f5f7ff;
 }
 </style>
