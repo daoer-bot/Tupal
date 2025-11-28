@@ -89,6 +89,10 @@ def generate_images():
             "url": "API URL",
             "apiKey": "API Key",
             "model": "模型名称"
+        },
+        "image_generation_config": {
+            "quality": "1k|2k|4k",
+            "aspectRatio": "4:3|3:4|16:9|..."
         }
     }
     """
@@ -100,6 +104,7 @@ def generate_images():
         reference_image = data.get('reference_image')
         generator_type = data.get('generator_type', 'mock')
         image_model_config = data.get('image_model_config', {})
+        image_generation_config = data.get('image_generation_config', {})
         
         if not task_id or not pages:
             return jsonify({
@@ -133,7 +138,8 @@ def generate_images():
             task_id=task_id,
             pages=pages,
             topic=topic,
-            reference_image=reference_image
+            reference_image=reference_image,
+            image_generation_config=image_generation_config
         )
         
         return jsonify({

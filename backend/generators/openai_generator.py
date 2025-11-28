@@ -42,9 +42,17 @@ class OpenAIGenerator(BaseGenerator):
         # 调用父类初始化，只传递过滤后的参数
         super().__init__(api_key, **filtered_kwargs)
         
+        # 处理 base_url：如果用户只提供域名，自动添加 /v1
+        if base_url:
+            base_url = base_url.rstrip('/')  # 移除末尾斜杠
+            if not base_url.endswith('/v1'):
+                base_url = f"{base_url}/v1"
+        
         self.base_url = base_url or "https://api.openai.com/v1"
         self.text_model = model or "gpt-4"  # 默认文本模型
         self.image_model = "dall-e-3"  # 图片模型
+        
+        logger.info(f"OpenAI 生成器初始化 - base_url: {self.base_url}")
         
         # 构建 OpenAI 客户端参数
         client_kwargs = {

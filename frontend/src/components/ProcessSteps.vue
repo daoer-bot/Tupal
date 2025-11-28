@@ -5,8 +5,8 @@
       :class="{ active: currentStep >= 1, current: currentStep === 1, clickable: currentStep > 1 }"
       @click="handleStepClick(1)"
     >
-      <div class="step-icon">1</div>
-      <div class="step-label">创意</div>
+      <div class="step-dot"></div>
+      <div class="step-label">创意构思</div>
     </div>
     <div class="step-line" :class="{ active: currentStep >= 2 }"></div>
     <div
@@ -14,8 +14,8 @@
       :class="{ active: currentStep >= 2, current: currentStep === 2, clickable: currentStep > 2 }"
       @click="handleStepClick(2)"
     >
-      <div class="step-icon">2</div>
-      <div class="step-label">文案</div>
+      <div class="step-dot"></div>
+      <div class="step-label">内容大纲</div>
     </div>
     <div class="step-line" :class="{ active: currentStep >= 3 }"></div>
     <div
@@ -23,8 +23,8 @@
       :class="{ active: currentStep >= 3, current: currentStep === 3, clickable: currentStep > 3 }"
       @click="handleStepClick(3)"
     >
-      <div class="step-icon">3</div>
-      <div class="step-label">图文</div>
+      <div class="step-dot"></div>
+      <div class="step-label">生成结果</div>
     </div>
   </div>
 </template>
@@ -68,45 +68,40 @@ const handleStepClick = (step: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 2rem;
-  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
 }
 
 .step {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 0.5rem;
   position: relative;
   z-index: 1;
   transition: var(--transition);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
 }
 
 .step.clickable {
   cursor: pointer;
 }
 
-.step.clickable:hover .step-icon {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.step.clickable:hover {
+  background: var(--hover-bg);
 }
 
 .step.clickable:hover .step-label {
   color: var(--primary-color);
 }
 
-.step-icon {
-  width: 2.5rem;
-  height: 2.5rem;
+.step-dot {
+  width: 0.75rem;
+  height: 0.75rem;
   border-radius: 50%;
-  background: var(--surface-color);
-  border: 2px solid var(--border-color);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
+  background: var(--border-color);
   transition: var(--transition);
+  position: relative;
 }
 
 .step-label {
@@ -116,25 +111,25 @@ const handleStepClick = (step: number) => {
   transition: var(--transition);
 }
 
-.step.active .step-icon {
+.step.active .step-dot {
   background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .step.active .step-label {
   color: var(--primary-color);
+  font-weight: 600;
 }
 
-.step.current .step-icon {
-  box-shadow: 0 0 0 4px var(--primary-light);
+.step.current .step-dot {
+  transform: scale(1.2);
 }
 
 .step-line {
-  flex: 0 0 60px;
-  height: 2px;
+  width: 3rem;
+  height: 1px;
   background: var(--border-color);
-  margin: 0 0.5rem 1.5rem;
+  margin: 0 0.5rem;
   transition: var(--transition);
 }
 

@@ -45,7 +45,11 @@ export interface GenerateImagesParams {
   topic?: string
   reference_image?: string
   generator_type?: string
-  image_model_config?: any  // 新增：图片模型配置
+  image_model_config?: any  // 图片模型配置
+  image_generation_config?: {  // 新增：图片生成配置
+    quality: '1k' | '2k' | '4k'
+    aspectRatio: string
+  }
 }
 
 export interface ProgressData {

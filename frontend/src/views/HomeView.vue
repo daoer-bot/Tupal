@@ -1,11 +1,9 @@
 <template>
   <div class="home-container">
-    <ProcessSteps :current-step="1" />
-
     <div class="hero-section">
-      <h2 class="hero-title">一句话，生成完整<span class="highlight">小红书图文</span></h2>
+      <h2 class="hero-title">一键生成精美<span class="highlight">图文内容</span></h2>
       <p class="hero-subtitle">
-        输入你的创作主题，AI 将自动生成精美图文内容，让创作从未如此简单
+        输入创作主题，AI 自动生成高质量图文，让创作从未如此简单
       </p>
     </div>
     
@@ -48,7 +46,7 @@
         :disabled="!topic || isGenerating"
       >
         <span v-if="isGenerating" class="loading-spinner"></span>
-        {{ isGenerating ? '正在生成灵感...' : '开始生成图文' }}
+        {{ isGenerating ? '正在生成灵感...' : '开始生成' }}
       </button>
     </div>
     
@@ -59,7 +57,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l-.249 1.74" />
           </svg>
         </div>
-        <h3>AI 智能生成</h3>
+        <h3>智能生成</h3>
         <p>基于先进大语言模型，自动生成高质量文案</p>
       </div>
       <div class="feature-card">
@@ -89,7 +87,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
 import { generateOutline, uploadReference } from '../services/api'
-import ProcessSteps from '../components/ProcessSteps.vue'
 
 const router = useRouter()
 const store = useAppStore()

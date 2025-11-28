@@ -52,17 +52,12 @@
                   
                   <div class="card-body">
                     <div class="form-group">
-                      <label>生成器类型</label>
-                      <select v-model="model.generatorType" class="form-input" @click.stop>
-                        <option value="openai">OpenAI</option>
-                        <option value="gemini">Google Gemini</option>
-                        <option value="mock">Mock (测试)</option>
-                      </select>
-                    </div>
-                    
-                    <div class="form-group">
                       <label>API URL</label>
-                      <input v-model="model.url" placeholder="https://api.openai.com/v1" class="form-input" @click.stop />
+                      <input v-model="model.url" placeholder="https://api.openai.com" class="form-input" @click.stop />
+                      <p class="field-hint">
+                        <span class="endpoint-label">实际调用地址: </span>
+                        <code class="endpoint-url">{{ getActualEndpoint(model) }}</code>
+                      </p>
                     </div>
                     
                     <div class="form-group">
@@ -73,6 +68,9 @@
                     <div class="form-group">
                       <label>模型名称</label>
                       <input v-model="model.model" placeholder="gpt-4" class="form-input" @click.stop />
+                      <p class="field-hint">
+                        文本模型使用 OpenAI 格式，支持: gpt-4, gpt-3.5-turbo, claude-3-opus 等
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -119,17 +117,26 @@
                   
                   <div class="card-body">
                     <div class="form-group">
-                      <label>生成器类型</label>
-                      <select v-model="model.generatorType" class="form-input" @click.stop>
-                        <option value="image_api">Image API</option>
-                        <option value="openai">OpenAI DALL-E</option>
-                        <option value="mock">Mock (测试)</option>
+                      <label>接口规则</label>
+                      <select v-model="model.apiFormat" class="form-input" @click.stop>
+                        <option value="chat">OpenAI-Chat 格式（推荐）</option>
+                        <option value="generations">OpenAI-DALL·E 格式</option>
+                        <option value="official">Gemini 原生格式</option>
                       </select>
+                      <p class="field-hint">
+                        • OpenAI-Chat: /v1/chat/completions 端点<br>
+                        • OpenAI-DALL·E 格式: /v1/images/generations 端点<br>
+                        • Gemini 原生格式: 原生 generateContent 端点
+                      </p>
                     </div>
                     
                     <div class="form-group">
                       <label>API URL</label>
                       <input v-model="model.url" placeholder="API 地址" class="form-input" @click.stop />
+                      <p class="field-hint">
+                        <span class="endpoint-label">实际调用地址: </span>
+                        <code class="endpoint-url">{{ getActualEndpoint(model) }}</code>
+                      </p>
                     </div>
                     
                     <div class="form-group">
@@ -139,10 +146,11 @@
                     
                     <div class="form-group">
                       <label>模型名称</label>
-                      <input v-model="model.model" placeholder="dall-e-3" class="form-input" @click.stop />
+                      <input v-model="model.model" placeholder="nano-banana" class="form-input" @click.stop />
                       <p class="field-hint">
-                        支持: dall-e-3, dall-e-2, stable-diffusion-xl, flux-pro 等<br>
-                        <span class="warning-text">⚠️ Gemini 模型不支持图片生成</span>
+                        <span v-if="model.apiFormat === 'chat'">常用模型: gemini-2.0-flash-exp-image-generation, gpt-4, claude-3 等</span>
+                        <span v-else-if="model.apiFormat === 'generations'">常用模型: dall-e-3, dall-e-2, flux-pro 等</span>
+                        <span v-else>常用模型: gemini-2.0-flash-exp, gemini-pro-vision 等</span>
                       </p>
                     </div>
                   </div>
@@ -170,6 +178,40 @@ interface ModelConfig {
   apiKey: string
   model: string
   generatorType: string
+  apiFormat?: string // 仅用于图片模型
+}
+
+// 计算实际的接口地址（根据选择的格式动态变化）
+const getActualEndpoint = (model: ModelConfig): string => {
+  if (!model.url) {
+    return '请先填写 API URL'
+  }
+  
+  let baseUrl = model.url.trim().replace(/\/+$/, '') // 移除末尾的斜杠
+  
+  // 文本模型（OpenAI 格式）
+  if (model.generatorType === 'openai') {
+    // 如果 URL 不包含 /v1，自动添加
+    if (!baseUrl.endsWith('/v1')) {
+      baseUrl = `${baseUrl}/v1`
+    }
+    return `${baseUrl}/chat/completions`
+  }
+  
+  // 图像模型
+  if (model.apiFormat === 'chat') {
+    // OpenAI-Chat 格式: /v1/chat/completions
+    return `${baseUrl}/v1/chat/completions`
+  } else if (model.apiFormat === 'generations') {
+    // OpenAI-DALL·E 格式: /v1/images/generations
+    return `${baseUrl}/v1/images/generations`
+  } else if (model.apiFormat === 'official') {
+    // Gemini 原生格式: /v1beta/models/{model}:generateContent
+    const modelName = model.model || 'gemini-2.0-flash-exp'
+    return `${baseUrl}/v1beta/models/${modelName}:generateContent`
+  }
+  
+  return baseUrl
 }
 
 const props = defineProps<{
@@ -217,9 +259,9 @@ watch(() => props.show, (newVal) => {
 const addTextModel = () => {
   textModels.value.push({
     name: `文本模型 ${textModels.value.length + 1}`,
-    url: '',
+    url: 'https://api.openai.com',
     apiKey: '',
-    model: '',
+    model: 'gpt-4',
     generatorType: 'openai'
   })
 }
@@ -229,10 +271,30 @@ const addImageModel = () => {
     name: `图片模型 ${imageModels.value.length + 1}`,
     url: '',
     apiKey: '',
-    model: '',
-    generatorType: 'image_api'
+    model: 'nano-banana',
+    generatorType: 'image_api',
+    apiFormat: 'chat' // 默认使用 chat 格式
   })
 }
+
+// 监听 apiFormat 变化，自动更新对应的默认模型
+watch(() => imageModels.value.map(m => m.apiFormat), (newFormats, oldFormats) => {
+  imageModels.value.forEach((model, index) => {
+    // 只有当格式发生变化时才更新模型
+    if (newFormats[index] !== oldFormats[index]) {
+      if (model.apiFormat === 'official') {
+        // Gemini 原生格式
+        model.model = 'gemini-3-pro-image-preview'
+      } else if (model.apiFormat === 'chat') {
+        // OpenAI-Chat 格式
+        model.model = 'nano-banana'
+      } else if (model.apiFormat === 'generations') {
+        // OpenAI-DALL·E 格式
+        model.model = 'nano-banana'
+      }
+    }
+  })
+}, { deep: true })
 
 const deleteTextModel = (index: number) => {
   if (confirm('确定要删除这个配置吗？')) {
@@ -526,8 +588,30 @@ const saveConfig = () => {
   line-height: 1.5;
 }
 
+.endpoint-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.endpoint-url {
+  background: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: #059669;
+  word-break: break-all;
+  display: inline-block;
+  margin-top: 0.25rem;
+}
+
 .warning-text {
   color: #f59e0b;
+  font-weight: 500;
+}
+
+.info-text {
+  color: #3b82f6;
   font-weight: 500;
 }
 

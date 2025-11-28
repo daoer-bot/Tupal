@@ -47,7 +47,8 @@ class ImageService:
         topic: str = '',
         reference_image: Optional[str] = None,
         width: int = 1080,
-        height: int = 1440
+        height: int = 1440,
+        image_generation_config: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         批量生成图片（异步后台任务）
@@ -57,13 +58,17 @@ class ImageService:
             pages: 页面列表，每页包含 page_number, title, description
             topic: 主题
             reference_image: 参考图片URL
-            width: 图片宽度
-            height: 图片高度
+            width: 图片宽度（已弃用，使用 image_generation_config）
+            height: 图片高度（已弃用，使用 image_generation_config）
+            image_generation_config: 图片生成配置 (quality, aspectRatio)
         """
+        # 计算实际宽高
+        actual_width, actual_height = self._calculate_dimensions(image_generation_config)
+        
         # 在新线程中运行，不阻塞主线程
         thread = threading.Thread(
             target=self._generate_batch_worker,
-            args=(task_id, pages, topic, reference_image, width, height),
+            args=(task_id, pages, topic, reference_image, actual_width, actual_height),
             daemon=True
         )
         thread.start()
@@ -233,6 +238,61 @@ class ImageService:
                 'error': str(e)
             }
     
+    def _calculate_dimensions(self, config: Optional[Dict[str, Any]]) -> tuple[int, int]:
+        """
+        根据配置计算图片尺寸
+        
+        Args:
+            config: 图片生成配置 {quality: '1k|2k|4k', aspectRatio: '4:3|...'}
+            
+        Returns:
+            (width, height) 元组
+        """
+        if not config:
+            # 默认配置：2K 质量，3:4 比例（小红书常用）
+            return (1080, 1440)
+        
+        quality = config.get('quality', '2k')
+        aspect_ratio = config.get('aspectRatio', '3:4')
+        
+        # 定义质量等级对应的像素数（短边）
+        quality_map = {
+            '1k': 720,   # 1K
+            '2k': 1080,  # 2K
+            '4k': 2160   # 4K
+        }
+        
+        base_size = quality_map.get(quality, 1080)
+        
+        # 解析宽高比
+        try:
+            ratio_parts = aspect_ratio.split(':')
+            if len(ratio_parts) != 2:
+                logger.warning(f"无效的宽高比格式: {aspect_ratio}，使用默认3:4")
+                ratio_w, ratio_h = 3, 4
+            else:
+                ratio_w = int(ratio_parts[0])
+                ratio_h = int(ratio_parts[1])
+        except Exception as e:
+            logger.error(f"解析宽高比失败: {e}，使用默认3:4")
+            ratio_w, ratio_h = 3, 4
+        
+        # 根据比例计算实际尺寸
+        if ratio_w < ratio_h:
+            # 竖版：短边是宽度
+            width = base_size
+            height = int(base_size * ratio_h / ratio_w)
+        elif ratio_w > ratio_h:
+            # 横版：短边是高度
+            height = base_size
+            width = int(base_size * ratio_w / ratio_h)
+        else:
+            # 正方形
+            width = height = base_size
+        
+        logger.info(f"计算图片尺寸: 质量={quality}, 比例={aspect_ratio}, 尺寸={width}x{height}")
+        return (width, height)
+    
     def _build_prompt(self, page: Dict[str, Any]) -> str:
         """
         根据页面信息构建提示词
@@ -368,7 +428,8 @@ class ImageService:
                     return ImageAPIGenerator(
                         api_key=self.model_config['apiKey'],
                         api_url=self.model_config['url'],
-                        model=self.model_config.get('model', 'dall-e-3')
+                        model=self.model_config.get('model', 'dall-e-3'),
+                        apiFormat=self.model_config.get('apiFormat', 'generations')
                     )
                 elif self.generator_type == 'openai':
                     from generators.openai_generator import OpenAIGenerator

@@ -234,9 +234,10 @@ onMounted(() => {
 .main-content {
   flex: 1;
   margin-left: 260px;
-  padding: 2rem;
+  padding: 0;
   max-width: calc(100vw - 260px);
-  overflow-x: hidden;
+  height: 100vh;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {

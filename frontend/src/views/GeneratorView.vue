@@ -1,116 +1,177 @@
 <template>
-  <div class="generator">
-    <ProcessSteps :current-step="2" />
-
-    <div class="page-header">
-      <h2>文案大纲确认</h2>
-      <div class="header-actions" v-if="store.currentOutline">
-        <button @click="addNewPage" class="btn btn-secondary">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          添加页面
-        </button>
-        <button @click="goToResult" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l-.249 1.74" />
-          </svg>
-          开始生成图片
-        </button>
-      </div>
+  <div class="generator-view">
+    <!-- 错误提示 -->
+    <div v-if="error" class="error-message">
+      <p>{{ error }}</p>
+      <button @click="error = ''" class="btn-close">×</button>
     </div>
-    
-    <!-- 大纲预览和编辑区 -->
-    <div v-if="store.currentOutline" class="outline-section">
-      <div class="section-title">
-        <h3>内容大纲：{{ store.currentOutline.topic }}</h3>
-      </div>
+
+    <div v-if="store.currentOutline" class="script-layout">
       
-      <div class="pages-grid">
-        <div
-          v-for="(page, index) in store.currentOutline.pages"
-          :key="page.page_number"
-          class="page-card"
-          :class="{ 'editing': editingIndex === index }"
-        >
-          <div class="page-header-row">
-            <div class="page-number">P{{ page.page_number }}</div>
-            <div class="page-actions">
-              <button
-                v-if="editingIndex !== index"
-                @click="startEdit(index)"
-                class="btn-icon"
-                title="编辑"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-svg-sm">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </button>
-              <button
-                @click="deletePage(index)"
-                class="btn-icon btn-danger"
-                title="删除"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-svg-sm">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-              </button>
+      <!-- 左侧：文案与全局设置 -->
+      <div class="sidebar-section">
+        <div class="sidebar-sticky">
+          <!-- 1. 小红书文案 (极简版) -->
+          <div class="minimal-panel caption-panel">
+            <div class="panel-header-minimal">
+              <span class="panel-title">笔记文案</span>
+              <div class="header-tools">
+                <div class="template-dropdown">
+                  <button class="tool-btn">模板 ▼</button>
+                  <div class="dropdown-menu">
+                    <div 
+                      v-for="(tpl, idx) in captionTemplates" 
+                      :key="idx"
+                      class="dropdown-item"
+                      @click="applyTemplate(tpl.content)"
+                    >
+                      {{ tpl.name }}
+                    </div>
+                  </div>
+                </div>
+                <span class="counter" :class="{ 'text-error': captionLength > 1000 }">
+                  {{ captionLength }}/1000
+                </span>
+              </div>
+            </div>
+            
+            <div class="textarea-wrapper-minimal">
+              <textarea
+                v-model="mainCaption"
+                class="main-textarea-minimal"
+                placeholder="输入笔记正文..."
+              ></textarea>
+              <div class="emoji-trigger-minimal" title="插入 Emoji">😊</div>
             </div>
           </div>
 
-          <!-- 编辑模式 -->
-          <template v-if="editingIndex === index">
-            <div class="edit-form">
-              <div class="form-group">
-                <label>标题</label>
-                <input
-                  v-model="editForm.title"
-                  type="text"
-                  class="form-input"
-                  placeholder="输入页面标题"
-                />
-              </div>
-              <div class="form-group">
-                <label>描述</label>
-                <textarea
-                  v-model="editForm.description"
-                  class="form-textarea"
-                  placeholder="输入页面描述"
-                  rows="4"
-                ></textarea>
-              </div>
-              <div class="form-actions">
-                <button @click="saveEdit" class="btn btn-sm btn-primary">保存</button>
-                <button @click="cancelEdit" class="btn btn-sm btn-secondary">取消</button>
+          <!-- 2. 全局风格 (折叠式) -->
+          <div class="minimal-panel global-panel">
+            <div class="panel-header-minimal clickable" @click="showGlobalStyle = !showGlobalStyle">
+              <span class="panel-title">全局风格设定</span>
+              <span class="toggle-icon">{{ showGlobalStyle ? '−' : '+' }}</span>
+            </div>
+            <div v-show="showGlobalStyle" class="panel-body-minimal">
+              <textarea
+                v-model="globalStyle"
+                class="style-textarea-minimal"
+                placeholder="输入全局风格提示词..."
+                rows="2"
+              ></textarea>
+              <div class="global-actions-minimal">
+                <button @click="applyGlobalStyle('append')" class="btn-text-sm">追加</button>
+                <span class="divider">|</span>
+                <button @click="applyGlobalStyle('replace')" class="btn-text-sm">覆盖</button>
               </div>
             </div>
-          </template>
+          </div>
 
-          <!-- 查看模式 -->
-          <template v-else>
-            <h4>{{ page.title }}</h4>
-            <p>{{ page.description }}</p>
-          </template>
+          <!-- 3. 图片配置 (折叠式) -->
+          <div class="minimal-panel config-panel">
+            <div class="panel-header-minimal clickable" @click="showImageConfig = !showImageConfig">
+              <span class="panel-title">图片配置</span>
+              <span class="toggle-icon">{{ showImageConfig ? '−' : '+' }}</span>
+            </div>
+            <div v-show="showImageConfig" class="panel-body-minimal">
+              <!-- 清晰度选择 -->
+              <div class="config-group">
+                <label class="config-label">清晰度</label>
+                <div class="config-options">
+                  <button
+                    v-for="q in qualityOptions"
+                    :key="q.value"
+                    @click="selectQuality(q.value)"
+                    class="config-btn"
+                    :class="{ active: store.imageGenerationConfig.quality === q.value }"
+                  >
+                    {{ q.label }}
+                  </button>
+                </div>
+              </div>
+              
+              <!-- 图片比例选择 -->
+              <div class="config-group">
+                <label class="config-label">图片比例</label>
+                <div class="config-options ratio-grid">
+                  <button
+                    v-for="ratio in ratioOptions"
+                    :key="ratio.value"
+                    @click="selectRatio(ratio.value)"
+                    class="config-btn ratio-btn"
+                    :class="{ active: store.imageGenerationConfig.aspectRatio === ratio.value }"
+                  >
+                    {{ ratio.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. 生成按钮 -->
+          <div class="generate-action">
+            <button
+              class="btn-generate"
+              @click="handleGenerate"
+              :disabled="isGenerating"
+            >
+              <span v-if="isGenerating" class="loading-dot"></span>
+              <span v-if="isGenerating">生成中...</span>
+              <span v-else>一键生成小红书图文</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：分镜脚本网格 -->
+      <div class="grid-section">
+        <div class="section-header-minimal">
+          <h2>分镜脚本 <span class="count-badge">{{ store.currentOutline.pages.length }}</span></h2>
+          <div class="section-actions">
+            <button @click="clearAllPrompts" class="btn-text">清空</button>
+            <button @click="addNewPage" class="btn-text-primary">+ 添加</button>
+          </div>
+        </div>
+
+        <div class="script-grid">
+          <div 
+            v-for="(page, index) in store.currentOutline.pages" 
+            :key="page.page_number"
+            class="script-card-minimal"
+            :class="{ 'focused': focusedIndex === index }"
+          >
+            <div class="page-badge-corner">P{{ page.page_number }}</div>
+            
+            <div class="card-content-wrapper">
+              <div class="card-tools">
+                <button @click="copyPrompt(index)" class="tool-icon" title="复制">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5" />
+                  </svg>
+                </button>
+                <button @click="deletePage(index)" class="tool-icon" title="删除">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <textarea
+                v-model="page.description"
+                class="script-textarea-minimal"
+                placeholder="描述画面细节..."
+                @focus="focusedIndex = index"
+                @blur="focusedIndex = null"
+              ></textarea>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    
+
     <!-- 无大纲提示 -->
     <div v-if="!store.currentOutline" class="empty-state">
       <p>请先在首页生成内容大纲</p>
       <button @click="goHome" class="btn btn-primary">前往首页</button>
-    </div>
-
-    <!-- 底部操作按钮 -->
-    <div class="actions-footer" v-if="store.currentOutline">
-      <button @click="goHome" class="btn btn-secondary">返回首页</button>
-      <button
-        v-if="hasGeneratedImages"
-        @click="goToResult"
-        class="btn btn-outline"
-      >
-        查看生成结果
-      </button>
     </div>
   </div>
 </template>
@@ -119,102 +180,176 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
-import ProcessSteps from '../components/ProcessSteps.vue'
 
 const router = useRouter()
 const store = useAppStore()
 
-// 编辑状态
-const editingIndex = ref<number | null>(null)
-const editForm = ref({
-  title: '',
-  description: ''
+// 状态
+const focusedIndex = ref<number | null>(null)
+const error = ref('')
+const isGenerating = ref(false)
+const globalStyle = ref('')
+const showGlobalStyle = ref(true)
+const showImageConfig = ref(false)
+
+// 配置选项
+const qualityOptions = [
+  { label: '1K', value: '1k' as const },
+  { label: '2K', value: '2k' as const },
+  { label: '4K', value: '4k' as const }
+]
+
+const ratioOptions = [
+  { label: '4:3', value: '4:3' as const },
+  { label: '3:4', value: '3:4' as const },
+  { label: '16:9', value: '16:9' as const },
+  { label: '9:16', value: '9:16' as const },
+  { label: '2:3', value: '2:3' as const },
+  { label: '3:2', value: '3:2' as const },
+  { label: '1:1', value: '1:1' as const },
+  { label: '4:5', value: '4:5' as const },
+  { label: '5:4', value: '5:4' as const },
+  { label: '21:9', value: '21:9' as const }
+]
+
+// 快捷标签
+const quickTags = ['#特写', '#全景', '#对角线构图', '#自然光', '#极简背景']
+
+// 文案模板
+const captionTemplates = [
+  { name: '种草', content: '宝子们！今天发现了一个超级好用的神器✨\n\n[产品名称] 真的绝绝子！\n亲测好用，强烈推荐给大家💖\n\n#好物推荐 #种草 #神器' },
+  { name: '探店', content: '📍坐标：[地点]\n\n终于来打卡这家网红店啦！📸\n环境超级出片，味道也很赞😋\n\n建议集美们周末冲！\n\n#探店 #周末去哪儿 #美食' },
+  { name: '干货', content: '纯干货分享！建议收藏🌟\n\n关于[主题]的几个关键点：\n1️⃣ 第一点\n2️⃣ 第二点\n3️⃣ 第三点\n\n学会了吗？评论区告诉我👇\n\n#干货 #知识分享 #学习' }
+]
+
+// 计算属性
+const mainCaption = computed({
+  get: () => {
+    return store.currentOutline?.pages[0]?.xiaohongshu_content || ''
+  },
+  set: (val: string) => {
+    if (!store.currentOutline) return
+    // 同步更新所有页面的文案字段
+    store.currentOutline.pages.forEach(p => {
+      p.xiaohongshu_content = val
+    })
+  }
 })
 
-// 检查是否有生成的图片
-const hasGeneratedImages = computed(() => {
-  return store.currentOutline?.pages?.some(p => !!p.image_url) ?? false
-})
+const captionLength = computed(() => mainCaption.value.length)
 
-// 开始编辑
-const startEdit = (index: number) => {
+// 方法
+const applyTemplate = (content: string) => {
+  mainCaption.value = content
+}
+
+const applyGlobalStyle = (mode: 'append' | 'replace') => {
+  if (!store.currentOutline || !globalStyle.value) return
+  
+  store.currentOutline.pages.forEach(p => {
+    if (mode === 'replace') {
+      p.description = globalStyle.value
+    } else {
+      p.description = p.description ? `${p.description} ${globalStyle.value}` : globalStyle.value
+    }
+  })
+}
+
+const appendTagToPage = (index: number, tag: string) => {
   if (!store.currentOutline) return
-  
-  editingIndex.value = index
   const page = store.currentOutline.pages[index]
-  editForm.value = {
-    title: page.title,
-    description: page.description
-  }
+  page.description = page.description ? `${page.description} ${tag}` : tag
 }
 
-// 保存编辑
-const saveEdit = () => {
-  if (!store.currentOutline || editingIndex.value === null) return
-  
-  const index = editingIndex.value
-  store.currentOutline.pages[index] = {
-    ...store.currentOutline.pages[index],
-    title: editForm.value.title,
-    description: editForm.value.description
-  }
-  
-  cancelEdit()
+const copyPrompt = (index: number) => {
+  if (!store.currentOutline) return
+  const text = store.currentOutline.pages[index].description
+  navigator.clipboard.writeText(text).then(() => {
+    // 可以加个 toast 提示
+  })
 }
 
-// 取消编辑
-const cancelEdit = () => {
-  editingIndex.value = null
-  editForm.value = {
-    title: '',
-    description: ''
-  }
+const clearPrompt = (index: number) => {
+  if (!store.currentOutline) return
+  store.currentOutline.pages[index].description = ''
 }
 
-// 删除页面
 const deletePage = (index: number) => {
   if (!store.currentOutline) return
+  if (store.currentOutline.pages.length <= 1) {
+    error.value = '至少需要保留一个分镜'
+    return
+  }
   
-  if (confirm('确定要删除这个页面吗？')) {
+  if (confirm('确定要删除这个分镜吗？')) {
     store.currentOutline.pages.splice(index, 1)
-    // 重新调整页码
-    store.currentOutline.pages.forEach((page, idx) => {
-      page.page_number = idx + 1
+    // 重新编号
+    store.currentOutline.pages.forEach((p, i) => {
+      p.page_number = i + 1
     })
   }
 }
 
-// 添加新页面
+const clearAllPrompts = () => {
+  if (!store.currentOutline) return
+  if (confirm('确定要清空所有提示词吗？')) {
+    store.currentOutline.pages.forEach(p => p.description = '')
+  }
+}
+
 const addNewPage = () => {
   if (!store.currentOutline) return
-  
-  const newPageNumber = store.currentOutline.pages.length + 1
+  const newPageNum = store.currentOutline.pages.length + 1
   store.currentOutline.pages.push({
-    page_number: newPageNumber,
-    title: `新页面 ${newPageNumber}`,
-    description: '请编辑页面描述'
+    page_number: newPageNum,
+    title: `页面 ${newPageNum}`,
+    description: '',
+    xiaohongshu_content: mainCaption.value // 继承当前文案
   })
-  
-  // 自动进入编辑模式
-  startEdit(store.currentOutline.pages.length - 1)
 }
 
-// 跳转到结果页并开始生成
-const goToResult = () => {
-  if (!store.currentOutline) {
-    console.warn('没有可用的大纲')
+// 图片配置方法
+const selectQuality = (quality: '1k' | '2k' | '4k') => {
+  store.setImageGenerationConfig({
+    ...store.imageGenerationConfig,
+    quality
+  })
+}
+
+const selectRatio = (aspectRatio: '4:3' | '3:4' | '16:9' | '9:16' | '2:3' | '3:2' | '1:1' | '4:5' | '5:4' | '21:9') => {
+  store.setImageGenerationConfig({
+    ...store.imageGenerationConfig,
+    aspectRatio
+  })
+}
+
+const handleGenerate = () => {
+  if (!store.currentOutline) return
+  
+  const hasEmptyPrompt = store.currentOutline.pages.some(p => !p.description || !p.description.trim())
+  if (hasEmptyPrompt) {
+    error.value = '请确保所有分镜都有提示词'
     return
   }
-  // 跳转到结果页，结果页会自动开始生成
-  router.push('/result')
+  
+  if (!mainCaption.value || !mainCaption.value.trim()) {
+    error.value = '请输入小红书文案'
+    return
+  }
+
+  isGenerating.value = true
+  error.value = ''
+  
+  setTimeout(() => {
+    isGenerating.value = false
+    router.push('/result')
+  }, 800)
 }
 
-// 返回首页
 const goHome = () => {
   router.push('/')
 }
 
-// 挂载时检查是否有大纲
 onMounted(() => {
   if (!store.currentOutline) {
     console.warn('No outline available')
@@ -223,212 +358,494 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.generator {
-  max-width: 1200px;
+.generator-view {
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2rem;
+  min-height: 100vh;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f8fafc;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.page-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-/* 大纲区域 */
-.outline-section {
-  margin-bottom: 3rem;
-}
-
-.section-title {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.section-title h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.pages-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.page-card {
-  background: var(--surface-color);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: var(--transition);
-}
-
-.page-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-hover);
-}
-
-.page-card.editing {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-.page-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.page-number {
-  display: inline-block;
-  background: var(--primary-light);
-  color: var(--primary-color);
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.page-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: var(--transition);
-}
-
-.btn-icon:hover {
-  background: var(--hover-bg);
-  color: var(--primary-color);
-}
-
-.btn-icon.btn-danger:hover {
+/* 错误提示 */
+.error-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   background: #fee;
-  color: #dc2626;
+  color: #ff2442;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #ffcdd2;
 }
 
-.icon-svg-sm {
-  width: 1.125rem;
-  height: 1.125rem;
+.btn-close {
+  background: none;
+  border: none;
+  color: #ff2442;
+  font-size: 18px;
+  cursor: pointer;
 }
 
-.page-card h4 {
-  margin: 0 0 0.75rem;
-  color: var(--text-primary);
-  font-size: 1.1rem;
+/* 布局 */
+.script-layout {
+  display: flex;
+  gap: 40px;
+  margin-top: 2rem;
+  align-items: flex-start;
+}
+
+/* 左侧边栏 */
+.sidebar-section {
+  width: 400px;
+  flex-shrink: 0;
+}
+
+.sidebar-sticky {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 极简面板 */
+.minimal-panel {
+  background: transparent;
+}
+
+.panel-header-minimal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.panel-header-minimal.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.panel-title {
+  font-size: 14px;
   font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.page-card p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  line-height: 1.6;
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* 编辑表单 */
-.edit-form {
-  margin-top: 1rem;
+.counter {
+  font-size: 12px;
+  color: #999;
+  font-family: monospace;
 }
 
-.form-group {
-  margin-bottom: 1rem;
+.text-error { color: #ff2442; }
+
+/* 下拉菜单 */
+.template-dropdown {
+  position: relative;
 }
 
-.form-group label {
+.tool-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.tool-btn:hover { background: #eee; }
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10;
+  min-width: 120px;
+  padding: 4px 0;
+}
+
+.template-dropdown:hover .dropdown-menu {
   display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
-.form-input,
-.form-textarea {
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+  color: #ff2442;
+}
+
+/* 极简输入框 */
+.textarea-wrapper-minimal {
+  position: relative;
+}
+
+.main-textarea-minimal {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  color: var(--text-primary);
-  background: var(--bg-color);
-  transition: var(--transition);
+  min-height: 500px; /* 大幅增加高度 */
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #333;
+  resize: none;
   font-family: inherit;
 }
 
-.form-input:focus,
-.form-textarea:focus {
+.main-textarea-minimal:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
+.emoji-trigger-minimal {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
 }
 
-.form-actions {
+.emoji-trigger-minimal:hover { opacity: 1; }
+
+/* 全局风格 */
+.toggle-icon {
+  font-size: 16px;
+  color: #999;
+}
+
+.style-textarea-minimal {
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  border-bottom: 1px solid #eee;
+  background: transparent;
+  font-size: 14px;
+  color: #333;
+  resize: none;
+  margin-bottom: 8px;
+}
+
+.style-textarea-minimal:focus {
+  outline: none;
+  border-bottom-color: #ff2442;
+}
+
+.global-actions-minimal {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  gap: 8px;
+  align-items: center;
 }
 
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+.btn-text-sm {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 6rem 2rem;
-  background: var(--surface-color);
-  border-radius: var(--radius-lg);
-  border: 1px dashed var(--border-color);
+.btn-text-sm:hover { color: #ff2442; }
+
+.divider { color: #eee; font-size: 10px; }
+
+/* 图片配置 */
+.config-panel {
+  margin-top: 16px;
 }
 
-.empty-state p {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-  margin-bottom: 2rem;
+.config-group {
+  margin-bottom: 16px;
 }
 
-.actions-footer {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border-color);
+.config-group:last-child {
+  margin-bottom: 0;
+}
+
+.config-label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.config-options {
   display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.config-btn {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #666;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.config-btn:hover {
+  background: #eee;
+  border-color: #ccc;
+}
+
+.config-btn.active {
+  background: #ff2442;
+  border-color: #ff2442;
+  color: white;
+  font-weight: 500;
+}
+
+.ratio-btn {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+/* 生成按钮 */
+.btn-generate {
+  width: 100%;
+  background: #ff2442;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 36, 66, 0.2);
+}
+
+.btn-generate:hover:not(:disabled) {
+  background: #ff4d6a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255, 36, 66, 0.3);
+}
+
+.btn-generate:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 右侧网格区 */
+.grid-section {
+  flex: 1;
+}
+
+.section-header-minimal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.section-header-minimal h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count-badge {
+  font-size: 12px;
+  color: #999;
+  font-weight: normal;
+}
+
+.section-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-text:hover { color: #333; }
+
+.btn-text-primary {
+  background: none;
+  border: none;
+  color: #ff2442;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* 分镜网格 */
+.script-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.script-card-minimal {
+  background: #fff;
+  border-radius: 8px;
+  /* 去除边框，使用极淡的阴影 */
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s;
+  position: relative;
+  padding: 20px;
+  margin-top: 16px; /* 为顶部标签留出空间 */
+}
+
+.script-card-minimal:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+
+.script-card-minimal.focused {
+  box-shadow: 0 8px 24px rgba(255, 36, 66, 0.08);
+}
+
+/* 左上角标签样式 - 位于卡片框外部上方 */
+.page-badge-corner {
+  position: absolute;
+  top: -16px;
+  left: 12px;
+  background: #ff2442;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 2px 6px rgba(255, 36, 66, 0.25);
+  z-index: 5;
+  pointer-events: none;
+  transition: all 0.2s;
+}
+
+.script-card-minimal:hover .page-badge-corner {
+  box-shadow: 0 3px 8px rgba(255, 36, 66, 0.35);
+}
+
+.card-content-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.card-tools {
+  position: absolute;
+  top: -12px;
+  right: -4px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 5;
+}
+
+.script-card-minimal:hover .card-tools {
+  opacity: 1;
+}
+
+.tool-icon {
+  background: #fff;
+  border: 1px solid #eee;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 1rem;
+}
+
+.tool-icon:hover {
+  color: #333;
+  border-color: #ccc;
+}
+
+.w-4 { width: 14px; }
+.h-4 { height: 14px; }
+
+.script-textarea-minimal {
+  width: 100%;
+  min-height: 240px; /* 增加高度，去掉底部标签后有更多空间 */
+  border: none;
+  resize: none;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+  font-family: inherit;
+  background: transparent;
+  padding: 0; /* 去掉顶部padding，不再需要为标签留空间 */
+}
+
+.script-textarea-minimal:focus {
+  outline: none;
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .script-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar-section {
+    width: 100%;
+  }
+  
+  .sidebar-sticky {
+    position: static;
+  }
+  
+  .main-textarea-minimal {
+    min-height: 300px;
+  }
 }
 </style>

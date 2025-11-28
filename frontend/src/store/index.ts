@@ -22,6 +22,12 @@ export interface ModelConfig {
   generatorType?: string  // 新增：生成器类型
 }
 
+// 图片生成配置
+export interface ImageGenerationConfig {
+  quality: '1k' | '2k' | '4k'  // 清晰度
+  aspectRatio: '4:3' | '3:4' | '16:9' | '9:16' | '2:3' | '3:2' | '1:1' | '4:5' | '5:4' | '21:9'  // 宽高比
+}
+
 export const useAppStore = defineStore('app', () => {
   // 当前大纲
   const currentOutline = ref<Outline | null>(null)
@@ -47,6 +53,12 @@ export const useAppStore = defineStore('app', () => {
     apiKey: '',
     model: '',
     generatorType: 'image_api'  // 默认使用 image_api
+  })
+  
+  // 图片生成配置
+  const imageGenerationConfig = ref<ImageGenerationConfig>({
+    quality: '2k',  // 默认 2K
+    aspectRatio: '3:4'  // 默认 3:4（小红书常用竖版）
   })
   
   // 设置大纲
@@ -80,6 +92,11 @@ export const useAppStore = defineStore('app', () => {
     imageModelConfig.value = config
   }
   
+  // 设置图片生成配置
+  const setImageGenerationConfig = (config: ImageGenerationConfig) => {
+    imageGenerationConfig.value = config
+  }
+  
   // 重置状态
   const reset = () => {
     currentOutline.value = null
@@ -96,12 +113,14 @@ export const useAppStore = defineStore('app', () => {
     referenceImage,
     textModelConfig,
     imageModelConfig,
+    imageGenerationConfig,
     setOutline,
     updateProgress,
     setGenerating,
     setReferenceImage,
     setTextModelConfig,
     setImageModelConfig,
+    setImageGenerationConfig,
     reset
   }
 })
