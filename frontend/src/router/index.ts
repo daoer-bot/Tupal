@@ -22,6 +22,11 @@ const router = createRouter({
       path: '/history',
       name: 'history',
       component: () => import('../views/HistoryView.vue')
+    },
+    {
+      path: '/trending',
+      name: 'trending',
+      component: () => import('../views/TrendingView.vue')
     }
   ]
 })

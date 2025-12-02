@@ -467,3 +467,124 @@ def upload_reference():
             'success': False,
             'error': str(e)
         }), 500
+
+
+@api_bp.route('/trending/sources', methods=['GET'])
+def get_trending_sources():
+    """
+    获取所有热榜数据源列表
+    
+    Returns:
+        JSON响应，包含所有可用的数据源信息
+    """
+    try:
+        from services.trending_service import TrendingService
+        trending_service = TrendingService()
+        
+        sources = trending_service.get_sources_list()
+        
+        return jsonify({
+            'success': True,
+            'data': sources
+        })
+        
+    except Exception as e:
+        logger.error(f'Error getting trending sources: {e}', exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@api_bp.route('/trending/<source_id>', methods=['GET'])
+def get_trending_data(source_id):
+    """
+    获取指定平台的热榜数据
+    
+    Args:
+        source_id: 数据源ID（如 weibo, zhihu, douyin, bilibili, baidu）
+    
+    Query Parameters:
+        force_refresh: 是否强制刷新（可选，默认false）
+    
+    Returns:
+        JSON响应，包含热榜数据
+    """
+    try:
+        import asyncio
+        from services.trending_service import TrendingService
+        
+        force_refresh = request.args.get('force_refresh', 'false').lower() == 'true'
+        
+        trending_service = TrendingService()
+        
+        # 在同步环境中运行异步函数
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            data = loop.run_until_complete(
+                trending_service.get_trending_data(source_id, force_refresh)
+            )
+        finally:
+            loop.close()
+        
+        return jsonify({
+            'success': True,
+            'data': data
+        })
+        
+    except ValueError as e:
+        logger.error(f'Invalid source_id: {source_id}')
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 404
+        
+    except Exception as e:
+        logger.error(f'Error getting trending data for {source_id}: {e}', exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@api_bp.route('/trending', methods=['GET'])
+def get_all_trending():
+    """
+    获取所有平台的热榜数据
+    
+    Query Parameters:
+        force_refresh: 是否强制刷新（可选，默认false）
+    
+    Returns:
+        JSON响应，包含所有平台的热榜数据
+    """
+    try:
+        import asyncio
+        from services.trending_service import TrendingService
+        
+        force_refresh = request.args.get('force_refresh', 'false').lower() == 'true'
+        
+        trending_service = TrendingService()
+        
+        # 在同步环境中运行异步函数
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            data = loop.run_until_complete(
+                trending_service.get_all_trending_data(force_refresh)
+            )
+        finally:
+            loop.close()
+        
+        return jsonify({
+            'success': True,
+            'data': data
+        })
+        
+    except Exception as e:
+        logger.error(f'Error getting all trending data: {e}', exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
