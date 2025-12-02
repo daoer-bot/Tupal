@@ -187,25 +187,4 @@ export const uploadReference = (file: File) => {
   })
 }
 
-// 热榜相关接口
-
-// 获取所有热榜数据源列表
-export const getTrendingSources = () => {
-  return api.get<any, { success: boolean; data: any[] }>('/trending/sources')
-}
-
-// 获取指定平台的热榜数据
-export const getTrendingBySource = (sourceId: string, forceRefresh: boolean = false) => {
-  return api.get<any, { success: boolean; data: any }>(`/trending/${sourceId}`, {
-    params: { force_refresh: forceRefresh }
-  })
-}
-
-// 获取所有平台的热榜数据
-export const getTrendingData = (forceRefresh: boolean = false) => {
-  return api.get<any, { success: boolean; data: any[] }>('/trending', {
-    params: { force_refresh: forceRefresh }
-  })
-}
-
 export default api

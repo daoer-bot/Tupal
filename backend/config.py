@@ -46,6 +46,14 @@ class Config:
     IMAGE_WIDTH = 1080
     IMAGE_HEIGHT = 1440  # 小红书标准比例 3:4
     
+    # 热榜抓取配置 - 参考 next-daily-hot 设计
+    TRENDING_CACHE_TTL = int(os.getenv('TRENDING_CACHE_TTL', '1800'))  # 缓存有效期（秒），默认30分钟
+    TRENDING_STALE_TTL = int(os.getenv('TRENDING_STALE_TTL', '7200'))  # 过期数据保留期（秒），默认2小时
+    TRENDING_REQUEST_TIMEOUT = int(os.getenv('TRENDING_REQUEST_TIMEOUT', '5'))  # 请求超时（秒），优化为5秒
+    TRENDING_MAX_RETRIES = int(os.getenv('TRENDING_MAX_RETRIES', '2'))  # 最大重试次数，优化为2次
+    TRENDING_PROXY = os.getenv('TRENDING_PROXY', '')  # 代理地址，如 http://127.0.0.1:7890
+    TRENDING_BACKOFF_FACTOR = float(os.getenv('TRENDING_BACKOFF_FACTOR', '0.5'))  # 重试退避因子，优化为0.5
+    
     @staticmethod
     def init_app(app):
         """初始化应用配置"""
