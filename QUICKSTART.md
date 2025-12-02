@@ -62,9 +62,9 @@ python test_outline.py
 python app.py
 ```
 
-后端服务将在 `http://localhost:5000` 启动。
+后端服务将在 `http://localhost:5030` 启动。
 
-打开浏览器访问：`http://localhost:5000` 应该看到：
+打开浏览器访问：`http://localhost:5030` 应该看到：
 ```json
 {
   "success": true,
@@ -143,7 +143,7 @@ npm run build
 ```
 
 #### 问题：无法连接后端
-- 确保后端服务正在 `http://localhost:5000` 运行
+- 确保后端服务正在 `http://localhost:5030` 运行
 - 检查浏览器控制台是否有 CORS 错误
 - Vite 已配置代理，`/api` 请求会自动转发到后端
 

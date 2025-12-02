@@ -48,7 +48,8 @@ class ImageService:
         reference_image: Optional[str] = None,
         width: int = 1080,
         height: int = 1440,
-        image_generation_config: Optional[Dict[str, Any]] = None
+        image_generation_config: Optional[Dict[str, Any]] = None,
+        full_outline: str = ''
     ) -> None:
         """
         批量生成图片（异步后台任务）
@@ -61,6 +62,7 @@ class ImageService:
             width: 图片宽度（已弃用，使用 image_generation_config）
             height: 图片高度（已弃用，使用 image_generation_config）
             image_generation_config: 图片生成配置 (quality, aspectRatio)
+            full_outline: 完整内容大纲（用于保持风格一致性）
         """
         # 计算实际宽高
         actual_width, actual_height = self._calculate_dimensions(image_generation_config)
@@ -68,7 +70,7 @@ class ImageService:
         # 在新线程中运行，不阻塞主线程
         thread = threading.Thread(
             target=self._generate_batch_worker,
-            args=(task_id, pages, topic, reference_image, actual_width, actual_height),
+            args=(task_id, pages, topic, reference_image, actual_width, actual_height, full_outline),
             daemon=True
         )
         thread.start()
@@ -81,7 +83,8 @@ class ImageService:
         topic: str,
         reference_image: Optional[str],
         width: int,
-        height: int
+        height: int,
+        full_outline: str = ''
     ):
         """
         批量生成工作线程
@@ -123,7 +126,10 @@ class ImageService:
                         page,
                         reference_image,
                         width,
-                        height
+                        height,
+                        topic,
+                        pages,
+                        full_outline
                     )
                     future_to_page[future] = page
                 
@@ -191,7 +197,10 @@ class ImageService:
         page: Dict[str, Any],
         reference_image: Optional[str],
         width: int,
-        height: int
+        height: int,
+        topic: str = '',
+        all_pages: List[Dict[str, Any]] = None,
+        full_outline: str = ''
     ) -> Dict[str, Any]:
         """
         生成单张图片
@@ -201,13 +210,19 @@ class ImageService:
             reference_image: 参考图片
             width: 宽度
             height: 高度
+            topic: 用户原始需求
+            all_pages: 所有页面列表（用于获取封面信息）
+            full_outline: 完整内容大纲
             
         Returns:
             生成结果
         """
         try:
+            # 如果有参考图片且是本地路径，转换为 base64 Data URL
+            processed_reference = self._process_reference_image(reference_image)
+            
             # 构建提示词
-            prompt = self._build_prompt(page)
+            prompt = self._build_prompt(page, topic, all_pages, full_outline, processed_reference)
             
             # 生成图片 - 使用统一的 generate 接口
             from generators.base_generator import ContentType
@@ -216,7 +231,7 @@ class ImageService:
                 prompt=prompt,
                 width=width,
                 height=height,
-                reference_image=reference_image
+                reference_image=processed_reference
             )
             
             # 转换为旧格式以保持兼容性
@@ -293,24 +308,79 @@ class ImageService:
         logger.info(f"计算图片尺寸: 质量={quality}, 比例={aspect_ratio}, 尺寸={width}x{height}")
         return (width, height)
     
-    def _build_prompt(self, page: Dict[str, Any]) -> str:
+    def _build_prompt(
+        self,
+        page: Dict[str, Any],
+        user_topic: str = '',
+        all_pages: List[Dict[str, Any]] = None,
+        full_outline: str = '',
+        reference_image: Optional[str] = None
+    ) -> str:
         """
-        根据页面信息构建提示词
+        根据页面信息构建图片生成提示词（精简版）
         
         Args:
-            page: 页面信息
+            page: 当前页面信息
+            user_topic: 用户原始需求
+            all_pages: 所有页面列表
+            full_outline: 完整内容大纲
+            reference_image: 参考图片URL
             
         Returns:
-            提示词
+            简洁的图片生成提示词
         """
+        page_content = page.get('description', '')
+        page_number = page.get('page_number', 1)
         title = page.get('title', '')
-        description = page.get('description', '')
         
-        # 构建详细的提示词
-        prompt = f"{title}. {description}"
+        # 判断页面类型
+        page_type = '内容页'
+        if '[封面]' in title or '[封面]' in page_content or page_number == 1:
+            page_type = '封面'
+        elif '[总结]' in title or '[总结]' in page_content:
+            page_type = '总结页'
         
-        # 添加小红书风格提示
-        prompt += " 小红书风格，简洁美观，适合社交媒体分享"
+        # 精简版提示词 - 控制在1000字符以内
+        prompt_parts = []
+        
+        # 1. 核心内容（最重要）
+        prompt_parts.append(f"小红书风格图文内容 - {page_type}")
+        
+        # 2. 页面具体内容（限制长度）
+        content_limit = 500
+        if len(page_content) > content_limit:
+            page_content = page_content[:content_limit] + "..."
+        prompt_parts.append(f"内容: {page_content}")
+        
+        # 3. 设计要求（精简）
+        if page_type == '封面':
+            prompt_parts.append("设计: 标题大而醒目，副标题清晰，吸引眼球，竖版3:4比例")
+        elif page_type == '总结页':
+            prompt_parts.append("设计: 总结性文字突出，完成感，鼓励性，竖版3:4比例")
+        else:
+            prompt_parts.append("设计: 信息层次分明，列表清晰，重点突出，竖版3:4比例")
+        
+        # 4. 风格要求（精简）
+        prompt_parts.append("风格: 小红书爆款风格，清新精致，年轻人审美，配色和谐，高清画质")
+        
+        # 5. 合规要求（重要）
+        prompt_parts.append("注意: 不要小红书logo，不要用户id，不要水印，不要手机边框")
+        
+        # 6. 风格一致性（仅在非封面时添加，且精简）
+        if page_type != '封面' and all_pages and len(all_pages) > 0:
+            cover_page = all_pages[0]
+            cover_title = cover_page.get('title', '')
+            prompt_parts.append(f"保持与封面({cover_title})风格一致")
+        
+        # 组合提示词
+        prompt = " | ".join(prompt_parts)
+        
+        # 最终检查长度（确保不超过1000字符）
+        if len(prompt) > 1000:
+            logger.warning(f"提示词长度 {len(prompt)} 超过1000，进行截断")
+            prompt = prompt[:1000]
+        
+        logger.info(f"生成提示词长度: {len(prompt)} 字符")
         
         return prompt
     
@@ -380,9 +450,14 @@ class ImageService:
             if not isinstance(page, dict):
                 return False, f'第{i+1}页数据格式错误'
             
-            # 检查必需字段是否存在
-            if 'page_number' not in page:
-                return False, f'第{i+1}页缺少必需字段: page_number'
+            # 检查必需字段（兼容 page_number 和 page 两种格式）
+            page_num = page.get('page_number') or page.get('page')
+            if page_num is None:
+                return False, f'第{i+1}页缺少必需字段: page_number 或 page'
+            
+            # 自动规范化：如果只有 page 字段，补充 page_number
+            if 'page_number' not in page and 'page' in page:
+                page['page_number'] = page['page']
             
             if 'title' not in page:
                 return False, f'第{i+1}页缺少必需字段: title'
@@ -390,14 +465,11 @@ class ImageService:
             if 'description' not in page:
                 return False, f'第{i+1}页缺少必需字段: description'
             
-            # 验证字段值（page_number 可以为 0，但 title 和 description 不能为空）
-            if page['page_number'] is None:
-                return False, f'第{i+1}页的page_number不能为None'
-            
-            if not page['title'] or not isinstance(page['title'], str) or not page['title'].strip():
+            # 验证字段值
+            if not isinstance(page['title'], str) or not page['title'].strip():
                 return False, f'第{i+1}页的title不能为空'
             
-            if not page['description'] or not isinstance(page['description'], str) or not page['description'].strip():
+            if not isinstance(page['description'], str) or not page['description'].strip():
                 return False, f'第{i+1}页的description不能为空'
         
         return True, ''
@@ -445,4 +517,64 @@ class ImageService:
             
         except Exception as e:
             logger.error(f"创建图片生成器失败: {e}", exc_info=True)
+            return None
+    
+    def _process_reference_image(self, reference_image: Optional[str]) -> Optional[str]:
+        """
+        处理参考图片：将本地文件路径转换为 base64 Data URL
+        
+        Args:
+            reference_image: 参考图片路径或URL
+            
+        Returns:
+            处理后的图片（base64 Data URL 或 HTTP URL）
+        """
+        if not reference_image:
+            return None
+        
+        # 如果已经是 Data URL 或 HTTP URL，直接返回
+        if reference_image.startswith('data:image') or \
+           reference_image.startswith('http://') or \
+           reference_image.startswith('https://'):
+            return reference_image
+        
+        # 本地文件路径，需要转换为 base64
+        try:
+            import base64
+            import mimetypes
+            from pathlib import Path
+            
+            # 构建完整文件路径
+            if reference_image.startswith('/uploads/'):
+                file_path = Path('uploads') / reference_image.replace('/uploads/', '')
+            elif reference_image.startswith('uploads/'):
+                file_path = Path(reference_image)
+            else:
+                file_path = Path('uploads') / reference_image
+            
+            if not file_path.exists():
+                logger.warning(f"参考图片文件不存在: {file_path}")
+                return None
+            
+            # 读取文件内容
+            with open(file_path, 'rb') as f:
+                image_data = f.read()
+            
+            # 编码为 base64
+            base64_data = base64.b64encode(image_data).decode('utf-8')
+            
+            # 获取 MIME 类型
+            mime_type, _ = mimetypes.guess_type(str(file_path))
+            if not mime_type:
+                mime_type = 'image/jpeg'  # 默认
+            
+            # 构建 Data URL
+            data_url = f"data:{mime_type};base64,{base64_data}"
+            
+            logger.info(f"参考图片转换为 base64 成功: {file_path} -> {len(base64_data)} 字符")
+            
+            return data_url
+            
+        except Exception as e:
+            logger.error(f"处理参考图片失败: {e}", exc_info=True)
             return None

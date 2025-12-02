@@ -20,6 +20,7 @@ export interface ModelConfig {
   apiKey: string
   model: string
   generatorType?: string  // 新增：生成器类型
+  apiFormat?: string  // 新增：图片模型的接口规则（chat/generations/official）
 }
 
 // 图片生成配置

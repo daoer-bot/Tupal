@@ -17,7 +17,7 @@ cd backend
 python app.py
 ```
 
-后端应该在 `http://localhost:5000` 运行。
+后端应该在 `http://localhost:5030` 运行。
 
 ### 2. 确保前端服务运行
 
@@ -168,7 +168,7 @@ GEMINI_API_KEY=your-key-here
 **排查：**
 ```bash
 # 检查后端是否运行
-curl http://localhost:5000/health
+curl http://localhost:5030/health
 
 # 检查CORS配置
 # 查看backend/app.py中的CORS设置

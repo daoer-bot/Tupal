@@ -86,7 +86,7 @@ cp .env.example .env
 python app.py
 ```
 
-后端服务将在 `http://localhost:5000` 启动。
+后端服务将在 `http://localhost:5030` 启动。
 
 ### 2. 前端设置
 
@@ -168,7 +168,7 @@ MAX_CONCURRENT_GENERATIONS=25
 ### 前端环境变量 (.env)
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5030/api
 ```
 
 ## 支持的 AI 服务商

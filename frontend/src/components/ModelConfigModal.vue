@@ -272,8 +272,8 @@ const addImageModel = () => {
     url: '',
     apiKey: '',
     model: 'nano-banana',
-    generatorType: 'image_api',
-    apiFormat: 'chat' // 默认使用 chat 格式
+    generatorType: 'image_api',  // 明确设置为 image_api
+    apiFormat: 'chat'  // 默认使用 chat 格式
   })
 }
 

@@ -11,11 +11,11 @@
       <div class="input-group">
         <label class="input-label">创作主题</label>
         <div class="input-wrapper">
-          <textarea
+          <MentionInput
             v-model="topic"
-            placeholder="例如：如何提高工作效率的10个小技巧..."
-            rows="3"
-            class="topic-input"
+            placeholder="输入你的创作主题...&#10;例如：分享10个提高工作效率的实用小技巧"
+            :rows="6"
+            input-class="topic-input"
           />
         </div>
       </div>
@@ -87,6 +87,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
 import { generateOutline, uploadReference } from '../services/api'
+import MaterialSelector from '../components/MaterialSelector.vue'
+import MentionInput from '../components/MentionInput.vue'
+import materialApi from '../services/materialApi'
 
 const router = useRouter()
 const store = useAppStore()
@@ -94,6 +97,8 @@ const store = useAppStore()
 const topic = ref('')
 const referenceFileName = ref('')
 const isGenerating = ref(false)
+const selectedMaterialIds = ref<string[]>([])
+const showMaterialSelector = ref(false)
 
 // 模型配置列表
 const textModels = ref<any[]>([])
@@ -122,7 +127,12 @@ const updateStoreConfig = () => {
     store.setTextModelConfig(textModels.value[selectedTextIndex.value])
   }
   if (imageModels.value.length > 0 && imageModels.value[selectedImageIndex.value]) {
-    store.setImageModelConfig(imageModels.value[selectedImageIndex.value])
+    const config = imageModels.value[selectedImageIndex.value]
+    // 确保 generatorType 默认为 image_api（如果没有设置）
+    if (!config.generatorType) {
+      config.generatorType = 'image_api'
+    }
+    store.setImageModelConfig(config)
   }
 }
 
@@ -139,6 +149,7 @@ const handleFileUpload = async (event: Event) => {
     
     try {
       const response = await uploadReference(file)
+      console.log('📤 用户上传参考图:', response.file_url)
       store.setReferenceImage(response.file_url)
     } catch (error) {
       console.error('上传失败:', error)
@@ -158,10 +169,63 @@ const handleGenerate = async () => {
   isGenerating.value = true
   store.setGenerating(true)
   
+  // 🔧 修复：如果没有手动上传参考图，清空store中可能残留的历史记录参考图
+  if (!referenceFileName.value) {
+    console.log('🧹 清空可能残留的历史记录参考图')
+    store.setReferenceImage(null)
+  }
+  
   try {
+    let enhancedTopic = topic.value
+    let referenceImages: string[] = []
+    
+    // 从 @mention 格式中提取素材ID
+    const mentionedMaterialIds = extractMaterialIds(topic.value)
+    
+    // 合并 @mention 和手动选择的素材ID
+    const allMaterialIds = [...new Set([...mentionedMaterialIds, ...selectedMaterialIds.value])]
+    
+    // 如果有素材引用，先处理素材引用
+    if (allMaterialIds.length > 0) {
+      console.log('处理素材引用:', allMaterialIds)
+      const refResponse = await materialApi.processReferences({
+        material_ids: allMaterialIds,
+        base_prompt: topic.value
+      })
+      
+      if (refResponse.success && refResponse.data) {
+        enhancedTopic = refResponse.data.enhanced_prompt
+        referenceImages = refResponse.data.reference_images
+        console.log('素材引用处理成功:', {
+          enhancedPrompt: enhancedTopic,
+          referenceImages
+        })
+        
+        // 保存素材图片到 store，用于后续图片生成
+        if (referenceImages && referenceImages.length > 0) {
+          // 如果用户手动上传了参考图，优先使用用户上传的图片
+          // 只有当没有手动上传时，才使用素材图片
+          if (!referenceFileName.value) {
+            console.log('📦 使用素材参考图:', referenceImages[0])
+            store.setReferenceImage(referenceImages[0])
+          } else {
+            console.log('👤 保持用户上传的参考图，不使用素材图片')
+          }
+        }
+      }
+    }
+    
+    // 生成大纲
+    const finalReferenceImage = store.referenceImage || referenceImages[0] || undefined
+    console.log('🎯 最终使用的参考图:', {
+      fromStore: store.referenceImage,
+      fromMaterial: referenceImages[0],
+      final: finalReferenceImage
+    })
+    
     const response = await generateOutline({
-      topic: topic.value,
-      reference_image: store.referenceImage || undefined,
+      topic: enhancedTopic,
+      reference_image: finalReferenceImage,
       generator_type: store.textModelConfig.generatorType || 'openai',
       text_model_config: store.textModelConfig
     })
@@ -177,6 +241,19 @@ const handleGenerate = async () => {
     isGenerating.value = false
     store.setGenerating(false)
   }
+}
+
+// 从文本中提取 @[素材名](material_id) 格式的素材ID
+const extractMaterialIds = (text: string): string[] => {
+  const regex = /@\[([^\]]+)\]\(([^)]+)\)/g
+  const ids: string[] = []
+  let match
+  
+  while ((match = regex.exec(text)) !== null) {
+    ids.push(match[2]) // match[2] 是 material_id
+  }
+  
+  return ids
 }
 </script>
 
@@ -238,21 +315,40 @@ const handleGenerate = async () => {
 
 .topic-input {
   width: 100%;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
+  padding: 1.5rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  font-size: 1.05rem;
   resize: vertical;
-  transition: var(--transition);
-  background: var(--bg-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
   color: var(--text-primary);
+  font-family: inherit;
+  line-height: 1.8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06),
+              0 1px 2px rgba(0, 0, 0, 0.04);
+  min-height: 200px;
+}
+
+.topic-input:hover {
+  border-color: #cbd5e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08),
+              0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .topic-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  background: var(--surface-color);
-  box-shadow: 0 0 0 3px var(--primary-light);
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(255, 36, 66, 0.12),
+              0 4px 8px rgba(255, 36, 66, 0.08),
+              0 0 0 3px rgba(255, 36, 66, 0.1);
+  transform: translateY(-2px);
+}
+
+.topic-input::placeholder {
+  color: #a0aec0;
+  line-height: 1.8;
 }
 
 .upload-section {
@@ -308,6 +404,7 @@ const handleGenerate = async () => {
   background: rgba(0, 0, 0, 0.05);
   opacity: 1;
 }
+
 
 .generate-btn {
   width: 100%;
@@ -377,5 +474,22 @@ const handleGenerate = async () => {
   color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.6;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .home-container {
+    padding-top: 2rem;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .topic-input {
+    padding: 1.25rem;
+    font-size: 1rem;
+    min-height: 160px;
+  }
 }
 </style>

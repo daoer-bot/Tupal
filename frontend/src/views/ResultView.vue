@@ -72,7 +72,7 @@
                   </div>
 
                   <!-- 放大模式：单张大图 -->
-                  <div v-else key="single" class="single-view" @click="exitSingleView">
+                  <div v-else key="single" class="single-view" @click="exitSingleView" @mousemove="handleSingleViewMouseMove">
                     <div class="single-image-wrapper" @click.stop>
                       <img
                         v-if="selectedPage?.image_url"
@@ -96,6 +96,34 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
                         </svg>
+                      </div>
+                      
+                      <!-- 左侧翻页区域 -->
+                      <div
+                        v-if="canGoPrevInSingleView"
+                        class="single-nav-zone single-nav-zone-left"
+                        :class="{ 'active': showLeftNavInSingle }"
+                        @click.stop="goToPrevInSingleView"
+                      >
+                        <div class="single-nav-arrow">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                          </svg>
+                        </div>
+                      </div>
+                      
+                      <!-- 右侧翻页区域 -->
+                      <div
+                        v-if="canGoNextInSingleView"
+                        class="single-nav-zone single-nav-zone-right"
+                        :class="{ 'active': showRightNavInSingle }"
+                        @click.stop="goToNextInSingleView"
+                      >
+                        <div class="single-nav-arrow">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -270,10 +298,38 @@
     </div>
 
     <!-- 图片预览模态框 -->
-    <div v-if="previewUrl" class="image-modal" @click="closePreview">
+    <div v-if="previewUrl" class="image-modal" @click="closePreview" @mousemove="handleModalMouseMove">
       <div class="modal-content">
         <img :src="previewUrl" alt="预览图片" />
         <button class="close-btn" @click="closePreview">×</button>
+        
+        <!-- 左侧翻页区域 -->
+        <div
+          class="nav-zone nav-zone-left"
+          :class="{ 'active': showLeftNav && canGoPrev }"
+          @click.stop="goToPrevImage"
+          v-if="canGoPrev"
+        >
+          <div class="nav-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </div>
+        </div>
+        
+        <!-- 右侧翻页区域 -->
+        <div
+          class="nav-zone nav-zone-right"
+          :class="{ 'active': showRightNav && canGoNext }"
+          @click.stop="goToNextImage"
+          v-if="canGoNext"
+        >
+          <div class="nav-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -284,6 +340,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
 import { generateImages, subscribeProgress, saveHistory, type ProgressData } from '../services/api'
+import materialApi from '../services/materialApi'
 
 const router = useRouter()
 const store = useAppStore()
@@ -295,6 +352,11 @@ const editingPrompts = ref<Record<number, string>>({})
 const initialPrompts = ref<Record<number, string>>({})
 const editingCaptions = ref<Record<number, string>>({})
 const previewUrl = ref('')
+const previewImageIndex = ref<number>(0) // 当前预览的图片索引
+const showLeftNav = ref(false) // 显示左侧导航（模态框）
+const showRightNav = ref(false) // 显示右侧导航（模态框）
+const showLeftNavInSingle = ref(false) // 显示左侧导航（单张视图）
+const showRightNavInSingle = ref(false) // 显示右侧导航（单张视图）
 
 // 风格标签
 const styleTags = ['#胶片感', '#ins风', '#韩系穿搭', '#美食特写', '#暖光滤镜', '#极简主义', '#高饱和度']
@@ -323,6 +385,33 @@ const progressData = ref<ProgressData>({
 // 计算属性
 const hasImages = computed(() => {
   return store.currentOutline?.pages?.some(p => !!p.image_url) ?? false
+})
+
+// 获取所有有图片的页面
+const imagesWithUrls = computed(() => {
+  if (!store.currentOutline) return []
+  return store.currentOutline.pages.filter(p => !!p.image_url)
+})
+
+// 是否可以上一张
+const canGoPrev = computed(() => {
+  return previewImageIndex.value > 0
+})
+
+// 是否可以下一张
+const canGoNext = computed(() => {
+  return previewImageIndex.value < imagesWithUrls.value.length - 1
+})
+
+// 单张视图是否可以上一张
+const canGoPrevInSingleView = computed(() => {
+  return selectedPageIndex.value > 0
+})
+
+// 单张视图是否可以下一张
+const canGoNextInSingleView = computed(() => {
+  if (!store.currentOutline) return false
+  return selectedPageIndex.value < store.currentOutline.pages.length - 1
 })
 
 const selectedPage = computed(() => {
@@ -385,10 +474,101 @@ const exitSingleView = () => {
 
 const openPreview = (url: string) => {
   previewUrl.value = url
+  // 找到当前预览图片的索引
+  const index = imagesWithUrls.value.findIndex(p => p.image_url === url)
+  if (index !== -1) {
+    previewImageIndex.value = index
+  }
 }
 
 const closePreview = () => {
   previewUrl.value = ''
+  showLeftNav.value = false
+  showRightNav.value = false
+}
+
+// 处理鼠标移动，显示/隐藏导航箭头
+const handleModalMouseMove = (e: MouseEvent) => {
+  const modalWidth = (e.currentTarget as HTMLElement).offsetWidth
+  const mouseX = e.clientX
+  const edgeThreshold = 150 // 边缘区域宽度
+
+  // 左侧区域
+  if (mouseX < edgeThreshold && canGoPrev.value) {
+    showLeftNav.value = true
+    showRightNav.value = false
+  }
+  // 右侧区域
+  else if (mouseX > modalWidth - edgeThreshold && canGoNext.value) {
+    showRightNav.value = true
+    showLeftNav.value = false
+  }
+  // 中间区域
+  else {
+    showLeftNav.value = false
+    showRightNav.value = false
+  }
+}
+
+// 上一张图片
+const goToPrevImage = () => {
+  if (canGoPrev.value) {
+    previewImageIndex.value--
+    previewUrl.value = imagesWithUrls.value[previewImageIndex.value].image_url || ''
+  }
+}
+
+// 下一张图片
+const goToNextImage = () => {
+  if (canGoNext.value) {
+    previewImageIndex.value++
+    previewUrl.value = imagesWithUrls.value[previewImageIndex.value].image_url || ''
+  }
+}
+
+// 处理单张视图鼠标移动
+const handleSingleViewMouseMove = (e: MouseEvent) => {
+  const viewWidth = (e.currentTarget as HTMLElement).offsetWidth
+  const mouseX = e.offsetX
+  const edgeThreshold = 80 // 边缘区域宽度
+
+  // 左侧区域
+  if (mouseX < edgeThreshold && canGoPrevInSingleView.value) {
+    showLeftNavInSingle.value = true
+    showRightNavInSingle.value = false
+  }
+  // 右侧区域
+  else if (mouseX > viewWidth - edgeThreshold && canGoNextInSingleView.value) {
+    showRightNavInSingle.value = true
+    showLeftNavInSingle.value = false
+  }
+  // 中间区域
+  else {
+    showLeftNavInSingle.value = false
+    showRightNavInSingle.value = false
+  }
+}
+
+// 单张视图上一张
+const goToPrevInSingleView = () => {
+  if (canGoPrevInSingleView.value) {
+    selectedPageIndex.value--
+    // 更新编辑提示词
+    if (editingPrompts.value[selectedPageIndex.value] === undefined && store.currentOutline) {
+      editingPrompts.value[selectedPageIndex.value] = store.currentOutline.pages[selectedPageIndex.value].description
+    }
+  }
+}
+
+// 单张视图下一张
+const goToNextInSingleView = () => {
+  if (canGoNextInSingleView.value) {
+    selectedPageIndex.value++
+    // 更新编辑提示词
+    if (editingPrompts.value[selectedPageIndex.value] === undefined && store.currentOutline) {
+      editingPrompts.value[selectedPageIndex.value] = store.currentOutline.pages[selectedPageIndex.value].description
+    }
+  }
 }
 
 const appendTag = (tag: string) => {
@@ -409,6 +589,18 @@ const isPageGenerating = (pageNumber: number | undefined) => {
   return pageNumber !== undefined && generatingPages.value.has(pageNumber)
 }
 
+// 构建完整大纲文本
+const buildFullOutline = () => {
+  if (!store.currentOutline) return ''
+  
+  const pages = store.currentOutline.pages
+  const outlineText = pages.map(page => {
+    return `${page.title}\n${page.description}`
+  }).join('\n\n<page>\n\n')
+  
+  return outlineText
+}
+
 // 重新生成当前图片
 const regenerateCurrent = async () => {
   if (!selectedPage.value || !store.currentOutline) return
@@ -422,25 +614,60 @@ const regenerateCurrent = async () => {
     generatingPages.value.add(selectedPage.value.page_number)
     error.value = ''
     
+    // 🎨 处理素材引用
+    const currentPrompt = currentEditingPrompt.value
+    const processResult = await materialApi.processBatchPrompts([currentPrompt])
+    
+    let enhancedPrompt = currentPrompt
+    let referenceImages: string[] = []
+    
+    if (processResult.success && processResult.enhanced_prompts && processResult.enhanced_prompts.length > 0) {
+      enhancedPrompt = processResult.enhanced_prompts[0]
+      referenceImages = processResult.reference_images || []
+      
+      console.log('✅ 单页素材引用处理完成:', {
+        原始提示词: currentPrompt,
+        增强提示词: enhancedPrompt,
+        参考图片数量: referenceImages.length
+      })
+    }
+    
     // 构造只包含当前页面的请求
-    const singlePage = store.currentOutline.pages[pageIndex]
+    const singlePage = {
+      ...store.currentOutline.pages[pageIndex],
+      description: enhancedPrompt  // 使用增强后的提示词
+    }
+    
+    // 🔧 修复：生成新的子任务 ID，避免与主任务冲突
+    const regenerateTaskId = `${store.currentOutline.task_id}_regen_${Date.now()}`
+    
+    console.log(`🔄 重新生成页面 ${singlePage.page_number}，任务ID: ${regenerateTaskId}`)
+    console.log('🖼️ 使用的参考图 (regenerate):', store.referenceImage)
+    
+    // 如果素材中有参考图片，使用第一个
+    const finalReferenceImage = referenceImages.length > 0
+      ? referenceImages[0]
+      : (store.referenceImage || undefined)
     
     const response = await generateImages({
-      task_id: store.currentOutline.task_id, // 复用 task_id 或后端生成新的
+      task_id: regenerateTaskId, // ✅ 使用新的子任务 ID
       pages: [singlePage],
       topic: store.currentOutline.topic,
-      reference_image: store.referenceImage || undefined,
+      reference_image: finalReferenceImage,
       generator_type: selectedGenerator.value,
       image_model_config: store.imageModelConfig,
-      image_generation_config: store.imageGenerationConfig  // 新增：图片配置
+      image_generation_config: store.imageGenerationConfig,  // 新增：图片配置
+      full_outline: buildFullOutline()  // 新增：完整大纲
     })
     
     if (response.success) {
+      console.log(`✅ 重新生成任务已启动，订阅进度: ${response.task_id}`)
       subscribeToProgress(response.task_id)
     } else {
       throw new Error('启动生成任务失败')
     }
   } catch (err: any) {
+    console.error('❌ 重新生成失败:', err)
     error.value = err.message || '生成失败，请重试'
     isGenerating.value = false
     generatingPages.value.delete(selectedPage.value.page_number)
@@ -463,16 +690,47 @@ const startGeneration = async () => {
     
     error.value = ''
     
+    // 🎨 处理素材引用
+    const prompts = store.currentOutline.pages.map(p => p.description)
+    const processResult = await materialApi.processBatchPrompts(prompts)
+    
+    let enhancedPages = store.currentOutline.pages
+    let referenceImages: string[] = []
+    
+    if (processResult.success && processResult.enhanced_prompts) {
+      // 创建增强后的页面数组
+      enhancedPages = store.currentOutline.pages.map((page, index) => ({
+        ...page,
+        description: processResult.enhanced_prompts![index] || page.description
+      }))
+      
+      referenceImages = processResult.reference_images || []
+      
+      console.log('✅ 批量素材引用处理完成:', {
+        页面数量: prompts.length,
+        增强提示词数量: processResult.enhanced_prompts.length,
+        参考图片数量: referenceImages.length
+      })
+    }
+    
     const generatorType = store.imageModelConfig.generatorType || selectedGenerator.value
+    
+    console.log('🎨 批量生成图片，使用的参考图:', store.referenceImage)
+    
+    // 如果素材中有参考图片，使用第一个
+    const finalReferenceImage = referenceImages.length > 0
+      ? referenceImages[0]
+      : (store.referenceImage || undefined)
     
     const response = await generateImages({
       task_id: store.currentOutline.task_id,
-      pages: store.currentOutline.pages,
+      pages: enhancedPages,  // 使用增强后的页面
       topic: store.currentOutline.topic,
-      reference_image: store.referenceImage || undefined,
+      reference_image: finalReferenceImage,
       generator_type: generatorType,
       image_model_config: store.imageModelConfig,
-      image_generation_config: store.imageGenerationConfig  // 新增：图片配置
+      image_generation_config: store.imageGenerationConfig,  // 新增：图片配置
+      full_outline: buildFullOutline()  // 新增：完整大纲
     })
     
     if (response.success) {
@@ -517,11 +775,18 @@ const subscribeToProgress = (taskId: string) => {
           })
         }
         
-        // 处理失败
+        // 处理失败页面 - 显示错误信息
         if (data.failed_pages && data.failed_pages.length > 0) {
-           data.failed_pages.forEach(fail => {
-             generatingPages.value.delete(fail.page_number)
-           })
+          data.failed_pages.forEach(fail => {
+            generatingPages.value.delete(fail.page_number)
+            // 显示错误提示
+            const errorMsg = `第 ${fail.page_number} 页生成失败: ${fail.error}`
+            console.error(errorMsg)
+            // 如果是第一个错误，显示在界面上
+            if (!error.value) {
+              error.value = errorMsg
+            }
+          })
         }
       }
     },
@@ -1020,6 +1285,79 @@ onUnmounted(() => {
   height: 20px;
 }
 
+/* 单张视图导航区域 */
+.single-nav-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s, background 0.3s;
+  cursor: pointer;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.single-nav-zone.active {
+  opacity: 1;
+}
+
+.single-nav-zone-left {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.single-nav-zone-right {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.single-nav-zone:hover {
+  opacity: 1;
+}
+
+.single-nav-zone-left:hover {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.6), transparent);
+}
+
+.single-nav-zone-right:hover {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.6), transparent);
+}
+
+.single-nav-arrow {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.single-nav-zone:hover .single-nav-arrow {
+  background: white;
+  transform: scale(1.15);
+}
+
+.single-nav-zone-left .single-nav-arrow {
+  margin-left: 12px;
+}
+
+.single-nav-zone-right .single-nav-arrow {
+  margin-right: 12px;
+}
+
+.single-nav-arrow svg {
+  width: 24px;
+  height: 24px;
+  color: #333;
+}
+
 .single-placeholder {
   color: #fff;
   display: flex;
@@ -1391,6 +1729,63 @@ onUnmounted(() => {
   to { transform: rotate(360deg); }
 }
 
+/* 网格加载点动画 */
+.loading-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: #ff2442;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* 单张视图加载状态 */
+.generating-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.skeleton-pulse {
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 12px;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-dots {
+  display: flex;
+  gap: 8px;
+}
+
 .loading-dots span {
   display: inline-block;
   width: 8px;
@@ -1489,5 +1884,79 @@ onUnmounted(() => {
   color: white;
   font-size: 2rem;
   cursor: pointer;
+  z-index: 10;
+  transition: transform 0.2s;
+}
+
+.close-btn:hover {
+  transform: scale(1.1);
+}
+
+/* 导航区域 */
+.nav-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s, background 0.3s;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.nav-zone.active {
+  opacity: 1;
+}
+
+.nav-zone-left {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.3), transparent);
+}
+
+.nav-zone-right {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.3), transparent);
+}
+
+.nav-zone:hover {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.5), transparent);
+}
+
+.nav-zone-right:hover {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.5), transparent);
+}
+
+.nav-arrow {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.nav-zone:hover .nav-arrow {
+  background: white;
+  transform: scale(1.1);
+}
+
+.nav-zone-left .nav-arrow {
+  margin-left: 20px;
+}
+
+.nav-zone-right .nav-arrow {
+  margin-right: 20px;
+}
+
+.nav-arrow svg {
+  width: 28px;
+  height: 28px;
+  color: #333;
 }
 </style>

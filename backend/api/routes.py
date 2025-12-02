@@ -93,7 +93,8 @@ def generate_images():
         "image_generation_config": {
             "quality": "1k|2k|4k",
             "aspectRatio": "4:3|3:4|16:9|..."
-        }
+        },
+        "full_outline": "完整内容大纲（可选）"
     }
     """
     try:
@@ -105,6 +106,7 @@ def generate_images():
         generator_type = data.get('generator_type', 'mock')
         image_model_config = data.get('image_model_config', {})
         image_generation_config = data.get('image_generation_config', {})
+        full_outline = data.get('full_outline', '')  # 新增：完整内容大纲
         
         if not task_id or not pages:
             return jsonify({
@@ -139,7 +141,8 @@ def generate_images():
             pages=pages,
             topic=topic,
             reference_image=reference_image,
-            image_generation_config=image_generation_config
+            image_generation_config=image_generation_config,
+            full_outline=full_outline  # 新增：传递完整内容大纲
         )
         
         return jsonify({

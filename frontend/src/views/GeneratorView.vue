@@ -8,80 +8,97 @@
 
     <div v-if="store.currentOutline" class="script-layout">
       
-      <!-- 左侧：文案与全局设置 -->
+      <!-- 左侧：笔记文案 -->
       <div class="sidebar-section">
         <div class="sidebar-sticky">
-          <!-- 1. 小红书文案 (极简版) -->
-          <div class="minimal-panel caption-panel">
-            <div class="panel-header-minimal">
-              <span class="panel-title">笔记文案</span>
-              <div class="header-tools">
-                <div class="template-dropdown">
-                  <button class="tool-btn">模板 ▼</button>
-                  <div class="dropdown-menu">
-                    <div 
-                      v-for="(tpl, idx) in captionTemplates" 
-                      :key="idx"
-                      class="dropdown-item"
-                      @click="applyTemplate(tpl.content)"
-                    >
-                      {{ tpl.name }}
+          <div class="sidebar-scroll-content">
+            <!-- 1. 生成按钮（移到上面） -->
+            <div class="generate-action-top">
+              <button
+                class="btn-generate"
+                @click="handleGenerate"
+                :disabled="isGenerating"
+              >
+                <span v-if="isGenerating" class="loading-dot"></span>
+                <span v-if="isGenerating">生成中...</span>
+                <span v-else>一键生成小红书图文</span>
+              </button>
+            </div>
+
+            <!-- 2. 小红书文案（拉长） -->
+            <div class="minimal-panel caption-panel">
+              <div class="panel-header-minimal">
+                <span class="panel-title">笔记文案</span>
+                <div class="header-tools">
+                  <div class="template-dropdown">
+                    <button class="tool-btn">模板 ▼</button>
+                    <div class="dropdown-menu">
+                      <div
+                        v-for="(tpl, idx) in captionTemplates"
+                        :key="idx"
+                        class="dropdown-item"
+                        @click="applyTemplate(tpl.content)"
+                      >
+                        {{ tpl.name }}
+                      </div>
                     </div>
                   </div>
+                  <span class="counter" :class="{ 'text-error': captionLength > 1000 }">
+                    {{ captionLength }}/1000
+                  </span>
                 </div>
-                <span class="counter" :class="{ 'text-error': captionLength > 1000 }">
-                  {{ captionLength }}/1000
-                </span>
+              </div>
+              
+              <div class="textarea-wrapper-minimal">
+                <textarea
+                  v-model="mainCaption"
+                  class="main-textarea-minimal"
+                  placeholder="输入笔记正文..."
+                ></textarea>
+                <div class="emoji-trigger-minimal" title="插入 Emoji">😊</div>
               </div>
             </div>
-            
-            <div class="textarea-wrapper-minimal">
-              <textarea
-                v-model="mainCaption"
-                class="main-textarea-minimal"
-                placeholder="输入笔记正文..."
-              ></textarea>
-              <div class="emoji-trigger-minimal" title="插入 Emoji">😊</div>
-            </div>
           </div>
+        </div>
+      </div>
 
-          <!-- 2. 全局风格 (折叠式) -->
-          <div class="minimal-panel global-panel">
-            <div class="panel-header-minimal clickable" @click="showGlobalStyle = !showGlobalStyle">
-              <span class="panel-title">全局风格设定</span>
-              <span class="toggle-icon">{{ showGlobalStyle ? '−' : '+' }}</span>
+      <!-- 右侧：分镜脚本、全局设置和图片配置 -->
+      <div class="grid-section">
+        <!-- 全局设置栏（紧凑横向布局） -->
+        <div class="top-settings-bar">
+          <!-- 全局风格设定 -->
+          <div class="settings-group global-style-group">
+            <div class="settings-header">
+              <span class="settings-title">全局风格</span>
             </div>
-            <div v-show="showGlobalStyle" class="panel-body-minimal">
+            <div class="settings-content">
               <textarea
                 v-model="globalStyle"
-                class="style-textarea-minimal"
-                placeholder="输入全局风格提示词..."
+                class="style-input-compact"
+                placeholder="输入全局风格提示词，如：极简风格、暖色调、自然光..."
                 rows="2"
               ></textarea>
-              <div class="global-actions-minimal">
-                <button @click="applyGlobalStyle('append')" class="btn-text-sm">追加</button>
-                <span class="divider">|</span>
-                <button @click="applyGlobalStyle('replace')" class="btn-text-sm">覆盖</button>
+              <div class="style-actions">
+                <button @click="applyGlobalStyle('append')" class="action-btn">追加到所有分镜</button>
+                <button @click="applyGlobalStyle('replace')" class="action-btn">覆盖所有分镜</button>
               </div>
             </div>
           </div>
 
-          <!-- 3. 图片配置 (折叠式) -->
-          <div class="minimal-panel config-panel">
-            <div class="panel-header-minimal clickable" @click="showImageConfig = !showImageConfig">
-              <span class="panel-title">图片配置</span>
-              <span class="toggle-icon">{{ showImageConfig ? '−' : '+' }}</span>
+          <!-- 图片配置 -->
+          <div class="settings-group config-group-compact">
+            <div class="settings-header">
+              <span class="settings-title">图片配置</span>
             </div>
-            <div v-show="showImageConfig" class="panel-body-minimal">
-              <!-- 清晰度选择 -->
-              <div class="config-group">
-                <label class="config-label">清晰度</label>
-                <div class="config-options">
+            <div class="settings-content">
+              <div class="config-row">
+                <label class="config-label-inline">清晰度</label>
+                <div class="config-buttons-inline">
                   <button
                     v-for="q in qualityOptions"
                     :key="q.value"
                     @click="selectQuality(q.value)"
-                    class="config-btn"
+                    class="config-btn-compact"
                     :class="{ active: store.imageGenerationConfig.quality === q.value }"
                   >
                     {{ q.label }}
@@ -89,15 +106,14 @@
                 </div>
               </div>
               
-              <!-- 图片比例选择 -->
-              <div class="config-group">
-                <label class="config-label">图片比例</label>
-                <div class="config-options ratio-grid">
+              <div class="config-row">
+                <label class="config-label-inline">图片比例</label>
+                <div class="config-buttons-inline ratio-buttons">
                   <button
                     v-for="ratio in ratioOptions"
                     :key="ratio.value"
                     @click="selectRatio(ratio.value)"
-                    class="config-btn ratio-btn"
+                    class="config-btn-compact"
                     :class="{ active: store.imageGenerationConfig.aspectRatio === ratio.value }"
                   >
                     {{ ratio.label }}
@@ -106,24 +122,9 @@
               </div>
             </div>
           </div>
-
-          <!-- 4. 生成按钮 -->
-          <div class="generate-action">
-            <button
-              class="btn-generate"
-              @click="handleGenerate"
-              :disabled="isGenerating"
-            >
-              <span v-if="isGenerating" class="loading-dot"></span>
-              <span v-if="isGenerating">生成中...</span>
-              <span v-else>一键生成小红书图文</span>
-            </button>
-          </div>
         </div>
-      </div>
 
-      <!-- 右侧：分镜脚本网格 -->
-      <div class="grid-section">
+        <!-- 分镜脚本 -->
         <div class="section-header-minimal">
           <h2>分镜脚本 <span class="count-badge">{{ store.currentOutline.pages.length }}</span></h2>
           <div class="section-actions">
@@ -155,13 +156,15 @@
                 </button>
               </div>
 
-              <textarea
+              <MentionInput
                 v-model="page.description"
-                class="script-textarea-minimal"
-                placeholder="描述画面细节..."
+                placeholder="描述画面细节...（输入 @ 可引用素材）"
+                :multiline="true"
+                :rows="10"
+                input-class="script-textarea-minimal"
                 @focus="focusedIndex = index"
                 @blur="focusedIndex = null"
-              ></textarea>
+              />
             </div>
           </div>
         </div>
@@ -180,6 +183,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
+import MentionInput from '../components/MentionInput.vue'
+import materialApi from '../services/materialApi'
 
 const router = useRouter()
 const store = useAppStore()
@@ -190,7 +195,7 @@ const error = ref('')
 const isGenerating = ref(false)
 const globalStyle = ref('')
 const showGlobalStyle = ref(true)
-const showImageConfig = ref(false)
+const showImageConfig = ref(true)
 
 // 配置选项
 const qualityOptions = [
@@ -323,7 +328,7 @@ const selectRatio = (aspectRatio: '4:3' | '3:4' | '16:9' | '9:16' | '2:3' | '3:2
   })
 }
 
-const handleGenerate = () => {
+const handleGenerate = async () => {
   if (!store.currentOutline) return
   
   const hasEmptyPrompt = store.currentOutline.pages.some(p => !p.description || !p.description.trim())
@@ -340,10 +345,51 @@ const handleGenerate = () => {
   isGenerating.value = true
   error.value = ''
   
-  setTimeout(() => {
+  try {
+    // 🎨 处理素材引用
+    const prompts = store.currentOutline.pages.map(p => p.description)
+    const processResult = await materialApi.processBatchPrompts(prompts)
+    
+    if (processResult.success && processResult.enhanced_prompts) {
+      // 更新所有页面的描述为处理后的提示词
+      processResult.enhanced_prompts.forEach((enhancedPrompt, index) => {
+        if (store.currentOutline && store.currentOutline.pages[index]) {
+          const page = store.currentOutline.pages[index] as any
+          // 保存原始描述（包含 @mention）到一个备份字段，以便后续编辑
+          if (!page.original_description) {
+            page.original_description = page.description
+          }
+          // 使用增强后的提示词
+          page.description = enhancedPrompt
+        }
+      })
+      
+      // 保存参考图片到 store（如果有）
+      if (processResult.reference_images && processResult.reference_images.length > 0) {
+        // 如果有多个参考图，这里只取第一个（也可以根据需求调整）
+        if (!store.referenceImage) {
+          store.referenceImage = processResult.reference_images[0]
+        }
+      }
+      
+      console.log('✅ 素材引用处理完成:', {
+        原始提示词数量: prompts.length,
+        增强提示词数量: processResult.enhanced_prompts.length,
+        参考图片数量: processResult.reference_images?.length || 0
+      })
+    }
+    
+    // 跳转到结果页
+    setTimeout(() => {
+      isGenerating.value = false
+      router.push('/result')
+    }, 500)
+    
+  } catch (err: any) {
+    console.error('❌ 处理素材引用失败:', err)
+    error.value = err.message || '处理素材引用失败'
     isGenerating.value = false
-    router.push('/result')
-  }, 800)
+  }
 }
 
 const goHome = () => {
@@ -362,7 +408,6 @@ onMounted(() => {
   max-width: 1600px;
   margin: 0 auto;
   padding: 2rem;
-  min-height: 100vh;
   font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
   background: #f8fafc;
 }
@@ -399,12 +444,14 @@ onMounted(() => {
   gap: 40px;
   margin-top: 2rem;
   align-items: flex-start;
+  min-height: calc(100vh - 4rem);
 }
 
 /* 左侧边栏 */
 .sidebar-section {
-  width: 400px;
+  width: 420px;
   flex-shrink: 0;
+  height: fit-content;
 }
 
 .sidebar-sticky {
@@ -412,7 +459,38 @@ onMounted(() => {
   top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  max-height: calc(100vh - 40px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  overflow: hidden;
+}
+
+.sidebar-scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 自定义滚动条样式 */
+.sidebar-scroll-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll-content::-webkit-scrollbar-thumb {
+  background: #eee;
+  border-radius: 4px;
+}
+
+.sidebar-scroll-content::-webkit-scrollbar-thumb:hover {
+  background: #ddd;
 }
 
 /* 极简面板 */
@@ -510,14 +588,14 @@ onMounted(() => {
 
 .main-textarea-minimal {
   width: 100%;
-  min-height: 500px; /* 大幅增加高度 */
+  min-height: 520px; /* 进一步拉长，与右侧高度更平衡 */
   padding: 0;
   border: none;
   background: transparent;
   font-size: 15px;
   line-height: 1.8;
   color: #333;
-  resize: none;
+  resize: vertical; /* 允许用户自己调整 */
   font-family: inherit;
 }
 
@@ -579,9 +657,34 @@ onMounted(() => {
 
 .divider { color: #eee; font-size: 10px; }
 
-/* 图片配置 */
-.config-panel {
-  margin-top: 16px;
+/* 顶部生成按钮 */
+.generate-action-top {
+  margin-bottom: 20px;
+}
+
+.generate-action-top .btn-generate {
+  width: 100%;
+  background: linear-gradient(135deg, #ff2442 0%, #ff4d6a 100%);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(255, 36, 66, 0.25);
+}
+
+.generate-action-top .btn-generate:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff4d6a 0%, #ff6680 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 36, 66, 0.35);
+}
+
+.generate-action-top .btn-generate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .config-group {
@@ -641,35 +744,163 @@ onMounted(() => {
   font-size: 11px;
 }
 
-/* 生成按钮 */
-.btn-generate {
-  width: 100%;
-  background: #ff2442;
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  padding: 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(255, 36, 66, 0.2);
-}
-
-.btn-generate:hover:not(:disabled) {
-  background: #ff4d6a;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(255, 36, 66, 0.3);
-}
-
-.btn-generate:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
 /* 右侧网格区 */
 .grid-section {
   flex: 1;
+  min-width: 0;
+  padding-bottom: 2rem;
+}
+
+/* 顶部设置栏 - 紧凑横向布局 */
+.top-settings-bar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 32px;
+  border: 1px solid #f0f0f0;
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #ff2442;
+  margin-bottom: 2px;
+}
+
+.settings-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff2442;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 全局风格样式 */
+.style-input-compact {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fafafa;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+  resize: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.style-input-compact:focus {
+  outline: none;
+  border-color: #ff2442;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 36, 66, 0.1);
+}
+
+.style-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  flex: 1;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #666;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.action-btn:hover {
+  background: #ff2442;
+  border-color: #ff2442;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 36, 66, 0.2);
+}
+
+/* 图片配置样式 - 更大更显眼 */
+.config-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.config-row:last-child {
+  margin-bottom: 0;
+}
+
+.config-label-inline {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  min-width: 60px;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+.config-buttons-inline {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.ratio-buttons {
+  gap: 5px;
+}
+
+.config-btn-compact {
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  color: #333;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-weight: 500;
+  min-width: 50px;
+  text-align: center;
+}
+
+.config-btn-compact:hover {
+  background: #f8f8f8;
+  border-color: #ff2442;
+  color: #ff2442;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.config-btn-compact.active {
+  background: #ff2442;
+  border-color: #ff2442;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(255, 36, 66, 0.25);
 }
 
 .section-header-minimal {
@@ -815,7 +1046,7 @@ onMounted(() => {
 
 .script-textarea-minimal {
   width: 100%;
-  min-height: 240px; /* 增加高度，去掉底部标签后有更多空间 */
+  min-height: 240px;
   border: none;
   resize: none;
   font-size: 15px;
@@ -823,11 +1054,20 @@ onMounted(() => {
   color: #333;
   font-family: inherit;
   background: transparent;
-  padding: 0; /* 去掉顶部padding，不再需要为标签留空间 */
+  padding: 0;
 }
 
 .script-textarea-minimal:focus {
   outline: none;
+}
+
+/* MentionInput 在卡片中的样式调整 */
+.script-card-minimal :deep(.mention-input-wrapper) {
+  height: 100%;
+}
+
+.script-card-minimal :deep(.mention-dropdown) {
+  z-index: 100;
 }
 
 /* 响应式 */
@@ -838,14 +1078,31 @@ onMounted(() => {
   
   .sidebar-section {
     width: 100%;
+    height: auto;
   }
   
   .sidebar-sticky {
     position: static;
+    max-height: none;
   }
   
   .main-textarea-minimal {
-    min-height: 300px;
+    min-height: 400px;
+  }
+  
+  .top-settings-bar {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .config-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .config-label-inline {
+    min-width: auto;
   }
 }
 </style>

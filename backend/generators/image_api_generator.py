@@ -25,7 +25,7 @@ class ImageAPIGenerator(BaseGenerator):
         super().__init__(api_key, **kwargs)
         self.api_url = api_url or kwargs.get('url', '')
         self.model = model or kwargs.get('model', self.DEFAULT_MODEL)
-        self.api_format = kwargs.get('apiFormat', 'generations')  # 默认使用 generations 格式
+        self.api_format = kwargs.get('apiFormat', 'chat')  # 默认使用 chat 格式（与前端一致）
         
         if not self.api_url:
             raise ValueError("Image API URL 不能为空")
@@ -108,14 +108,16 @@ class ImageAPIGenerator(BaseGenerator):
             else:
                 api_endpoint = base_url
             
-            if reference_image:
-                logger.warning(f"DALL-E 格式不支持参考图片功能，将忽略 reference_image 参数")
-            
             logger.info(f"使用 Generations 格式生成图片: {api_endpoint}")
             logger.info(f"提示词: {prompt[:100]}...")
+            if reference_image:
+                logger.info(f"检测到参考图片，将添加到请求中")
             
             # 直接使用传入的尺寸
             size = f"{width}x{height}"
+            
+            # 计算宽高比（某些 API 需要）
+            aspect_ratio = self._calculate_aspect_ratio(width, height)
             
             payload = {
                 'model': self.model,
@@ -125,6 +127,30 @@ class ImageAPIGenerator(BaseGenerator):
                 'response_format': 'url'
             }
             
+            # 添加宽高比参数（某些 API 支持）
+            if aspect_ratio:
+                payload['aspect_ratio'] = aspect_ratio
+            
+            # 如果有参考图片，添加到 payload 中
+            if reference_image:
+                # 清理 base64 字符串：如果是 Data URL，移除其中的空白字符
+                cleaned_reference = reference_image
+                if reference_image.startswith('data:image'):
+                    import re
+                    # 分离前缀和 base64 数据
+                    if ',' in reference_image:
+                        prefix, base64_data = reference_image.split(',', 1)
+                        # 移除 base64 数据中的所有空白字符
+                        base64_data = re.sub(r'\s+', '', base64_data)
+                        cleaned_reference = f"{prefix},{base64_data}"
+                        logger.info(f"Generations - 参考图片 base64 数据长度: {len(base64_data)} 字符")
+                        logger.info(f"Generations - 参考图片前缀: {prefix}")
+                else:
+                    logger.info(f"Generations - 参考图片 URL: {reference_image[:200]}...")
+                
+                payload['image'] = [cleaned_reference]
+            
+            # 添加其他可选参数
             filtered_kwargs = {k: v for k, v in kwargs.items() if k not in ['reference_image', 'width', 'height']}
             payload.update(filtered_kwargs)
             
@@ -221,10 +247,28 @@ class ImageAPIGenerator(BaseGenerator):
             # 如果有参考图片，添加到 content 中
             if reference_image:
                 logger.info("检测到参考图片，添加到请求中")
+                
+                # 清理 base64 字符串：如果是 Data URL，移除其中的空白字符
+                cleaned_reference = reference_image
+                if reference_image.startswith('data:image'):
+                    import re
+                    # 分离前缀和 base64 数据
+                    if ',' in reference_image:
+                        prefix, base64_data = reference_image.split(',', 1)
+                        # 移除 base64 数据中的所有空白字符
+                        base64_data = re.sub(r'\s+', '', base64_data)
+                        cleaned_reference = f"{prefix},{base64_data}"
+                        logger.info(f"参考图片 base64 数据长度: {len(base64_data)} 字符")
+                        logger.info(f"参考图片前缀: {prefix}")
+                        # 记录前100个字符用于调试
+                        logger.info(f"Base64 前100字符: {base64_data[:100]}")
+                else:
+                    logger.info(f"参考图片 URL: {reference_image[:200]}...")
+                
                 content.append({
                     "type": "image_url",
                     "image_url": {
-                        "url": reference_image
+                        "url": cleaned_reference
                     }
                 })
             
@@ -385,6 +429,11 @@ class ImageAPIGenerator(BaseGenerator):
                     # 提取base64数据
                     mime_type = reference_image.split(';')[0].split(':')[1]
                     base64_data = reference_image.split(',')[1]
+                    
+                    # 清理 base64 字符串：移除所有空白字符
+                    import re
+                    base64_data = re.sub(r'\s+', '', base64_data)
+                    
                     parts.append({
                         "inline_data": {
                             "mime_type": mime_type,

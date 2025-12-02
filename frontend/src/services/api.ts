@@ -50,6 +50,7 @@ export interface GenerateImagesParams {
     quality: '1k' | '2k' | '4k'
     aspectRatio: string
   }
+  full_outline?: string  // 新增：完整内容大纲
 }
 
 export interface ProgressData {

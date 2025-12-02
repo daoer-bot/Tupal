@@ -53,7 +53,7 @@ npm install
 创建 `.env` 文件（可选）：
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5030/api
 ```
 
 ### 3. 运行开发服务器
@@ -130,7 +130,7 @@ npm run build
 ## 注意事项
 
 1. TypeScript 错误是正常的，需要先运行 `npm install` 安装依赖
-2. 开发时确保后端服务已启动在 `http://localhost:5000`
+2. 开发时确保后端服务已启动在 `http://localhost:5030`
 3. Vite 已配置代理，`/api` 请求会自动转发到后端
 
 ## 下一步开发计划

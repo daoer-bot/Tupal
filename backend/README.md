@@ -64,7 +64,7 @@ IMAGE_API_KEY=your-image-api-key
 python app.py
 ```
 
-服务将在 `http://localhost:5000` 启动。
+服务将在 `http://localhost:5030` 启动。
 
 ## API 端点
 

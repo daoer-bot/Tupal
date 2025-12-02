@@ -52,7 +52,10 @@ def create_app(config_name='default'):
 def register_blueprints(app):
     """注册所有蓝图"""
     from api.routes import api_bp
+    from api.material_routes import material_bp
+    
     app.register_blueprint(api_bp, url_prefix=app.config['API_PREFIX'])
+    app.register_blueprint(material_bp, url_prefix=app.config['API_PREFIX'])
 
 
 def register_error_handlers(app):
@@ -103,7 +106,7 @@ if __name__ == '__main__':
     env = os.getenv('FLASK_ENV', 'development')
     app = create_app(env)
     
-    port = int(os.getenv('PORT', 5000))
+    port = int(os.getenv('PORT', 5030))
     logger.info(f'Starting Flask app on port {port}')
     
     app.run(

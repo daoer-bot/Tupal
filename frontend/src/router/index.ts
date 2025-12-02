@@ -24,6 +24,11 @@ const router = createRouter({
       component: () => import('../views/HistoryView.vue')
     },
     {
+      path: '/materials',
+      name: 'materials',
+      component: () => import('../views/MaterialView.vue')
+    },
+    {
       path: '/trending',
       name: 'trending',
       component: () => import('../views/TrendingView.vue')

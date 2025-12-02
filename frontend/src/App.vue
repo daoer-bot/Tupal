@@ -1,8 +1,14 @@
 <template>
   <div id="app" class="app-container">
     <!-- 侧边栏 -->
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
       <div class="logo-container">
+        <!-- 折叠按钮 -->
+        <button class="collapse-btn" @click="toggleSidebar" :title="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="collapse-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+          </svg>
+        </button>
         <div class="logo-icon">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
@@ -16,7 +22,13 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l-.249 1.74" />
           </svg>
-          <span class="label">创作中心</span>
+          <span class="label">开始创作</span>
+        </router-link>
+        <router-link to="/materials" class="nav-item" active-class="active">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+          </svg>
+          <span class="label">素材中心</span>
         </router-link>
         <router-link to="/trending" class="nav-item" active-class="active">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
@@ -29,7 +41,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
           </svg>
-          <span class="label">历史记录</span>
+          <span class="label">作品管理</span>
         </router-link>
       </nav>
 
@@ -45,7 +57,7 @@
     </aside>
 
     <!-- 主内容区 -->
-    <main class="main-content">
+    <main class="main-content" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -63,12 +75,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useAppStore } from './store'
 import ModelConfigModal from './components/ModelConfigModal.vue'
 
 const store = useAppStore()
 const showConfigModal = ref(false)
+
+// 侧边栏收起状态
+const isSidebarCollapsed = ref(false)
 
 // 模型配置状态
 const textModels = ref<any[]>([])
@@ -76,17 +91,29 @@ const imageModels = ref<any[]>([])
 const selectedTextIndex = ref(0)
 const selectedImageIndex = ref(0)
 
+// 切换侧边栏状态
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
+
+// 监听侧边栏状态变化，保存到 localStorage
+watch(isSidebarCollapsed, (newValue) => {
+  localStorage.setItem('sidebarCollapsed', JSON.stringify(newValue))
+})
+
 // 加载配置
 const loadConfig = () => {
   const savedTextModels = localStorage.getItem('textModels')
   const savedImageModels = localStorage.getItem('imageModels')
   const savedSelectedTextIndex = localStorage.getItem('selectedTextIndex')
   const savedSelectedImageIndex = localStorage.getItem('selectedImageIndex')
+  const savedSidebarCollapsed = localStorage.getItem('sidebarCollapsed')
   
   if (savedTextModels) textModels.value = JSON.parse(savedTextModels)
   if (savedImageModels) imageModels.value = JSON.parse(savedImageModels)
   if (savedSelectedTextIndex) selectedTextIndex.value = parseInt(savedSelectedTextIndex)
   if (savedSelectedImageIndex) selectedImageIndex.value = parseInt(savedSelectedImageIndex)
+  if (savedSidebarCollapsed) isSidebarCollapsed.value = JSON.parse(savedSidebarCollapsed)
   
   updateStoreConfig()
 }
@@ -138,7 +165,11 @@ onMounted(() => {
   position: fixed;
   height: 100vh;
   z-index: 50;
-  transition: var(--transition);
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 70px;
 }
 
 .logo-container {
@@ -147,6 +178,50 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.sidebar.collapsed .logo-container {
+  justify-content: center;
+  padding: 1.5rem 0.5rem;
+}
+
+.collapse-btn {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.collapse-btn:hover {
+  background: var(--bg-color);
+  color: var(--primary-color);
+}
+
+.collapse-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed .collapse-icon {
+  transform: rotate(180deg);
+}
+
+.sidebar.collapsed .collapse-btn {
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .logo-icon {
@@ -159,11 +234,22 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .logo-icon {
+  width: 2rem;
+  height: 2rem;
 }
 
 .logo-icon svg {
   width: 1.5rem;
   height: 1.5rem;
+}
+
+.sidebar.collapsed .logo-icon svg {
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .logo-text {
@@ -172,6 +258,15 @@ onMounted(() => {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.025em;
+  margin-left: 2rem;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
 }
 
 .nav-menu {
@@ -182,6 +277,10 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
+.sidebar.collapsed .nav-menu {
+  padding: 1.5rem 0.5rem;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -190,9 +289,15 @@ onMounted(() => {
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   text-decoration: none;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   font-weight: 500;
   font-size: 0.95rem;
+  position: relative;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 0.75rem;
 }
 
 .nav-item:hover {
@@ -208,11 +313,40 @@ onMounted(() => {
 .nav-icon {
   width: 1.25rem;
   height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.nav-item .label {
+  transition: opacity 0.2s ease;
+}
+
+.sidebar.collapsed .nav-item .label {
+  position: absolute;
+  left: 100%;
+  margin-left: 1rem;
+  background: var(--surface-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+  border: 1px solid var(--border-color);
+}
+
+.sidebar.collapsed .nav-item:hover .label {
+  opacity: 1;
 }
 
 .sidebar-footer {
   padding: 1.5rem;
   border-top: 1px solid var(--border-color);
+}
+
+.sidebar.collapsed .sidebar-footer {
+  padding: 1.5rem 0.5rem;
 }
 
 .config-btn {
@@ -227,8 +361,10 @@ onMounted(() => {
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-weight: 500;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   font-size: 0.9rem;
+  position: relative;
+  cursor: pointer;
 }
 
 .config-btn:hover {
@@ -237,14 +373,41 @@ onMounted(() => {
   background: var(--primary-light);
 }
 
+.sidebar.collapsed .config-btn .label {
+  position: absolute;
+  left: 100%;
+  margin-left: 1rem;
+  background: var(--surface-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+  border: 1px solid var(--border-color);
+}
+
+.sidebar.collapsed .config-btn:hover .label {
+  opacity: 1;
+}
+
 /* 主内容区样式 */
 .main-content {
   flex: 1;
   margin-left: 260px;
   padding: 0;
   max-width: calc(100vw - 260px);
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: margin-left 0.3s ease, max-width 0.3s ease;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 70px;
+  max-width: calc(100vw - 70px);
 }
 
 @media (max-width: 768px) {
@@ -252,7 +415,12 @@ onMounted(() => {
     transform: translateX(-100%);
   }
   
-  .main-content {
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+  
+  .main-content,
+  .main-content.sidebar-collapsed {
     margin-left: 0;
     max-width: 100%;
   }
