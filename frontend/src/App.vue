@@ -1,63 +1,59 @@
 <template>
-  <div id="app" class="app-container">
-    <!-- 侧边栏 -->
-    <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
-      <div class="logo-container">
-        <!-- 折叠按钮 -->
-        <button class="collapse-btn" @click="toggleSidebar" :title="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="collapse-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
-          </svg>
-        </button>
-        <div class="logo-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-          </svg>
+  <div id="app" class="app-wrapper">
+    <!-- 🌌 动态极光背景层 -->
+    <div class="aurora-bg">
+      <div class="aurora-orb orb-1"></div>
+      <div class="aurora-orb orb-2"></div>
+      <div class="aurora-orb orb-3"></div>
+    </div>
+
+    <!-- 🏗️ 顶部导航栏 -->
+    <header class="top-navbar">
+      <div class="navbar-container">
+        <!-- Logo 区域 -->
+        <div class="logo-area">
+          <div class="logo-icon animate-pulse-slow">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l-.249 1.74" />
+            </svg>
+          </div>
+          <h1 class="logo-text text-gradient">Tupal</h1>
         </div>
-        <h1 class="logo-text">Tupal</h1>
-      </div>
-      
-      <nav class="nav-menu">
-        <router-link to="/" class="nav-item" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l-.249 1.74" />
-          </svg>
-          <span class="label">开始创作</span>
-        </router-link>
-        <router-link to="/materials" class="nav-item" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-          </svg>
-          <span class="label">素材中心</span>
-        </router-link>
-        <router-link to="/trending" class="nav-item" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
-          </svg>
-          <span class="label">热点趋势</span>
-        </router-link>
-        <router-link to="/history" class="nav-item" active-class="active">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-          </svg>
-          <span class="label">作品管理</span>
-        </router-link>
-      </nav>
+        
+        <!-- 导航菜单 -->
+        <nav class="nav-menu">
+          <router-link to="/" class="nav-item" active-class="active">
+            <span class="label">灵感工坊</span>
+          </router-link>
 
-      <div class="sidebar-footer">
-        <button class="config-btn" @click="showConfigModal = true">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span class="label">模型配置</span>
-        </button>
-      </div>
-    </aside>
+          <router-link to="/materials" class="nav-item" active-class="active">
+            <span class="label">素材中心</span>
+          </router-link>
 
-    <!-- 主内容区 -->
-    <main class="main-content" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+          <router-link to="/trending" class="nav-item" active-class="active">
+            <span class="label">热点趋势</span>
+          </router-link>
+
+          <router-link to="/history" class="nav-item" active-class="active">
+            <span class="label">作品档案</span>
+          </router-link>
+        </nav>
+
+        <!-- 顶部操作区 -->
+        <div class="header-actions">
+          <button class="config-btn glass-btn" @click="showConfigModal = true" title="AI 模型配置">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.02-.398-1.11-.94l-.149-.894c-.07-.424-.384-.764-.78-.93-.398-.164-.855-.142-1.205.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="label">模型配置</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 🎨 主舞台 -->
+    <main class="main-stage">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -65,7 +61,7 @@
       </router-view>
     </main>
 
-    <!-- 全局配置模态框 -->
+    <!-- 配置模态框 -->
     <ModelConfigModal
       :show="showConfigModal"
       @close="showConfigModal = false"
@@ -82,43 +78,26 @@ import ModelConfigModal from './components/ModelConfigModal.vue'
 const store = useAppStore()
 const showConfigModal = ref(false)
 
-// 侧边栏收起状态
-const isSidebarCollapsed = ref(false)
-
 // 模型配置状态
 const textModels = ref<any[]>([])
 const imageModels = ref<any[]>([])
 const selectedTextIndex = ref(0)
 const selectedImageIndex = ref(0)
 
-// 切换侧边栏状态
-const toggleSidebar = () => {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
-// 监听侧边栏状态变化，保存到 localStorage
-watch(isSidebarCollapsed, (newValue) => {
-  localStorage.setItem('sidebarCollapsed', JSON.stringify(newValue))
-})
-
-// 加载配置
 const loadConfig = () => {
   const savedTextModels = localStorage.getItem('textModels')
   const savedImageModels = localStorage.getItem('imageModels')
   const savedSelectedTextIndex = localStorage.getItem('selectedTextIndex')
   const savedSelectedImageIndex = localStorage.getItem('selectedImageIndex')
-  const savedSidebarCollapsed = localStorage.getItem('sidebarCollapsed')
   
   if (savedTextModels) textModels.value = JSON.parse(savedTextModels)
   if (savedImageModels) imageModels.value = JSON.parse(savedImageModels)
   if (savedSelectedTextIndex) selectedTextIndex.value = parseInt(savedSelectedTextIndex)
   if (savedSelectedImageIndex) selectedImageIndex.value = parseInt(savedSelectedImageIndex)
-  if (savedSidebarCollapsed) isSidebarCollapsed.value = JSON.parse(savedSidebarCollapsed)
   
   updateStoreConfig()
 }
 
-// 更新 store 配置
 const updateStoreConfig = () => {
   if (textModels.value.length > 0 && textModels.value[selectedTextIndex.value]) {
     store.setTextModelConfig(textModels.value[selectedTextIndex.value])
@@ -128,7 +107,6 @@ const updateStoreConfig = () => {
   }
 }
 
-// 保存配置回调
 const handleSaveConfig = (
   newTextModels: any[],
   newImageModels: any[],
@@ -149,280 +127,214 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.app-container {
+.app-wrapper {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg-color);
-}
-
-/* 侧边栏样式 */
-.sidebar {
-  width: 260px;
-  background: var(--surface-color);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  height: 100vh;
-  z-index: 50;
-  transition: width 0.3s ease;
-}
-
-.sidebar.collapsed {
-  width: 70px;
-}
-
-.logo-container {
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
   position: relative;
-}
-
-.sidebar.collapsed .logo-container {
-  justify-content: center;
-  padding: 1.5rem 0.5rem;
-}
-
-.collapse-btn {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.4rem;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.collapse-btn:hover {
-  background: var(--bg-color);
-  color: var(--primary-color);
-}
-
-.collapse-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  transition: transform 0.3s ease;
-}
-
-.sidebar.collapsed .collapse-icon {
-  transform: rotate(180deg);
-}
-
-.sidebar.collapsed .collapse-btn {
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.logo-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  background: var(--primary-color);
-  color: white;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
-}
-
-.sidebar.collapsed .logo-icon {
-  width: 2rem;
-  height: 2rem;
-}
-
-.logo-icon svg {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.sidebar.collapsed .logo-icon svg {
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-.logo-text {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.025em;
-  margin-left: 2rem;
-  white-space: nowrap;
-  transition: opacity 0.2s ease;
-}
-
-.sidebar.collapsed .logo-text {
-  opacity: 0;
-  width: 0;
   overflow: hidden;
 }
 
-.nav-menu {
-  flex: 1;
-  padding: 1.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+/* === 极光背景动画 === */
+.aurora-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background: var(--bg-color);
+  overflow: hidden;
 }
 
-.sidebar.collapsed .nav-menu {
-  padding: 1.5rem 0.5rem;
+.aurora-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  animation: float-orb 20s infinite ease-in-out;
+}
+
+.orb-1 {
+  width: 500px;
+  height: 500px;
+  background: var(--primary-color);
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 400px;
+  height: 400px;
+  background: var(--secondary-color);
+  bottom: 10%;
+  right: 10%;
+  animation-delay: -5s;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: var(--accent-color);
+  top: 40%;
+  left: 40%;
+  animation-delay: -10s;
+}
+
+@keyframes float-orb {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* === 顶部导航栏 === */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px; /* 稍微减小高度，更精致 */
+  z-index: 100;
+  display: flex;
+  justify-content: center; /* 让内部容器居中 */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.navbar-container {
+  width: 100%;
+  max-width: 1400px; /* 限制最大宽度 */
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+.logo-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+/* 导航菜单 - 绝对居中 */
+.nav-menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: 8px;
   color: var(--text-secondary);
   text-decoration: none;
-  transition: all 0.3s ease;
-  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
   font-size: 0.95rem;
-  position: relative;
-}
-
-.sidebar.collapsed .nav-item {
-  justify-content: center;
-  padding: 0.75rem;
+  font-weight: 500;
+  height: 36px;
 }
 
 .nav-item:hover {
-  background: var(--bg-color);
-  color: var(--text-primary);
+  color: var(--primary-color);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .nav-item.active {
-  background: var(--primary-light);
   color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
 }
 
-.nav-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
+/* 顶部操作区 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0; /* 防止被压缩 */
 }
 
-.nav-item .label {
-  transition: opacity 0.2s ease;
-}
-
-.sidebar.collapsed .nav-item .label {
-  position: absolute;
-  left: 100%;
-  margin-left: 1rem;
-  background: var(--surface-color);
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 100;
-  border: 1px solid var(--border-color);
-}
-
-.sidebar.collapsed .nav-item:hover .label {
-  opacity: 1;
-}
-
-.sidebar-footer {
-  padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.sidebar.collapsed .sidebar-footer {
-  padding: 1.5rem 0.5rem;
-}
-
-.config-btn {
-  width: 100%;
+.glass-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-weight: 500;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  position: relative;
+  gap: 8px;
+  padding: 0 16px; /* 水平 padding */
+  height: 36px; /* 固定高度 */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 99px;
+  background: white;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
   cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap; /* 强制不换行 */
+  flex-shrink: 0; /* 强制不压缩 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.config-btn:hover {
+.glass-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
-  background: var(--primary-light);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  transform: translateY(-1px);
 }
 
-.sidebar.collapsed .config-btn .label {
-  position: absolute;
-  left: 100%;
-  margin-left: 1rem;
-  background: var(--surface-color);
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 100;
-  border: 1px solid var(--border-color);
-}
-
-.sidebar.collapsed .config-btn:hover .label {
-  opacity: 1;
-}
-
-/* 主内容区样式 */
-.main-content {
+/* === 主舞台 === */
+.main-stage {
   flex: 1;
-  margin-left: 260px;
-  padding: 0;
-  max-width: calc(100vw - 260px);
-  min-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  transition: margin-left 0.3s ease, max-width 0.3s ease;
+  margin-top: 72px; /* 留出顶部导航栏的高度 */
+  padding: 24px;
+  min-height: calc(100vh - 72px);
+  position: relative;
+  z-index: 10;
 }
 
-.main-content.sidebar-collapsed {
-  margin-left: 70px;
-  max-width: calc(100vw - 70px);
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.collapsed {
-    transform: translateX(-100%);
-  }
-  
-  .main-content,
-  .main-content.sidebar-collapsed {
-    margin-left: 0;
-    max-width: 100%;
-  }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .8; }
 }
 </style>
