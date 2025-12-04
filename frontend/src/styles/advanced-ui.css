@@ -1,0 +1,421 @@
+/* =========================================
+   🌌 Advanced UI Components - Tupal
+   高级UI组件样式库
+   ========================================= */
+
+/* ===== 高级玻璃拟态效果 ===== */
+
+/* 悬浮玻璃卡片 - 带动态光晕 */
+.glass-card-premium {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.glass-card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(236, 72, 153, 0.1) 50%,
+    rgba(139, 92, 246, 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.glass-card-premium:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 20px 60px rgba(31, 38, 135, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.glass-card-premium:hover::before {
+  opacity: 1;
+}
+
+/* 极光光晕效果 */
+.aurora-glow {
+  position: relative;
+}
+
+.aurora-glow::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(
+    45deg,
+    var(--primary-color),
+    var(--secondary-color),
+    var(--accent-color),
+    var(--primary-color)
+  );
+  border-radius: 26px;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  animation: aurora-rotate 4s linear infinite;
+}
+
+.aurora-glow:hover::after {
+  opacity: 0.7;
+}
+
+@keyframes aurora-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 高级按钮系统 ===== */
+
+/* 3D悬浮按钮 */
+.btn-3d {
+  position: relative;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 
+    0 4px 15px rgba(99, 102, 241, 0.4),
+    0 8px 30px rgba(99, 102, 241, 0.2);
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(0deg);
+}
+
+.btn-3d::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-3d:hover {
+  transform: perspective(1000px) rotateX(-5deg) translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(99, 102, 241, 0.5),
+    0 16px 40px rgba(99, 102, 241, 0.3);
+}
+
+.btn-3d:hover::before {
+  opacity: 1;
+}
+
+.btn-3d:active {
+  transform: perspective(1000px) rotateX(0deg) translateY(0);
+  box-shadow: 
+    0 2px 10px rgba(99, 102, 241, 0.4),
+    0 4px 20px rgba(99, 102, 241, 0.2);
+}
+
+/* 玻璃幽灵按钮 */
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ghost::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.5s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-ghost:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* ===== 高级输入框 ===== */
+
+/* 浮动标签输入框 */
+.input-float {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.input-float input,
+.input-float textarea {
+  width: 100%;
+  padding: 1.5rem 1.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.input-float label {
+  position: absolute;
+  top: 1rem;
+  left: 1.25rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.input-float input:focus,
+.input-float textarea:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.input-float input:focus + label,
+.input-float input:not(:placeholder-shown) + label,
+.input-float textarea:focus + label,
+.input-float textarea:not(:placeholder-shown) + label {
+  top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--primary-color);
+}
+
+/* ===== 高级动画效果 ===== */
+
+/* 粒子背景效果 */
+.particles-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  animation: float-particle 20s infinite linear;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(100px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* 波纹效果 */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* 呼吸光晕 */
+.breathing-glow {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+@keyframes breathing {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
+  }
+}
+
+/* ===== 高级排版效果 ===== */
+
+/* 渐变文字动画 */
+.text-gradient-animated {
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color),
+    var(--accent-color),
+    var(--primary-color)
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 霓虹文字 */
+.text-neon {
+  color: #fff;
+  text-shadow: 
+    0 0 10px var(--primary-color),
+    0 0 20px var(--primary-color),
+    0 0 30px var(--primary-color),
+    0 0 40px var(--accent-color);
+  animation: neon-flicker 2s infinite alternate;
+}
+
+@keyframes neon-flicker {
+  0%, 100% {
+    text-shadow: 
+      0 0 10px var(--primary-color),
+      0 0 20px var(--primary-color),
+      0 0 30px var(--primary-color),
+      0 0 40px var(--accent-color);
+  }
+  50% {
+    text-shadow: 
+      0 0 5px var(--primary-color),
+      0 0 10px var(--primary-color),
+      0 0 15px var(--primary-color),
+      0 0 20px var(--accent-color);
+  }
+}
+
+/* ===== 高级布局 ===== */
+
+/* 网格布局增强 */
+.grid-enhanced {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.grid-enhanced > * {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 弹性容器 */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* 悬浮容器 */
+.float-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.float-element {
+  transform: translateZ(0);
+  transition: transform 0.3s ease;
+}
+
+.float-element:hover {
+  transform: translateZ(20px) rotateX(5deg);
+}
+
+/* ===== 响应式增强 ===== */
+
+/* 移动设备优化 */
+@media (max-width: 768px) {
+  .glass-card-premium {
+    border-radius: 20px;
+    margin: 0 1rem;
+  }
+  
+  .btn-3d {
+    padding: 0.875rem 1.75rem;
+    font-size: 0.95rem;
+  }
+  
+  .text-gradient-animated {
+    font-size: 2.5rem;
+  }
+}
+
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .glass-card-premium {
+    background: linear-gradient(
+      135deg,
+      rgba(30, 41, 59, 0.4) 0%,
+      rgba(15, 23, 42, 0.2) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}

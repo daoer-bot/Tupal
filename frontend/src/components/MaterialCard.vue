@@ -29,23 +29,16 @@
         <div v-else-if="material.type === 'image'" class="preview-image">
           <img :src="material.content.url" :alt="material.name" />
         </div>
-        <div v-else-if="material.type === 'style'" class="preview-style">
-          <span class="style-tone">{{ material.content.tone }}</span>
-        </div>
-        <div v-else-if="material.type === 'product'" class="preview-product">
-          <div class="product-desc">{{ getTextPreview(material.content.description) }}</div>
-          <div class="product-images" v-if="material.content.images && material.content.images.length > 0">
-            <Camera :size="14" />
-            <span>{{ material.content.images.length }} 张图片</span>
+        <div v-else-if="material.type === 'reference'" class="preview-reference">
+          <div class="reference-desc">{{ getTextPreview(material.content.content) }}</div>
+          <div class="reference-type" v-if="material.content.reference_type">
+            类型：{{ material.content.reference_type }}
           </div>
         </div>
       </div>
     </div>
 
     <div class="material-footer">
-      <div class="material-category">
-        {{ material.category }}
-      </div>
       <div class="material-tags" v-if="material.tags && material.tags.length > 0">
         <span v-for="tag in material.tags.slice(0, 3)" :key="tag" class="tag">
           {{ tag }}
@@ -63,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileText, Image, Palette, Package, Pencil, Trash2, Camera } from 'lucide-vue-next'
+import { FileText, Image, BookOpen, Pencil, Trash2 } from 'lucide-vue-next'
 import type { Material } from '../services/materialApi'
 import type { Component } from 'vue'
 
@@ -81,8 +74,7 @@ const getTypeIcon = (type: string): Component => {
   const icons: Record<string, Component> = {
     text: FileText,
     image: Image,
-    style: Palette,
-    product: Package
+    reference: BookOpen
   }
   return icons[type] || FileText
 }
@@ -91,8 +83,7 @@ const getTypeName = (type: string): string => {
   const names: Record<string, string> = {
     text: '文本',
     image: '图片',
-    style: '风格',
-    product: '产品'
+    reference: '参考'
   }
   return names[type] || type
 }
@@ -162,14 +153,9 @@ const formatDate = (dateStr: string): string => {
   color: #be185d;
 }
 
-.type-style {
+.type-reference {
   background: #f3e8ff;
   color: #7e22ce;
-}
-
-.type-product {
-  background: #dcfce7;
-  color: #15803d;
 }
 
 .material-actions {
@@ -249,12 +235,12 @@ const formatDate = (dateStr: string): string => {
   border-radius: 4px;
 }
 
-.preview-style {
+.preview-reference {
   color: #7e22ce;
   font-weight: 500;
 }
 
-.preview-product .product-desc {
+.preview-reference .reference-desc {
   color: #374151;
   margin-bottom: 8px;
   line-height: 1.6;
@@ -266,27 +252,16 @@ const formatDate = (dateStr: string): string => {
   word-break: break-word;
 }
 
-.preview-product .product-images {
+.preview-reference .reference-type {
   color: #6b7280;
   font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .material-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 8px;
-}
-
-.material-category {
-  font-size: 12px;
-  color: #6b7280;
-  background: #f3f4f6;
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
 .material-tags {

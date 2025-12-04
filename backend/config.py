@@ -26,8 +26,10 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     
-    # 历史记录存储
-    HISTORY_FOLDER = PROJECT_ROOT / 'history'
+    # 存储配置 - 统一使用项目根目录的 storage 文件夹
+    STORAGE_FOLDER = PROJECT_ROOT / 'storage'
+    HISTORY_FOLDER = STORAGE_FOLDER / 'history'
+    MATERIALS_FOLDER = STORAGE_FOLDER / 'materials'
     
     # AI服务配置
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
@@ -59,7 +61,9 @@ class Config:
         """初始化应用配置"""
         # 创建必要的目录
         Config.UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+        Config.STORAGE_FOLDER.mkdir(parents=True, exist_ok=True)
         Config.HISTORY_FOLDER.mkdir(parents=True, exist_ok=True)
+        Config.MATERIALS_FOLDER.mkdir(parents=True, exist_ok=True)
 
 
 class DevelopmentConfig(Config):

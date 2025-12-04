@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 import threading
 
-from models.material import Material, MaterialType, MaterialCategory
+from models.material import Material, MaterialType
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +24,10 @@ class MaterialStorage:
             storage_dir: 存储目录路径
         """
         if storage_dir is None:
-            # 获取backend目录的绝对路径
+            # 使用项目根目录的 storage/materials
             backend_dir = Path(__file__).resolve().parent.parent
-            storage_dir = backend_dir / 'storage' / 'materials'
+            project_root = backend_dir.parent
+            storage_dir = project_root / 'storage' / 'materials'
         self.storage_dir = Path(storage_dir)
         self.index_file = self.storage_dir / 'index.json'
         self.lock = threading.Lock()
@@ -105,7 +106,6 @@ class MaterialStorage:
                     'id': material.id,
                     'name': material.name,
                     'type': material.type.value,
-                    'category': material.category.value,
                     'tags': material.tags,
                     'description': material.description,
                     'created_at': material.created_at,
@@ -161,7 +161,6 @@ class MaterialStorage:
     def get_all(
         self,
         material_type: Optional[MaterialType] = None,
-        category: Optional[MaterialCategory] = None,
         tags: Optional[List[str]] = None,
         limit: Optional[int] = None,
         offset: int = 0
@@ -171,7 +170,6 @@ class MaterialStorage:
         
         Args:
             material_type: 按类型筛选
-            category: 按分类筛选
             tags: 按标签筛选
             limit: 限制数量
             offset: 偏移量
@@ -192,12 +190,6 @@ class MaterialStorage:
                 filtered_items = [
                     item for item in filtered_items
                     if item.get('type') == material_type.value
-                ]
-            
-            if category:
-                filtered_items = [
-                    item for item in filtered_items
-                    if item.get('category') == category.value
                 ]
             
             if tags:
@@ -289,15 +281,13 @@ class MaterialStorage:
     
     def count(
         self,
-        material_type: Optional[MaterialType] = None,
-        category: Optional[MaterialCategory] = None
+        material_type: Optional[MaterialType] = None
     ) -> int:
         """
         获取素材总数
         
         Args:
             material_type: 按类型筛选
-            category: 按分类筛选
             
         Returns:
             素材数量
@@ -307,9 +297,6 @@ class MaterialStorage:
             
             if material_type:
                 index = [item for item in index if item.get('type') == material_type.value]
-            
-            if category:
-                index = [item for item in index if item.get('category') == category.value]
             
             return len(index)
         except Exception as e:
@@ -344,21 +331,6 @@ class MaterialStorage:
             
         except Exception as e:
             logger.error(f"搜索素材失败: {e}", exc_info=True)
-            return []
-    
-    def get_categories(self) -> List[str]:
-        """
-        获取所有使用中的分类
-        
-        Returns:
-            分类列表
-        """
-        try:
-            index = self._load_index()
-            categories = set(item.get('category') for item in index)
-            return sorted(list(categories))
-        except Exception as e:
-            logger.error(f"获取分类列表失败: {e}", exc_info=True)
             return []
     
     def get_tags(self) -> List[str]:

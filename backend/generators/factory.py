@@ -7,9 +7,9 @@ from typing import Optional, Dict, Any, List
 from flask import current_app
 
 from .base_generator import BaseGenerator, ContentType
-from .openai_generator import OpenAIGenerator
-from .image_api_generator import ImageAPIGenerator
-from .mock_generator import MockGenerator
+from .workflows.text_workflow import TextWorkflow
+from .workflows.image_workflow import ImageWorkflow
+from .workflows.mock_workflow import MockWorkflow
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +19,9 @@ class GeneratorFactory:
     
     # 支持的生成器类型映射
     GENERATOR_TYPES = {
-        'openai': OpenAIGenerator,
-        'image_api': ImageAPIGenerator,
-        'mock': MockGenerator
+        'openai': {'text': TextWorkflow, 'image': ImageWorkflow},
+        'image_api': {'image': ImageWorkflow},
+        'mock': {'text': MockWorkflow, 'image': MockWorkflow}
     }
     
     @staticmethod
@@ -41,26 +41,70 @@ class GeneratorFactory:
         """
         try:
             if provider == 'mock':
-                generator = MockGenerator()
+                generator = MockWorkflow()
             elif provider == 'openai':
-                api_key = current_app.config.get('OPENAI_API_KEY')
-                base_url = current_app.config.get('OPENAI_BASE_URL')
-                model = current_app.config.get('OPENAI_MODEL', 'gpt-4')
-                if not api_key:
-                    logger.error("OPENAI_API_KEY 未配置")
-                    return None
-                logger.info(f"创建 OpenAI 生成器: api_key={api_key[:10]}..., base_url={base_url}, model={model}")
-                generator = OpenAIGenerator(api_key=api_key, base_url=base_url, model=model)
-                logger.info("OpenAI 生成器创建成功")
+                # 根据 content_type 选择工作流
+                if content_type == ContentType.TEXT:
+                    api_key = current_app.config.get('OPENAI_API_KEY')
+                    base_url = current_app.config.get('OPENAI_BASE_URL')
+                    model = current_app.config.get('OPENAI_MODEL', 'gpt-4')
+                    
+                    if not api_key:
+                        logger.error("OPENAI_API_KEY 未配置")
+                        return None
+                    
+                    generator = TextWorkflow(
+                        provider='openai',
+                        api_key=api_key,
+                        base_url=base_url,
+                        model=model
+                    )
+                elif content_type == ContentType.IMAGE:
+                    api_key = current_app.config.get('OPENAI_API_KEY')
+                    base_url = current_app.config.get('OPENAI_BASE_URL')
+                    model = current_app.config.get('OPENAI_MODEL', 'dall-e-3')
+                    
+                    if not api_key:
+                        logger.error("OPENAI_API_KEY 未配置")
+                        return None
+                    
+                    generator = ImageWorkflow(
+                        provider='openai',
+                        api_key=api_key,
+                        base_url=base_url,
+                        model=model
+                    )
+                else:
+                    # 默认创建文本工作流
+                    api_key = current_app.config.get('OPENAI_API_KEY')
+                    base_url = current_app.config.get('OPENAI_BASE_URL')
+                    model = current_app.config.get('OPENAI_MODEL', 'gpt-4')
+                    
+                    if not api_key:
+                        logger.error("OPENAI_API_KEY 未配置")
+                        return None
+                    
+                    generator = TextWorkflow(
+                        provider='openai',
+                        api_key=api_key,
+                        base_url=base_url,
+                        model=model
+                    )
             elif provider == 'image_api':
                 api_key = current_app.config.get('IMAGE_API_KEY')
                 api_url = current_app.config.get('IMAGE_API_URL')
-                model = current_app.config.get('IMAGE_MODEL', 'dall-e-3')
+                model = current_app.config.get('IMAGE_MODEL', 'nano-banana')
+                
                 if not api_key or not api_url:
                     logger.error("IMAGE_API_KEY 或 IMAGE_API_URL 未配置")
                     return None
-                logger.info(f"创建 Image API 生成器: api_key={api_key[:10]}..., api_url={api_url}, model={model}")
-                generator = ImageAPIGenerator(api_key=api_key, api_url=api_url, model=model)
+                
+                generator = ImageWorkflow(
+                    provider='image_api',
+                    api_key=api_key,
+                    api_url=api_url,
+                    model=model
+                )
             else:
                 logger.error(f"不支持的生成器类型: {provider}")
                 return None
@@ -89,16 +133,19 @@ class GeneratorFactory:
         """
         available = []
         
-        for provider, generator_class in GeneratorFactory.GENERATOR_TYPES.items():
-            # 检查该生成器类是否支持指定的内容类型
-            if content_type in generator_class.SUPPORTED_TYPES:
-                # 进一步检查配置是否完整
-                if provider == 'mock':
-                    available.append(provider)
-                elif provider == 'openai' and current_app.config.get('OPENAI_API_KEY'):
-                    available.append(provider)
-                elif provider == 'image_api' and current_app.config.get('IMAGE_API_KEY') and current_app.config.get('IMAGE_API_URL'):
-                    available.append(provider)
+        # Mock 总是可用
+        if content_type in MockWorkflow.SUPPORTED_TYPES:
+            available.append('mock')
+        
+        # 检查 OpenAI
+        if content_type in TextWorkflow.SUPPORTED_TYPES or content_type in ImageWorkflow.SUPPORTED_TYPES:
+            if current_app.config.get('OPENAI_API_KEY'):
+                available.append('openai')
+        
+        # 检查 Image API
+        if content_type == ContentType.IMAGE:
+            if current_app.config.get('IMAGE_API_KEY') and current_app.config.get('IMAGE_API_URL'):
+                available.append('image_api')
         
         return available
     
@@ -113,11 +160,14 @@ class GeneratorFactory:
         Returns:
             支持的内容类型列表
         """
-        if provider not in GeneratorFactory.GENERATOR_TYPES:
-            return []
+        if provider == 'mock':
+            return [ct.value for ct in MockWorkflow.SUPPORTED_TYPES]
+        elif provider == 'openai':
+            return [ContentType.TEXT.value, ContentType.IMAGE.value]
+        elif provider == 'image_api':
+            return [ContentType.IMAGE.value]
         
-        generator_class = GeneratorFactory.GENERATOR_TYPES[provider]
-        return [ct.value for ct in generator_class.SUPPORTED_TYPES]
+        return []
     
     @staticmethod
     def get_all_capabilities() -> Dict[str, List[str]]:
@@ -127,14 +177,11 @@ class GeneratorFactory:
         Returns:
             服务商能力字典 {provider: [content_types]}
         """
-        capabilities = {}
-        
-        for provider in GeneratorFactory.GENERATOR_TYPES.keys():
-            caps = GeneratorFactory.get_provider_capabilities(provider)
-            if caps:
-                capabilities[provider] = caps
-        
-        return capabilities
+        return {
+            'mock': [ContentType.TEXT.value, ContentType.IMAGE.value],
+            'openai': [ContentType.TEXT.value, ContentType.IMAGE.value],
+            'image_api': [ContentType.IMAGE.value]
+        }
     
     @staticmethod
     def validate_generator(generator: BaseGenerator) -> bool:

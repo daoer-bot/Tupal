@@ -91,7 +91,6 @@ const filteredMaterials = computed(() => {
   return allMaterials.value
     .filter(m => 
       m.name.toLowerCase().includes(query) ||
-      m.category.toLowerCase().includes(query) ||
       m.tags.some(tag => tag.toLowerCase().includes(query))
     )
     .slice(0, 10)
@@ -343,7 +342,7 @@ async function loadMaterials() {
 
 function getTypeIcon(type: string): string {
   const icons: Record<string, string> = {
-    text: '📝', image: '🖼️', style: '🎨', product: '📦'
+    text: '📝', image: '🖼️', reference: '📚'
   }
   return icons[type] || '📄'
 }
@@ -354,11 +353,8 @@ function getPreviewText(material: Material): string {
     return text.length > 40 ? text.substring(0, 40) + '...' : text
   } else if (material.type === 'image') {
     return material.content.description || '图片素材'
-  } else if (material.type === 'style') {
-    return material.content.tone || ''
-  } else if (material.type === 'product') {
-    const desc = material.content.description || ''
-    return desc.length > 40 ? desc.substring(0, 40) + '...' : desc
+  } else if (material.type === 'reference') {
+    return material.content.reference_type || '参考素材'
   }
   return material.description || ''
 }

@@ -8,8 +8,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from models.material import (
-    Material, MaterialType, MaterialCategory,
-    create_material
+    Material, MaterialType,
+    create_text, create_image, create_reference
 )
 from storage.material_storage import MaterialStorage
 
@@ -27,7 +27,6 @@ class MaterialService:
         self,
         name: str,
         material_type: str,
-        category: str,
         content: Dict[str, Any],
         tags: List[str] = None,
         description: str = ""
@@ -38,7 +37,6 @@ class MaterialService:
         Args:
             name: 素材名称
             material_type: 素材类型
-            category: 素材分类
             content: 素材内容
             tags: 标签列表
             description: 描述
@@ -49,17 +47,23 @@ class MaterialService:
         try:
             # 类型转换
             mat_type = MaterialType(material_type)
-            mat_category = MaterialCategory(category)
             
-            # 创建素材实例
-            material = create_material(
-                name=name,
-                material_type=mat_type,
-                category=mat_category,
-                content=content,
-                tags=tags,
-                description=description
-            )
+            # 根据类型创建素材实例
+            if mat_type == MaterialType.TEXT:
+                material = create_text(name, content.get('text', ''), **content)
+            elif mat_type == MaterialType.IMAGE:
+                material = create_image(name, content.get('url', ''), **content)
+            elif mat_type == MaterialType.REFERENCE:
+                material = create_reference(name, content.get('reference_type', ''), **content)
+            else:
+                logger.error(f"不支持的素材类型: {material_type}")
+                return None
+            
+            # 设置标签和描述
+            if tags:
+                material.tags = tags
+            if description:
+                material.description = description
             
             # 保存
             if self.storage.save(material):
@@ -82,8 +86,7 @@ class MaterialService:
         name: Optional[str] = None,
         content: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
-        description: Optional[str] = None,
-        category: Optional[str] = None
+        description: Optional[str] = None
     ) -> bool:
         """
         更新素材
@@ -94,7 +97,6 @@ class MaterialService:
             content: 新内容
             tags: 新标签列表
             description: 新描述
-            category: 新分类
             
         Returns:
             是否成功
@@ -115,8 +117,6 @@ class MaterialService:
                 material.tags = tags
             if description is not None:
                 material.description = description
-            if category is not None:
-                material.category = MaterialCategory(category)
             
             # 更新时间戳
             material.updated_at = datetime.now().isoformat()
@@ -170,7 +170,6 @@ class MaterialService:
     def get_materials(
         self,
         material_type: Optional[str] = None,
-        category: Optional[str] = None,
         tags: Optional[List[str]] = None,
         page: int = 1,
         page_size: int = 20
@@ -180,7 +179,6 @@ class MaterialService:
         
         Args:
             material_type: 按类型筛选
-            category: 按分类筛选
             tags: 按标签筛选
             page: 页码
             page_size: 每页数量
@@ -191,7 +189,6 @@ class MaterialService:
         try:
             # 类型转换
             mat_type = MaterialType(material_type) if material_type else None
-            mat_category = MaterialCategory(category) if category else None
             
             # 计算偏移量
             offset = (page - 1) * page_size
@@ -199,17 +196,13 @@ class MaterialService:
             # 获取素材列表
             materials = self.storage.get_all(
                 material_type=mat_type,
-                category=mat_category,
                 tags=tags,
                 limit=page_size,
                 offset=offset
             )
             
             # 获取总数
-            total = self.storage.count(
-                material_type=mat_type,
-                category=mat_category
-            )
+            total = self.storage.count(material_type=mat_type)
             
             # 转换为字典
             items = [material.to_dict() for material in materials]
@@ -270,19 +263,6 @@ class MaterialService:
             return [material.to_dict() for material in materials]
         except Exception as e:
             logger.error(f"批量获取素材失败: {e}", exc_info=True)
-            return []
-    
-    def get_categories(self) -> List[str]:
-        """
-        获取所有分类
-        
-        Returns:
-            分类列表
-        """
-        try:
-            return self.storage.get_categories()
-        except Exception as e:
-            logger.error(f"获取分类列表失败: {e}", exc_info=True)
             return []
     
     def get_tags(self) -> List[str]:
@@ -405,40 +385,17 @@ class MaterialService:
                     if image_url:
                         reference_images.append(image_url)
                 
-                elif material.type == MaterialType.STYLE:
-                    # 风格素材：提取风格参数
-                    tone = material.content.get('tone', '')
-                    style_guide = material.content.get('style_guide', '')
-                    temperature = material.content.get('temperature', 0.7)
+                elif material.type == MaterialType.REFERENCE:
+                    # 参考素材：提取参考信息
+                    reference_type = material.content.get('reference_type', '')
+                    if reference_type:
+                        enhanced_prompt += f"\n\n【参考-{material.name}】类型：{reference_type}"
                     
-                    if tone:
-                        enhanced_prompt += f"\n\n【语言风格】{tone}"
-                    if style_guide:
-                        enhanced_prompt += f"\n【风格指南】{style_guide}"
-                    
-                    style_params['temperature'] = temperature
-                
-                elif material.type == MaterialType.PRODUCT:
-                    # 产品素材：组合处理
-                    description = material.content.get('description', '')
-                    if description:
-                        enhanced_prompt += f"\n\n【产品信息-{material.name}】\n{description}"
-                    
-                    # 卖点
-                    selling_points = material.content.get('selling_points', [])
-                    if selling_points:
-                        enhanced_prompt += f"\n【产品卖点】\n"
-                        for point in selling_points:
-                            enhanced_prompt += f"- {point}\n"
-                    
-                    # 关联的图片素材
-                    image_ids = material.content.get('images', [])
-                    if image_ids:
-                        image_materials = self.storage.get_by_ids(image_ids)
-                        for img_mat in image_materials:
-                            img_url = img_mat.content.get('url')
-                            if img_url:
-                                reference_images.append(img_url)
+                    # 其他参考内容
+                    if 'content' in material.content:
+                        enhanced_prompt += f"\n{material.content['content']}"
+                    if 'account' in material.content:
+                        enhanced_prompt += f"\n账号：{material.content['account']}"
             
             logger.info(f"素材引用处理完成，引用了 {len(materials)} 个素材")
             
@@ -484,13 +441,9 @@ class MaterialService:
                 if 'url' not in content or not content['url']:
                     return False, "图片素材必须包含非空的url字段"
             
-            elif mat_type == MaterialType.STYLE:
-                if 'tone' not in content and 'style_guide' not in content:
-                    return False, "风格素材必须包含tone或style_guide字段"
-            
-            elif mat_type == MaterialType.PRODUCT:
-                if 'description' not in content:
-                    return False, "产品素材必须包含description字段"
+            elif mat_type == MaterialType.REFERENCE:
+                if 'reference_type' not in content:
+                    return False, "参考素材必须包含reference_type字段"
             
             return True, None
             

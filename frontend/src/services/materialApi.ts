@@ -8,8 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030
 export interface Material {
   id: string
   name: string
-  type: 'text' | 'image' | 'style' | 'product' | 'data'
-  category: string
+  type: 'text' | 'image' | 'reference'
   content: any
   tags: string[]
   description: string
@@ -39,8 +38,7 @@ export interface MaterialResponse {
 
 export interface CreateMaterialRequest {
   name: string
-  type: 'text' | 'image' | 'style' | 'product' | 'data'
-  category: string
+  type: 'text' | 'image' | 'reference'
   content: any
   tags?: string[]
   description?: string
@@ -51,7 +49,6 @@ export interface UpdateMaterialRequest {
   content?: any
   tags?: string[]
   description?: string
-  category?: string
 }
 
 export interface ProcessReferencesRequest {
@@ -95,7 +92,6 @@ class MaterialApi {
    */
   async getMaterials(params?: {
     type?: string
-    category?: string
     tags?: string
     page?: number
     page_size?: number
@@ -191,18 +187,6 @@ class MaterialApi {
   /**
    * 获取所有分类
    */
-  async getCategories(): Promise<{ success: boolean; data?: string[]; error?: string }> {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/materials/categories`)
-      return response.data
-    } catch (error: any) {
-      console.error('获取分类列表失败:', error)
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || '获取分类列表失败'
-      }
-    }
-  }
 
   /**
    * 获取所有标签
@@ -313,13 +297,10 @@ class MaterialApi {
               replacement = material.content.text || ''
             } else if (material.type === 'image') {
               replacement = material.content.description || `[图片素材：${materialName}]`
-            } else if (material.type === 'style') {
-              replacement = material.content.tone || ''
-            } else if (material.type === 'product') {
-              replacement = material.content.description || ''
-              const sellingPoints = material.content.selling_points || []
-              if (sellingPoints.length > 0) {
-                replacement += '\n特点：' + sellingPoints.join('、')
+            } else if (material.type === 'reference') {
+              replacement = material.content.content || ''
+              if (material.content.reference_type) {
+                replacement = `[参考：${material.content.reference_type}]`
               }
             }
             

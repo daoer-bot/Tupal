@@ -1,5 +1,5 @@
 <template>
-  <div class="material-editor-overlay" @click.self="$emit('close')">
+  <div v-if="show" class="material-editor-overlay" @click.self="$emit('close')">
     <div class="material-editor">
       <div class="editor-header">
         <h2>{{ isEdit ? '编辑素材' : '创建素材' }}</h2>
@@ -10,15 +10,15 @@
 
       <div class="editor-body">
         <form @submit.prevent="handleSubmit">
-          <!-- 场景选择器 (仅在创建时显示) -->
+          <!-- 素材类型选择 (仅在创建时显示) -->
           <div class="form-section" v-if="!isEdit">
             <h3>选择素材类型</h3>
             <div class="scene-grid">
               <div
                 v-for="scene in scenes"
-                :key="scene.category"
+                :key="scene.type"
                 class="scene-card"
-                :class="{ active: formData.category === scene.category }"
+                :class="{ active: formData.type === scene.type }"
                 @click="selectScene(scene)"
               >
                 <div class="scene-icon">
@@ -47,15 +47,15 @@
             </div>
           </div>
 
-          <!-- 内容类型选择 -->
-          <div class="form-section">
-            <h3>内容类型</h3>
+          <!-- 内容格式选择 (仅对参考素材显示) -->
+          <div class="form-section" v-if="formData.type === 'reference'">
+            <h3>内容格式</h3>
             <div class="content-type-tabs">
               <button
                 type="button"
                 class="tab-btn"
-                :class="{ active: contentType === 'text' }"
-                @click="contentType = 'text'"
+                :class="{ active: contentFormat === 'text' }"
+                @click="contentFormat = 'text'"
               >
                 <FileText :size="18" />
                 <span>文字内容</span>
@@ -63,8 +63,8 @@
               <button
                 type="button"
                 class="tab-btn"
-                :class="{ active: contentType === 'image' }"
-                @click="contentType = 'image'"
+                :class="{ active: contentFormat === 'image' }"
+                @click="contentFormat = 'image'"
               >
                 <Image :size="18" />
                 <span>图片内容</span>
@@ -77,12 +77,12 @@
             <h3>素材内容</h3>
             
             <!-- 文本输入 -->
-            <div v-if="contentType === 'text'" class="content-editor">
+            <div v-if="showTextInput" class="content-editor">
               <div class="form-group">
-                <label>文本内容 *</label>
+                <label>{{ contentLabel }} *</label>
                 <textarea
                   v-model="contentText"
-                  placeholder="请输入内容..."
+                  :placeholder="contentPlaceholder"
                   rows="10"
                   required
                 ></textarea>
@@ -149,6 +149,7 @@ import type { Material } from '../services/materialApi'
 import type { Component } from 'vue'
 
 const props = defineProps<{
+  show?: boolean
   material?: Material
 }>()
 
@@ -160,8 +161,6 @@ const emit = defineEmits<{
 const isEdit = computed(() => !!props.material)
 const loading = ref(false)
 
-// 内容类型（text 或 image）
-const contentType = ref<'text' | 'image'>('text')
 
 // 统一的内容文本
 const contentText = ref('')
@@ -172,40 +171,62 @@ const imagePreview = ref('')
 const imageFile = ref<File>()
 const isDragging = ref(false)
 
-// 场景定义 - 5大核心类型
+// 场景定义 - 3种核心类型
 const scenes = [
-  { name: '视觉核心素材', category: '视觉核心素材', type: 'image', icon: Film, desc: '封面图、场景图、生活片段' },
-  { name: '细节展示素材', category: '细节展示素材', type: 'image', icon: ZoomIn, desc: '产品特写、使用效果、材质纹理' },
-  { name: '信息结构素材', category: '信息结构素材', type: 'image', icon: BarChart3, desc: '表格、流程图、结构图、截图' },
-  { name: '对比验证素材', category: '对比验证素材', type: 'image', icon: Scale, desc: '前后对比、数据验证、测评参数' },
-  { name: '文案配图素材', category: '文案配图素材', type: 'text', icon: Type, desc: '金句、标题、引导文案' },
+  { name: '文本素材', type: 'text', icon: Type, desc: '标题、文案、话术、数据' },
+  { name: '图片素材', type: 'image', icon: Film, desc: '产品图、配图、截图' },
+  { name: '参考素材', type: 'reference', icon: ZoomIn, desc: '优秀案例、对标账号、风格参考' },
 ] as const
 
 // 表单数据
 const formData = reactive({
   name: '',
-  type: 'image' as 'text' | 'image',
-  category: '封面素材',
+  type: 'text' as 'text' | 'image' | 'reference',
   content: {} as any
+})
+
+// 内容格式（仅用于参考素材）
+const contentFormat = ref<'text' | 'image'>('text')
+
+// 计算属性：是否显示文本输入
+const showTextInput = computed(() => {
+  if (formData.type === 'text') return true
+  if (formData.type === 'image') return false
+  if (formData.type === 'reference') return contentFormat.value === 'text'
+  return true
+})
+
+// 计算属性：内容标签
+const contentLabel = computed(() => {
+  if (formData.type === 'text') return '文本内容'
+  if (formData.type === 'reference') return '参考内容'
+  return '内容'
+})
+
+// 计算属性：内容占位符
+const contentPlaceholder = computed(() => {
+  if (formData.type === 'text') return '请输入文本内容...'
+  if (formData.type === 'reference') return '请输入参考案例、对标账号或风格描述...'
+  return '请输入内容...'
 })
 
 // 初始化表单数据
 if (props.material) {
   formData.name = props.material.name
-  // 只接受 text 和 image 类型，其他类型默认为 text
-  formData.type = (props.material.type === 'text' || props.material.type === 'image')
-    ? props.material.type
-    : 'text'
-  formData.category = props.material.category
+  formData.type = props.material.type as any
   formData.content = { ...props.material.content }
 
-  // 设置内容类型和内容
-  if (props.material.type === 'text' && props.material.content.text) {
-    contentType.value = 'text'
+  // 设置内容
+  if (props.material.content.text) {
     contentText.value = props.material.content.text
-  } else if (props.material.type === 'image' && props.material.content.url) {
-    contentType.value = 'image'
+    if (props.material.type === 'reference') {
+      contentFormat.value = 'text'
+    }
+  } else if (props.material.content.url) {
     imagePreview.value = props.material.content.url
+    if (props.material.type === 'reference') {
+      contentFormat.value = 'image'
+    }
   }
 } else {
   // 默认选中第一个场景
@@ -214,17 +235,12 @@ if (props.material) {
 
 // 选择场景
 function selectScene(scene: typeof scenes[number]) {
-  formData.category = scene.category
-  formData.type = scene.type as any
-  initContentByType(scene.type)
-}
-
-function initContentByType(type: string) {
+  formData.type = scene.type
   // 清空内容
-  formData.content = {}
   contentText.value = ''
   imagePreview.value = ''
   imageFile.value = undefined
+  contentFormat.value = 'text'
 }
 
 // 触发文件选择
@@ -272,34 +288,42 @@ function removeImage() {
 async function handleSubmit() {
   loading.value = true
 
-  // 根据内容类型包装内容
+  // 根据素材类型和内容格式包装内容
   let content: any = {}
+  let finalType = formData.type
   
-  if (contentType.value === 'text') {
+  if (showTextInput.value) {
     // 文本内容
     if (!contentText.value.trim()) {
-      alert('请输入文本内容')
+      alert('请输入内容')
       loading.value = false
       return
     }
     content = { text: contentText.value }
-    formData.type = 'text'
+    
+    // 参考素材的文本内容，需要添加 reference_type
+    if (formData.type === 'reference') {
+      content.reference_type = 'text'
+    }
   } else {
-    // 图片内容 - 使用base64编码的图片数据
+    // 图片内容
     if (!imagePreview.value) {
       alert('请上传图片')
       loading.value = false
       return
     }
-    content = { url: imagePreview.value, description: '' }
-    formData.type = 'image'
+    content = { url: imagePreview.value }
+    
+    // 参考素材的图片内容，需要添加 reference_type
+    if (formData.type === 'reference') {
+      content.reference_type = 'image'
+    }
   }
 
-  // 提交数据，确保可选字段有默认值
+  // 提交数据
   emit('submit', {
     name: formData.name,
-    type: formData.type,
-    category: formData.category,
+    type: finalType,
     content: content,
     tags: [],
     description: '',

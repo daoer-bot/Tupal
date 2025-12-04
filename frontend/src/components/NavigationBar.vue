@@ -1,0 +1,622 @@
+<template>
+  <header class="navigation-bar">
+    <div class="nav-container">
+      <!-- Logo 区域 -->
+      <div class="logo-section">
+        <div class="logo-wrapper">
+          <div class="logo-icon breathing-glow">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l-.249 1.74" />
+            </svg>
+          </div>
+          <div class="logo-text">
+            <h1 class="brand-name text-gradient-animated">Tupal</h1>
+            <p class="brand-tagline">AI创意引擎</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 导航菜单 -->
+      <nav class="nav-menu">
+        <div class="nav-items">
+          <router-link 
+            v-for="item in navItems" 
+            :key="item.path"
+            :to="item.path"
+            class="nav-item"
+            :class="{ 'active': $route.path === item.path }"
+            @mouseenter="handleNavHover(item)"
+            @mouseleave="handleNavLeave"
+          >
+            <div class="nav-icon">
+              <component :is="item.icon" :size="18" />
+            </div>
+            <span class="nav-label">{{ item.label }}</span>
+            <div class="nav-indicator"></div>
+          </router-link>
+        </div>
+        
+        <!-- 动态指示器背景 -->
+        <div 
+          class="nav-indicator-bg" 
+          :style="indicatorStyle"
+          :class="{ 'transition': isTransitioning }"
+        ></div>
+      </nav>
+      
+      <!-- 右侧操作区 -->
+      <div class="nav-actions">
+        <!-- 模型配置 -->
+        <button 
+          class="action-btn config-btn glass-card-premium"
+          @click="showConfigModal = true"
+          title="AI模型配置"
+        >
+          <Settings :size="18" />
+          <span class="btn-label">配置</span>
+          <div class="btn-indicator" v-if="hasModelConfig"></div>
+        </button>
+        
+        <!-- 主题切换 -->
+        <button 
+          class="action-btn theme-btn glass-card-premium"
+          @click="toggleTheme"
+          title="切换主题"
+        >
+          <component :is="themeIcon" :size="18" />
+        </button>
+        
+        <!-- 用户菜单 -->
+        <div class="user-menu">
+          <button class="action-btn user-btn glass-card-premium" @click="toggleUserMenu">
+            <User :size="18" />
+          </button>
+          
+          <transition name="dropdown">
+            <div v-if="showUserMenu" class="user-dropdown glass-card-premium">
+              <div class="dropdown-header">
+                <div class="user-avatar">
+                  <User :size="24" />
+                </div>
+                <div class="user-info">
+                  <div class="user-name">创作者</div>
+                  <div class="user-status">在线</div>
+                </div>
+              </div>
+              
+              <div class="dropdown-divider"></div>
+              
+              <div class="dropdown-items">
+                <button class="dropdown-item" @click="openSettings">
+                  <Settings :size="16" />
+                  <span>设置</span>
+                </button>
+                <button class="dropdown-item" @click="openHelp">
+                  <HelpCircle :size="16" />
+                  <span>帮助</span>
+                </button>
+                <button class="dropdown-item" @click="openAbout">
+                  <Info :size="16" />
+                  <span>关于</span>
+                </button>
+              </div>
+            </div>
+          </transition>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 配置模态框 -->
+    <ModelConfigModal
+      :show="showConfigModal"
+      @close="showConfigModal = false"
+      @save="handleSaveConfig"
+    />
+  </header>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { 
+  Home, 
+  Database, 
+  TrendingUp, 
+  History, 
+  Settings, 
+  Sun, 
+  Moon, 
+  User,
+  HelpCircle,
+  Info
+} from 'lucide-vue-next'
+import ModelConfigModal from './ModelConfigModal.vue'
+
+const route = useRoute()
+const showConfigModal = ref(false)
+const showUserMenu = ref(false)
+const isTransitioning = ref(false)
+const currentTheme = ref<'light' | 'dark'>('light')
+
+// 导航项
+const navItems = [
+  {
+    path: '/inspiration',
+    label: '灵感与发现',
+    icon: TrendingUp
+  },
+  {
+    path: '/creation/new',
+    label: '智能创作',
+    icon: Database
+  },
+  {
+    path: '/workspace/works',
+    label: '作品与资产',
+    icon: History
+  }
+]
+
+// 当前激活的导航项索引
+const activeNavIndex = computed(() => {
+  return navItems.findIndex(item => item.path === route.path)
+})
+
+// 指示器样式
+const indicatorStyle = computed(() => {
+  const index = activeNavIndex.value
+  if (index === -1) return {}
+  
+  return {
+    transform: `translateX(${index * 100}%)`,
+    width: `${100 / navItems.length}%`
+  }
+})
+
+// 主题图标
+const themeIcon = computed(() => {
+  return currentTheme.value === 'light' ? Moon : Sun
+})
+
+// 是否有模型配置
+const hasModelConfig = computed(() => {
+  return localStorage.getItem('textModels') || localStorage.getItem('imageModels')
+})
+
+// 处理导航悬停
+const handleNavHover = (item: any) => {
+  // 可以添加悬停效果
+}
+
+const handleNavLeave = () => {
+  // 可以添加离开效果
+}
+
+// 切换主题
+const toggleTheme = () => {
+  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+  document.documentElement.setAttribute('data-theme', currentTheme.value)
+  localStorage.setItem('theme', currentTheme.value)
+}
+
+// 切换用户菜单
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+// 打开设置
+const openSettings = () => {
+  showConfigModal.value = true
+  showUserMenu.value = false
+}
+
+// 打开帮助
+const openHelp = () => {
+  // 实现帮助功能
+  showUserMenu.value = false
+}
+
+// 打开关于
+const openAbout = () => {
+  // 实现关于功能
+  showUserMenu.value = false
+}
+
+// 保存配置
+const handleSaveConfig = () => {
+  // 配置已保存，可以添加提示
+}
+
+// 点击外部关闭用户菜单
+const handleClickOutside = (event: Event) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.user-menu')) {
+    showUserMenu.value = false
+  }
+}
+
+// 监听路由变化
+const handleRouteChange = () => {
+  isTransitioning.value = true
+  setTimeout(() => {
+    isTransitioning.value = false
+  }, 300)
+}
+
+onMounted(() => {
+  // 初始化主题
+  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+  if (savedTheme) {
+    currentTheme.value = savedTheme
+    document.documentElement.setAttribute('data-theme', savedTheme)
+  }
+  
+  // 监听点击外部
+  document.addEventListener('click', handleClickOutside)
+  
+  // 监听路由变化
+  handleRouteChange()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+</script>
+
+<style scoped>
+.navigation-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+}
+
+.nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo 区域 */
+.logo-section {
+  flex-shrink: 0;
+}
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.logo-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.brand-tagline {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* 导航菜单 */
+.nav-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-items {
+  display: flex;
+  position: relative;
+  z-index: 2;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.nav-item:hover {
+  color: var(--primary-color);
+}
+
+.nav-item.active {
+  color: var(--primary-color);
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-label {
+  white-space: nowrap;
+}
+
+.nav-indicator {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color);
+  border-radius: 1px;
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+.nav-item.active .nav-indicator {
+  width: 24px;
+}
+
+.nav-indicator-bg {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  z-index: 1;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.nav-indicator-bg.transition {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 右侧操作区 */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.config-btn {
+  padding: 0.75rem 1.25rem;
+}
+
+.btn-label {
+  font-size: 0.85rem;
+}
+
+.btn-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* 用户菜单 */
+.user-menu {
+  position: relative;
+}
+
+.user-btn {
+  padding: 0.75rem;
+  border-radius: 50%;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  min-width: 200px;
+  padding: 0.75rem;
+  z-index: 1000;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.user-status {
+  font-size: 0.75rem;
+  color: #10b981;
+  margin: 0;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
+.dropdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--primary-color);
+}
+
+/* 动画 */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 下拉动画 */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .navigation-bar {
+    background: rgba(15, 23, 42, 0.8);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .nav-menu {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .nav-indicator-bg {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .action-btn {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0 1rem;
+  }
+  
+  .logo-text {
+    display: none;
+  }
+  
+  .nav-label {
+    display: none;
+  }
+  
+  .btn-label {
+    display: none;
+  }
+  
+  .nav-item {
+    padding: 0.75rem;
+  }
+  
+  .action-btn {
+    padding: 0.75rem;
+  }
+}
+</style>

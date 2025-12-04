@@ -5,7 +5,7 @@
 import logging
 import threading
 from typing import List, Dict, Any, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 from datetime import datetime
 
 from generators.factory import get_image_generator
@@ -133,13 +133,13 @@ class ImageService:
                     )
                     future_to_page[future] = page
                 
-                # 处理完成的任务
+                # 处理完成的任务（添加超时机制：每个图片最多5分钟）
                 for future in as_completed(future_to_page):
                     page = future_to_page[future]
                     page_number = page.get('page_number', 0)
                     
                     try:
-                        result = future.result()
+                        result = future.result(timeout=600)  # 5分钟超时
                         
                         if result['success']:
                             # 更新进度
@@ -161,8 +161,17 @@ class ImageService:
                             logger.error(f"页面 {page_number} 生成失败: {error_msg}")
                             # 继续生成其他页面，不中断整个任务
                             
+                    except TimeoutError:
+                        # 超时异常
+                        error_msg = "图片生成超时（超过5分钟）"
+                        self.progress_service.record_failed_page(
+                            task_id=task_id,
+                            page_number=page_number,
+                            error=error_msg
+                        )
+                        logger.error(f"页面 {page_number} 生成超时")
                     except Exception as e:
-                        # 异常情况也记录为失败
+                        # 其他异常情况也记录为失败
                         error_msg = f"处理结果异常: {str(e)}"
                         self.progress_service.record_failed_page(
                             task_id=task_id,

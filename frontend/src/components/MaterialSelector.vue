@@ -76,7 +76,6 @@
             {{ getPreviewText(material) }}
           </div>
           <div class="item-footer">
-            <span class="item-category">{{ material.category }}</span>
             <span v-if="isSelected(material.id)" class="check-icon">✓</span>
           </div>
         </div>
@@ -118,8 +117,7 @@ const materialTypes = [
   { value: '', label: '全部' },
   { value: 'text', label: '📝 文本' },
   { value: 'image', label: '🖼️ 图片' },
-  { value: 'style', label: '🎨 风格' },
-  { value: 'product', label: '📦 产品' }
+  { value: 'reference', label: '📚 参考' }
 ]
 
 // 加载素材列表
@@ -220,8 +218,7 @@ function getTypeIcon(type: string): string {
   const icons: Record<string, string> = {
     text: '📝',
     image: '🖼️',
-    style: '🎨',
-    product: '📦'
+    reference: '📚'
   }
   return icons[type] || '📄'
 }
@@ -233,11 +230,9 @@ function getPreviewText(material: Material): string {
     return text.length > 60 ? text.substring(0, 60) + '...' : text
   } else if (material.type === 'image') {
     return material.content.description || '图片素材'
-  } else if (material.type === 'style') {
-    return material.content.tone || ''
-  } else if (material.type === 'product') {
-    const desc = material.content.description || ''
-    return desc.length > 60 ? desc.substring(0, 60) + '...' : desc
+  } else if (material.type === 'reference') {
+    const content = material.content.content || ''
+    return content.length > 60 ? content.substring(0, 60) + '...' : (material.content.reference_type || '参考素材')
   }
   return ''
 }
@@ -471,11 +466,6 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.item-category {
-  font-size: 12px;
-  color: #9ca3af;
 }
 
 .check-icon {

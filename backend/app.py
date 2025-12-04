@@ -51,10 +51,21 @@ def create_app(config_name='default'):
 
 def register_blueprints(app):
     """注册所有蓝图"""
-    from api.routes import api_bp
-    from api.material_routes import material_bp
+    from api import (
+        outline_bp,
+        image_bp,
+        history_bp,
+        trending_bp,
+        upload_bp,
+        material_bp
+    )
     
-    app.register_blueprint(api_bp, url_prefix=app.config['API_PREFIX'])
+    # 注册所有功能域蓝图
+    app.register_blueprint(outline_bp, url_prefix=app.config['API_PREFIX'])
+    app.register_blueprint(image_bp, url_prefix=app.config['API_PREFIX'])
+    app.register_blueprint(history_bp, url_prefix=app.config['API_PREFIX'])
+    app.register_blueprint(trending_bp, url_prefix=app.config['API_PREFIX'])
+    app.register_blueprint(upload_bp, url_prefix=app.config['API_PREFIX'])
     app.register_blueprint(material_bp, url_prefix=app.config['API_PREFIX'])
 
 

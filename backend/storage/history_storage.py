@@ -15,13 +15,18 @@ logger = logging.getLogger(__name__)
 class HistoryStorage:
     """历史记录存储类"""
     
-    def __init__(self, storage_dir: str = 'storage/history'):
+    def __init__(self, storage_dir: str = None):
         """
         初始化存储
         
         Args:
             storage_dir: 存储目录路径
         """
+        if storage_dir is None:
+            # 使用项目根目录的 storage/history
+            backend_dir = Path(__file__).resolve().parent.parent
+            project_root = backend_dir.parent
+            storage_dir = project_root / 'storage' / 'history'
         self.storage_dir = Path(storage_dir)
         self.index_file = self.storage_dir / 'index.json'
         self.lock = threading.Lock()

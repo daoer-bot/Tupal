@@ -39,7 +39,50 @@ class ProgressService:
             self._tasks: Dict[str, Dict[str, Any]] = {}
             self._tasks_lock = threading.Lock()
             self._initialized = True
+            self._max_tasks = 1000  # 最大任务数限制
+            self._cleanup_hours = 24  # 自动清理24小时前的完成任务
+            
+            # 启动自动清理线程
+            self._start_cleanup_thread()
             logger.info("进度管理服务已初始化")
+    
+    def _start_cleanup_thread(self):
+        """启动自动清理线程"""
+        def cleanup_worker():
+            import time
+            while True:
+                try:
+                    # 每小时执行一次清理
+                    time.sleep(3600)
+                    cleared = self.clear_completed_tasks(self._cleanup_hours)
+                    if cleared > 0:
+                        logger.info(f"自动清理了 {cleared} 个过期任务")
+                    
+                    # 检查任务数是否超限
+                    with self._tasks_lock:
+                        if len(self._tasks) > self._max_tasks:
+                            # 超限时，删除最旧的已完成任务
+                            completed_tasks = [
+                                (task_id, task['updated_at'])
+                                for task_id, task in self._tasks.items()
+                                if task['status'] in ['completed', 'failed']
+                            ]
+                            completed_tasks.sort(key=lambda x: x[1])
+                            
+                            # 删除最旧的任务直到低于限制
+                            to_remove = len(self._tasks) - int(self._max_tasks * 0.8)
+                            for task_id, _ in completed_tasks[:to_remove]:
+                                del self._tasks[task_id]
+                            
+                            if to_remove > 0:
+                                logger.warning(f"任务数超限，清理了 {to_remove} 个最旧的已完成任务")
+                
+                except Exception as e:
+                    logger.error(f"自动清理任务异常: {e}", exc_info=True)
+        
+        cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
+        cleanup_thread.start()
+        logger.info("自动清理线程已启动")
     
     def create_task(
         self,
