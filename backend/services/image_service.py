@@ -504,16 +504,18 @@ class ImageService:
                 logger.info(f"自定义配置 - URL: {self.model_config['url']}, Model: {self.model_config.get('model', 'dall-e-3')}")
                 
                 if self.generator_type == 'image_api':
-                    from generators.image_api_generator import ImageAPIGenerator
-                    return ImageAPIGenerator(
+                    from generators.generators.image_generator import ImageGenerator
+                    return ImageGenerator(
+                        provider='image_api',
                         api_key=self.model_config['apiKey'],
                         api_url=self.model_config['url'],
                         model=self.model_config.get('model', 'dall-e-3'),
                         apiFormat=self.model_config.get('apiFormat', 'generations')
                     )
                 elif self.generator_type == 'openai':
-                    from generators.openai_generator import OpenAIGenerator
-                    return OpenAIGenerator(
+                    from generators.generators.image_generator import ImageGenerator
+                    return ImageGenerator(
+                        provider='openai',
                         api_key=self.model_config['apiKey'],
                         base_url=self.model_config['url'],
                         model=self.model_config.get('model', 'dall-e-3')

@@ -97,7 +97,7 @@ class GeneratorFactory:
                     logger.error("IMAGE_API_KEY 或 IMAGE_API_URL 未配置")
                     return None
                 
-                generator = ImageWorkflow(
+                generator = ImageGenerator(
                     provider='image_api',
                     api_key=api_key,
                     api_url=api_url,
