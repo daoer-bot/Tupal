@@ -1,27 +1,26 @@
 """
-文本生成工作流
-组合提示词构建和模型调用，处理业务逻辑
+文本生成器
+组合提示词构建和客户端调用，处理文本生成逻辑
 """
 import logging
 from typing import Optional
 from flask import current_app
 
-from ..base_generator import BaseGenerator, ContentType, GenerationResult
+from ..base import BaseGenerator, ContentType, GenerationResult
 from ..prompts.text_prompts import build_outline_prompt
-from ..models.text.openai_text import OpenAITextModel
-from ..models.text.mock_text import MockTextModel
+from ..clients.text import OpenAITextClient, MockTextClient
 
 logger = logging.getLogger(__name__)
 
 
-class TextWorkflow(BaseGenerator):
-    """文本生成工作流"""
+class TextGenerator(BaseGenerator):
+    """文本生成器"""
     
     SUPPORTED_TYPES = {ContentType.TEXT}
     
     def __init__(self, provider: str = 'openai', **kwargs):
         """
-        初始化文本工作流
+        初始化文本生成器
         
         Args:
             provider: 服务提供商 ('openai' 或 'mock')
@@ -31,9 +30,9 @@ class TextWorkflow(BaseGenerator):
         
         self.provider = provider
         
-        # 根据 provider 创建对应的模型
+        # 根据 provider 创建对应的客户端
         if provider == 'mock':
-            self.model = MockTextModel()
+            self.client = MockTextClient()
         elif provider == 'openai':
             api_key = kwargs.get('api_key') or current_app.config.get('OPENAI_API_KEY')
             base_url = kwargs.get('base_url') or current_app.config.get('OPENAI_BASE_URL')
@@ -42,11 +41,11 @@ class TextWorkflow(BaseGenerator):
             if not api_key:
                 raise ValueError("OPENAI_API_KEY 未配置")
             
-            self.model = OpenAITextModel(api_key=api_key, base_url=base_url, model=model)
+            self.client = OpenAITextClient(api_key=api_key, base_url=base_url, model=model)
         else:
             raise ValueError(f"不支持的 provider: {provider}")
         
-        logger.info(f"文本工作流初始化完成: provider={provider}")
+        logger.info(f"文本生成器初始化完成: provider={provider}")
     
     def generate(
         self,
@@ -72,12 +71,12 @@ class TextWorkflow(BaseGenerator):
             # 1. 构建提示词
             full_prompt = build_outline_prompt(prompt)
             
-            # 2. 调用模型生成
-            if isinstance(self.model, MockTextModel):
-                result_data = self.model.generate(full_prompt)
+            # 2. 调用客户端生成
+            if isinstance(self.client, MockTextClient):
+                result_data = self.client.generate(full_prompt)
             else:
-                content = self.model.generate(full_prompt)
-                result_data = OpenAITextModel.extract_json(content)
+                content = self.client.generate(full_prompt)
+                result_data = OpenAITextClient.extract_json(content)
             
             # 3. 验证数据结构
             if not isinstance(result_data, dict):

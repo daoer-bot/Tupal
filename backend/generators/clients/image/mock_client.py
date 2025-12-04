@@ -1,5 +1,5 @@
 """
-Mock 图片模型
+Mock 图片 API 客户端
 用于开发测试
 """
 import logging
@@ -8,12 +8,12 @@ import time
 logger = logging.getLogger(__name__)
 
 
-class MockImageModel:
-    """Mock 图片模型类"""
+class MockImageClient:
+    """Mock 图片 API 客户端"""
     
     def __init__(self):
-        """初始化 Mock 图片模型"""
-        logger.info("使用 Mock 图片模型")
+        """初始化 Mock 图片客户端"""
+        logger.info("使用 Mock 图片客户端")
     
     def generate(self, prompt: str, width: int = 1080, height: int = 1440, reference_image: str = None) -> str:
         """

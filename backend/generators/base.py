@@ -1,6 +1,8 @@
 """
 生成器基类
-定义所有AI服务商的统一接口，支持多种内容生成能力
+定义所有生成器的统一接口，支持多种内容生成能力
+
+注意：文件已重命名为 base.py，此文件保持向后兼容
 """
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, Set, List

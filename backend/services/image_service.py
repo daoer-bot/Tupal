@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 from datetime import datetime
 
 from generators.factory import get_image_generator
-from generators.base_generator import BaseGenerator
+from generators.base import BaseGenerator, ContentType
 from .progress_service import ProgressService
 
 logger = logging.getLogger(__name__)
@@ -234,7 +234,6 @@ class ImageService:
             prompt = self._build_prompt(page, topic, all_pages, full_outline, processed_reference)
             
             # 生成图片 - 使用统一的 generate 接口
-            from generators.base_generator import ContentType
             generation_result = self.generator.generate(
                 content_type=ContentType.IMAGE,
                 prompt=prompt,

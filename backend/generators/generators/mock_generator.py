@@ -1,29 +1,29 @@
 """
-Mock 工作流
+Mock 生成器
 用于开发测试，同时支持文本和图片生成
 """
 import logging
 
-from ..base_generator import BaseGenerator, ContentType, GenerationResult
-from ..models.text.mock_text import MockTextModel
-from ..models.image.mock_image import MockImageModel
+from ..base import BaseGenerator, ContentType, GenerationResult
+from ..clients.text import MockTextClient
+from ..clients.image import MockImageClient
 
 logger = logging.getLogger(__name__)
 
 
-class MockWorkflow(BaseGenerator):
-    """Mock 工作流"""
+class MockGenerator(BaseGenerator):
+    """Mock 生成器"""
     
     SUPPORTED_TYPES = {ContentType.TEXT, ContentType.IMAGE}
     
     def __init__(self, **kwargs):
-        """初始化 Mock 工作流"""
+        """初始化 Mock 生成器"""
         super().__init__(api_key='mock-key', **kwargs)
         
-        self.text_model = MockTextModel()
-        self.image_model = MockImageModel()
+        self.text_client = MockTextClient()
+        self.image_client = MockImageClient()
         
-        logger.info("Mock 工作流初始化完成")
+        logger.info("Mock 生成器初始化完成")
     
     def generate(
         self,
@@ -59,7 +59,7 @@ class MockWorkflow(BaseGenerator):
     
     def _generate_text(self, prompt: str, **kwargs) -> GenerationResult:
         """生成文本"""
-        result_data = self.text_model.generate(prompt)
+        result_data = self.text_client.generate(prompt)
         
         xiaohongshu_content = result_data['xiaohongshu_content']
         image_prompts = result_data['image_prompts']
@@ -89,7 +89,7 @@ class MockWorkflow(BaseGenerator):
         height = kwargs.get('height', 1440)
         reference_image = kwargs.get('reference_image')
         
-        image_url = self.image_model.generate(prompt, width, height, reference_image)
+        image_url = self.image_client.generate(prompt, width, height, reference_image)
         
         return self._create_success_result(
             content_type=ContentType.IMAGE,

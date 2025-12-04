@@ -1,5 +1,5 @@
 """
-通用图片 API 模型调用
+通用图片 API 客户端
 支持多种图片生成 API（如 nano-banana 等）
 """
 import logging
@@ -10,12 +10,12 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-class ImageAPIModel:
-    """通用图片 API 模型调用类"""
+class ImageAPIClient:
+    """通用图片 API 客户端"""
     
     def __init__(self, api_key: str, api_url: str, model: str = "nano-banana", api_format: str = "chat"):
         """
-        初始化图片 API 模型
+        初始化图片 API 客户端
         
         Args:
             api_key: API 密钥
@@ -28,7 +28,7 @@ class ImageAPIModel:
         self.model = model
         self.api_format = api_format
         
-        logger.info(f"图片 API 模型初始化: URL={self.api_url}, Model={self.model}, Format={self.api_format}")
+        logger.info(f"图片 API 客户端初始化: URL={self.api_url}, Model={self.model}, Format={self.api_format}")
     
     def generate(
         self,

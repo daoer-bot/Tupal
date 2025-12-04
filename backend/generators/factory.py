@@ -1,15 +1,13 @@
 """
-AI 服务商工厂
+生成器工厂
 根据配置创建合适的生成器实例
 """
 import logging
 from typing import Optional, Dict, Any, List
 from flask import current_app
 
-from .base_generator import BaseGenerator, ContentType
-from .workflows.text_workflow import TextWorkflow
-from .workflows.image_workflow import ImageWorkflow
-from .workflows.mock_workflow import MockWorkflow
+from .base import BaseGenerator, ContentType
+from .generators import TextGenerator, ImageGenerator, MockGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +17,9 @@ class GeneratorFactory:
     
     # 支持的生成器类型映射
     GENERATOR_TYPES = {
-        'openai': {'text': TextWorkflow, 'image': ImageWorkflow},
-        'image_api': {'image': ImageWorkflow},
-        'mock': {'text': MockWorkflow, 'image': MockWorkflow}
+        'openai': {'text': TextGenerator, 'image': ImageGenerator},
+        'image_api': {'image': ImageGenerator},
+        'mock': {'text': MockGenerator, 'image': MockGenerator}
     }
     
     @staticmethod
@@ -41,7 +39,7 @@ class GeneratorFactory:
         """
         try:
             if provider == 'mock':
-                generator = MockWorkflow()
+                generator = MockGenerator()
             elif provider == 'openai':
                 # 根据 content_type 选择工作流
                 if content_type == ContentType.TEXT:
@@ -53,7 +51,7 @@ class GeneratorFactory:
                         logger.error("OPENAI_API_KEY 未配置")
                         return None
                     
-                    generator = TextWorkflow(
+                    generator = TextGenerator(
                         provider='openai',
                         api_key=api_key,
                         base_url=base_url,
@@ -68,7 +66,7 @@ class GeneratorFactory:
                         logger.error("OPENAI_API_KEY 未配置")
                         return None
                     
-                    generator = ImageWorkflow(
+                    generator = ImageGenerator(
                         provider='openai',
                         api_key=api_key,
                         base_url=base_url,
@@ -84,7 +82,7 @@ class GeneratorFactory:
                         logger.error("OPENAI_API_KEY 未配置")
                         return None
                     
-                    generator = TextWorkflow(
+                    generator = TextGenerator(
                         provider='openai',
                         api_key=api_key,
                         base_url=base_url,
@@ -134,11 +132,11 @@ class GeneratorFactory:
         available = []
         
         # Mock 总是可用
-        if content_type in MockWorkflow.SUPPORTED_TYPES:
+        if content_type in MockGenerator.SUPPORTED_TYPES:
             available.append('mock')
         
         # 检查 OpenAI
-        if content_type in TextWorkflow.SUPPORTED_TYPES or content_type in ImageWorkflow.SUPPORTED_TYPES:
+        if content_type in TextGenerator.SUPPORTED_TYPES or content_type in ImageGenerator.SUPPORTED_TYPES:
             if current_app.config.get('OPENAI_API_KEY'):
                 available.append('openai')
         
@@ -161,7 +159,7 @@ class GeneratorFactory:
             支持的内容类型列表
         """
         if provider == 'mock':
-            return [ct.value for ct in MockWorkflow.SUPPORTED_TYPES]
+            return [ct.value for ct in MockGenerator.SUPPORTED_TYPES]
         elif provider == 'openai':
             return [ContentType.TEXT.value, ContentType.IMAGE.value]
         elif provider == 'image_api':

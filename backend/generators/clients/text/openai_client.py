@@ -1,5 +1,5 @@
 """
-OpenAI 文本模型调用
+OpenAI 文本 API 客户端
 纯粹的 API 调用，不包含业务逻辑
 """
 import logging
@@ -15,12 +15,12 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class OpenAITextModel:
-    """OpenAI 文本模型调用类"""
+class OpenAITextClient:
+    """OpenAI 文本 API 客户端"""
     
     def __init__(self, api_key: str, base_url: str = None, model: str = "gpt-4"):
         """
-        初始化 OpenAI 文本模型
+        初始化 OpenAI 文本客户端
         
         Args:
             api_key: API 密钥
@@ -40,7 +40,7 @@ class OpenAITextModel:
         self.model = model
         self.client = OpenAI(api_key=api_key, base_url=self.base_url)
         
-        logger.info(f"OpenAI 文本模型初始化: base_url={self.base_url}, model={self.model}")
+        logger.info(f"OpenAI 文本客户端初始化: base_url={self.base_url}, model={self.model}")
     
     def generate(self, prompt: str, temperature: float = 0.7) -> str:
         """

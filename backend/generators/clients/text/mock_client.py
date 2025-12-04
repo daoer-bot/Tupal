@@ -1,5 +1,5 @@
 """
-Mock 文本模型
+Mock 文本 API 客户端
 用于开发测试
 """
 import logging
@@ -8,12 +8,12 @@ import time
 logger = logging.getLogger(__name__)
 
 
-class MockTextModel:
-    """Mock 文本模型类"""
+class MockTextClient:
+    """Mock 文本 API 客户端"""
     
     def __init__(self):
-        """初始化 Mock 文本模型"""
-        logger.info("使用 Mock 文本模型")
+        """初始化 Mock 文本客户端"""
+        logger.info("使用 Mock 文本客户端")
     
     def generate(self, prompt: str, temperature: float = 0.7) -> dict:
         """
