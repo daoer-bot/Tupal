@@ -24,7 +24,7 @@
             :key="item.path"
             :to="item.path"
             class="nav-item"
-            :class="{ 'active': $route.path === item.path }"
+            :class="{ 'active': $route.meta.navKey === item.key }"
             @mouseenter="handleNavHover(item)"
             @mouseleave="handleNavLeave"
           >
@@ -141,25 +141,35 @@ const currentTheme = ref<'light' | 'dark'>('light')
 // 导航项
 const navItems = [
   {
+    key: 'home',
+    path: '/',
+    label: '仪表盘',
+    icon: Home
+  },
+  {
+    key: 'inspiration',
     path: '/inspiration',
     label: '灵感与发现',
     icon: TrendingUp
   },
   {
+    key: 'creation',
     path: '/creation/new',
     label: '智能创作',
     icon: Database
   },
   {
-    path: '/workspace/works',
-    label: '作品与资产',
+    key: 'workspace',
+    path: '/workspace',
+    label: '我的工作台',
     icon: History
   }
 ]
 
 // 当前激活的导航项索引
 const activeNavIndex = computed(() => {
-  return navItems.findIndex(item => item.path === route.path)
+  const currentNavKey = route.meta.navKey
+  return navItems.findIndex(item => item.key === currentNavKey)
 })
 
 // 指示器样式
@@ -192,11 +202,15 @@ const handleNavLeave = () => {
   // 可以添加离开效果
 }
 
+// 定义 emit
+const emit = defineEmits(['config', 'toggle-theme'])
+
 // 切换主题
 const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
   document.documentElement.setAttribute('data-theme', currentTheme.value)
   localStorage.setItem('theme', currentTheme.value)
+  emit('toggle-theme')
 }
 
 // 切换用户菜单

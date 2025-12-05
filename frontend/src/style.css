@@ -41,6 +41,18 @@
   --transition-smooth: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+/* --- 深色模式变量 --- */
+[data-theme='dark'] {
+  --bg-color: #0f172a;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #64748b;
+  --glass-surface: rgba(30, 41, 59, 0.65);
+  --glass-surface-hover: rgba(30, 41, 59, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
 /* --- 全局重置 --- */
 * {
   box-sizing: border-box;
@@ -205,6 +217,46 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-float {
   animation: float-slow 4s ease-in-out infinite;
+
+/* --- Bento Box 布局样式 --- */
+.bento-card {
+  padding: 2rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  border-radius: 32px;
+}
+
+.bento-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(31, 38, 135, 0.15);
+}
+
+[data-theme='dark'] .bento-card:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* 响应式布局 */
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-rows: auto !important;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .bento-hero,
+  .bento-sidebar,
+  .bento-small {
+    grid-column: span 1 !important;
+    grid-row: span 1 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .bento-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
 }
 
 /* 动效：渐入 */

@@ -510,7 +510,7 @@ class ImageService:
                         api_key=self.model_config['apiKey'],
                         api_url=self.model_config['url'],
                         model=self.model_config.get('model', 'dall-e-3'),
-                        apiFormat=self.model_config.get('apiFormat', 'generations')
+                        apiFormat=self.model_config.get('apiFormat', 'openai_dalle')
                     )
                 elif self.generator_type == 'openai':
                     from generators.generators.image_generator import ImageGenerator

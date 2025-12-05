@@ -1,11 +1,20 @@
 """
 通用图片 API 客户端
-支持多种图片生成 API（如 nano-banana 等）
+支持多种图片生成 API 格式：
+- openai_chat: OpenAI Chat API 兼容格式
+- openai_dalle: OpenAI DALL-E API 格式
+- gemini: Google Gemini API 格式
 """
 import logging
 import requests
-import re
 from typing import Optional
+
+from .image_utils import (
+    clean_base64,
+    calculate_aspect_ratio,
+    calculate_image_size,
+    extract_url_from_markdown
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +22,10 @@ logger = logging.getLogger(__name__)
 class ImageAPIClient:
     """通用图片 API 客户端"""
     
-    def __init__(self, api_key: str, api_url: str, model: str = "nano-banana", api_format: str = "chat"):
+    # 支持的 API 格式
+    SUPPORTED_FORMATS = ['openai_chat', 'openai_dalle', 'gemini']
+    
+    def __init__(self, api_key: str, api_url: str, model: str = "dall-e-3", api_format: str = "openai_dalle"):
         """
         初始化图片 API 客户端
         
@@ -21,8 +33,11 @@ class ImageAPIClient:
             api_key: API 密钥
             api_url: API URL
             model: 模型名称
-            api_format: API 格式 (chat/generations/official)
+            api_format: API 格式 (openai_chat/openai_dalle/gemini)
         """
+        if api_format not in self.SUPPORTED_FORMATS:
+            raise ValueError(f"不支持的 API 格式: {api_format}，支持的格式: {self.SUPPORTED_FORMATS}")
+        
         self.api_key = api_key
         self.api_url = api_url.rstrip('/')
         self.model = model
@@ -33,8 +48,8 @@ class ImageAPIClient:
     def generate(
         self,
         prompt: str,
-        width: int = 1080,
-        height: int = 1440,
+        width: int = 1024,
+        height: int = 1024,
         reference_image: Optional[str] = None
     ) -> str:
         """
@@ -47,28 +62,25 @@ class ImageAPIClient:
             reference_image: 参考图片（base64 或 URL）
             
         Returns:
-            图片 URL
+            图片 URL 或 base64 数据
         """
-        if self.api_format == 'chat':
-            return self._generate_chat(prompt, width, height, reference_image)
-        elif self.api_format == 'generations':
-            return self._generate_generations(prompt, width, height, reference_image)
-        elif self.api_format == 'official':
-            return self._generate_official(prompt, width, height, reference_image)
-        else:
-            raise ValueError(f"不支持的 API 格式: {self.api_format}")
+        if self.api_format == 'openai_chat':
+            return self._generate_openai_chat(prompt, width, height, reference_image)
+        elif self.api_format == 'openai_dalle':
+            return self._generate_openai_dalle(prompt, width, height, reference_image)
+        elif self.api_format == 'gemini':
+            return self._generate_gemini(prompt, width, height, reference_image)
     
-    def _generate_chat(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
-        """使用 Chat 格式生成图片"""
+    def _generate_openai_chat(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
+        """使用 OpenAI Chat API 格式生成图片"""
         api_endpoint = f"{self.api_url}/v1/chat/completions" if not self.api_url.endswith('/v1/chat/completions') else self.api_url
         
         content = [{"type": "text", "text": prompt}]
         
         if reference_image:
-            cleaned_reference = self._clean_base64(reference_image)
             content.append({
                 "type": "image_url",
-                "image_url": {"url": cleaned_reference}
+                "image_url": {"url": clean_base64(reference_image)}
             })
         
         payload = {
@@ -90,29 +102,28 @@ class ImageAPIClient:
         response.raise_for_status()
         result = response.json()
         
-        return self._extract_image_url_from_chat(result)
+        return self._extract_from_chat_response(result)
     
-    def _generate_generations(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
-        """使用 Generations 格式生成图片"""
+    def _generate_openai_dalle(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
+        """使用 OpenAI DALL-E API 格式生成图片"""
         api_endpoint = f"{self.api_url}/v1/images/generations" if not self.api_url.endswith('/v1/images/generations') else self.api_url
-        
-        size = f"{width}x{height}"
-        aspect_ratio = self._calculate_aspect_ratio(width, height)
         
         payload = {
             'model': self.model,
             'prompt': prompt,
-            'size': size,
+            'size': f"{width}x{height}",
             'n': 1,
             'response_format': 'url'
         }
         
+        # 添加宽高比（某些服务支持）
+        aspect_ratio = calculate_aspect_ratio(width, height)
         if aspect_ratio:
             payload['aspect_ratio'] = aspect_ratio
         
+        # 添加参考图片（某些服务支持）
         if reference_image:
-            cleaned_reference = self._clean_base64(reference_image)
-            payload['image'] = [cleaned_reference]
+            payload['image'] = clean_base64(reference_image)
         
         response = requests.post(
             api_endpoint,
@@ -127,10 +138,10 @@ class ImageAPIClient:
         response.raise_for_status()
         result = response.json()
         
-        return self._extract_image_url_from_generations(result)
+        return self._extract_from_dalle_response(result)
     
-    def _generate_official(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
-        """使用 Official 格式生成图片（Gemini 等）"""
+    def _generate_gemini(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
+        """使用 Google Gemini API 格式生成图片"""
         api_endpoint = self.api_url
         if '?' in api_endpoint:
             api_endpoint = f"{api_endpoint}&key={self.api_key}"
@@ -139,9 +150,10 @@ class ImageAPIClient:
         
         parts = [{"text": prompt}]
         
+        # 添加参考图片
         if reference_image and reference_image.startswith('data:image'):
             mime_type = reference_image.split(';')[0].split(':')[1]
-            base64_data = self._clean_base64(reference_image.split(',')[1])
+            base64_data = clean_base64(reference_image.split(',')[1])
             parts.append({
                 "inline_data": {
                     "mime_type": mime_type,
@@ -149,16 +161,13 @@ class ImageAPIClient:
                 }
             })
         
-        aspect_ratio = self._calculate_aspect_ratio(width, height)
-        image_size = self._calculate_image_size(width, height)
-        
         payload = {
             "contents": [{"role": "user", "parts": parts}],
             "generationConfig": {
                 "responseModalities": ["TEXT", "IMAGE"],
                 "imageConfig": {
-                    "aspectRatio": aspect_ratio,
-                    "imageSize": image_size
+                    "aspectRatio": calculate_aspect_ratio(width, height),
+                    "imageSize": calculate_image_size(width, height)
                 }
             }
         }
@@ -173,33 +182,25 @@ class ImageAPIClient:
         response.raise_for_status()
         result = response.json()
         
-        return self._extract_image_url_from_official(result)
+        return self._extract_from_gemini_response(result)
     
     @staticmethod
-    def _clean_base64(data: str) -> str:
-        """清理 base64 字符串"""
-        if data.startswith('data:image'):
-            if ',' in data:
-                prefix, base64_data = data.split(',', 1)
-                base64_data = re.sub(r'\s+', '', base64_data)
-                return f"{prefix},{base64_data}"
-        return re.sub(r'\s+', '', data)
-    
-    @staticmethod
-    def _extract_image_url_from_chat(result: dict) -> str:
-        """从 Chat 响应中提取图片 URL"""
+    def _extract_from_chat_response(result: dict) -> str:
+        """从 Chat API 响应中提取图片 URL"""
         if 'choices' in result and len(result['choices']) > 0:
             message = result['choices'][0].get('message', {})
             content = message.get('content', '')
             
-            if content.startswith('http') or content.startswith('data:image'):
+            # 直接返回 URL 或 base64
+            if content.startswith(('http', 'data:image')):
                 return content.strip()
             
-            if '![' in content and '](' in content:
-                match = re.search(r'!\[.*?\]\((.*?)\)', content)
-                if match:
-                    return match.group(1)
+            # 从 Markdown 中提取
+            url = extract_url_from_markdown(content)
+            if url:
+                return url
         
+        # 备用字段
         if 'image_url' in result:
             return result['image_url']
         if 'url' in result:
@@ -208,14 +209,15 @@ class ImageAPIClient:
         raise ValueError(f"无法从响应中获取图片URL: {result}")
     
     @staticmethod
-    def _extract_image_url_from_generations(result: dict) -> str:
-        """从 Generations 响应中提取图片 URL"""
+    def _extract_from_dalle_response(result: dict) -> str:
+        """从 DALL-E API 响应中提取图片 URL"""
         if 'data' in result and isinstance(result['data'], list) and len(result['data']) > 0:
             if 'url' in result['data'][0]:
                 return result['data'][0]['url']
             if 'b64_json' in result['data'][0]:
                 return f"data:image/png;base64,{result['data'][0]['b64_json']}"
         
+        # 备用字段
         if 'image_url' in result:
             return result['image_url']
         if 'url' in result:
@@ -224,8 +226,8 @@ class ImageAPIClient:
         raise ValueError(f"无法从响应中获取图片URL: {result}")
     
     @staticmethod
-    def _extract_image_url_from_official(result: dict) -> str:
-        """从 Official 响应中提取图片 URL"""
+    def _extract_from_gemini_response(result: dict) -> str:
+        """从 Gemini API 响应中提取图片数据"""
         if 'candidates' in result and len(result['candidates']) > 0:
             candidate = result['candidates'][0]
             if 'content' in candidate and 'parts' in candidate['content']:
@@ -236,43 +238,3 @@ class ImageAPIClient:
                         return f"data:{mime_type};base64,{data}"
         
         raise ValueError(f"无法从响应中获取图片数据: {result}")
-    
-    @staticmethod
-    def _calculate_aspect_ratio(width: int, height: int) -> str:
-        """计算宽高比"""
-        import math
-        
-        def gcd(a, b):
-            while b:
-                a, b = b, a % b
-            return a
-        
-        divisor = gcd(width, height)
-        ratio_w = width // divisor
-        ratio_h = height // divisor
-        
-        ratio = width / height
-        if abs(ratio - 16/9) < 0.1:
-            return "16:9"
-        elif abs(ratio - 9/16) < 0.1:
-            return "9:16"
-        elif abs(ratio - 4/3) < 0.1:
-            return "4:3"
-        elif abs(ratio - 3/4) < 0.1:
-            return "3:4"
-        elif abs(ratio - 1) < 0.1:
-            return "1:1"
-        else:
-            return f"{ratio_w}:{ratio_h}"
-    
-    @staticmethod
-    def _calculate_image_size(width: int, height: int) -> str:
-        """计算图片尺寸等级"""
-        total_pixels = width * height
-        
-        if total_pixels <= 1_500_000:
-            return "1K"
-        elif total_pixels <= 5_000_000:
-            return "2K"
-        else:
-            return "4K"

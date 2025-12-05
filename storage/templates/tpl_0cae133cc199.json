@@ -1,0 +1,39 @@
+{
+  "id": "tpl_0cae133cc199",
+  "name": "产品介绍模板",
+  "type": "user",
+  "category": "营销",
+  "description": "用于产品介绍的通用模板",
+  "structure": {
+    "topic": "{{product_name}}新品发布",
+    "description": "介绍{{product_name}}的特点：{{features}}"
+  },
+  "parameters": [
+    {
+      "name": "product_name",
+      "label": "产品名称",
+      "type": "text",
+      "required": true,
+      "default": null,
+      "placeholder": "请输入产品名称"
+    },
+    {
+      "name": "features",
+      "label": "产品特点",
+      "type": "text",
+      "required": true,
+      "default": null,
+      "placeholder": "请输入产品特点"
+    }
+  ],
+  "example": {},
+  "preview": "",
+  "thumbnail": "",
+  "tags": [
+    "营销",
+    "产品"
+  ],
+  "usage_count": 0,
+  "created_at": "2025-12-05T16:52:49.789945",
+  "updated_at": "2025-12-05T16:52:49.789945"
+}

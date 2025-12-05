@@ -8,7 +8,7 @@
     </div>
 
     <!-- 🏗️ 顶部导航栏 - 使用新的高级导航组件 -->
-    <NavigationBar @config="showConfigModal = true" />
+    <NavigationBar @config="showConfigModal = true" @toggle-theme="toggleTheme" />
 
     <!-- 🎨 主舞台 -->
     <main class="main-stage">
@@ -36,6 +36,19 @@ import NavigationBar from './components/NavigationBar.vue'
 
 const store = useAppStore()
 const showConfigModal = ref(false)
+
+// 主题切换逻辑
+const initTheme = () => {
+  const savedTheme = localStorage.getItem('theme') || 'light'
+  document.documentElement.setAttribute('data-theme', savedTheme)
+}
+
+const toggleTheme = () => {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light'
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light'
+  document.documentElement.setAttribute('data-theme', newTheme)
+  localStorage.setItem('theme', newTheme)
+}
 
 // 模型配置状态
 const textModels = ref<any[]>([])
@@ -82,6 +95,7 @@ const handleSaveConfig = (
 
 onMounted(() => {
   loadConfig()
+  initTheme()
 })
 </script>
 
@@ -145,137 +159,6 @@ onMounted(() => {
   33% { transform: translate(30px, -50px) scale(1.1); }
   66% { transform: translate(-20px, 20px) scale(0.9); }
   100% { transform: translate(0, 0) scale(1); }
-}
-
-/* === 顶部导航栏 === */
-.top-navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 64px; /* 稍微减小高度，更精致 */
-  z-index: 100;
-  display: flex;
-  justify-content: center; /* 让内部容器居中 */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-.navbar-container {
-  width: 100%;
-  max-width: 1400px; /* 限制最大宽度 */
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-}
-
-.logo-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
-}
-
-.logo-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.logo-text {
-  font-size: 1.25rem;
-  font-weight: 800;
-  white-space: nowrap;
-  letter-spacing: -0.02em;
-}
-
-/* 导航菜单 - 绝对居中 */
-.nav-menu {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 100%;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 16px;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  font-size: 0.95rem;
-  font-weight: 500;
-  height: 36px;
-}
-
-.nav-item:hover {
-  color: var(--primary-color);
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.nav-item.active {
-  color: var(--primary-color);
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  font-weight: 600;
-}
-
-/* 顶部操作区 */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0; /* 防止被压缩 */
-}
-
-.glass-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 16px; /* 水平 padding */
-  height: 36px; /* 固定高度 */
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 99px;
-  background: white;
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  white-space: nowrap; /* 强制不换行 */
-  flex-shrink: 0; /* 强制不压缩 */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.glass-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-  transform: translateY(-1px);
 }
 
 /* === 主舞台 === */

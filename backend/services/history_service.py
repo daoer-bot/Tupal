@@ -304,4 +304,90 @@ class HistoryService:
             
         except Exception as e:
             logger.error(f"导出历史记录失败: {e}", exc_info=True)
+    
+    def convert_to_template(
+        self,
+        history_id: str,
+        template_name: Optional[str] = None,
+        category: str = "用户模板",
+        extract_parameters: bool = True
+    ) -> Optional[str]:
+        """
+        将历史作品转换为模板
+        
+        Args:
+            history_id: 历史记录ID
+            template_name: 模板名称（默认使用历史记录的topic）
+            category: 模板分类
+            extract_parameters: 是否自动提取参数
+            
+        Returns:
+            模板ID，失败返回None
+        """
+        try:
+            from services.template_service import TemplateService
+            from models.template import TemplateParameter
+            
+            # 获取历史记录
+            history_data = self.storage.get(history_id)
+            if not history_data:
+                logger.error(f"历史记录不存在: {history_id}")
+                return None
+            
+            # 提取模板结构
+            structure = {
+                'topic': history_data.get('topic', ''),
+                'pages': history_data.get('pages', []),
+                'reference_image': history_data.get('reference_image', '')
+            }
+            
+            # 自动提取参数（简化版）
+            parameters = []
+            if extract_parameters:
+                # 主题参数
+                parameters.append({
+                    'name': 'topic',
+                    'label': '主题',
+                    'type': 'text',
+                    'required': True,
+                    'placeholder': '请输入主题'
+                })
+                
+                # 如果有参考图，添加图片参数
+                if history_data.get('reference_image'):
+                    parameters.append({
+                        'name': 'reference_image',
+                        'label': '参考图片',
+                        'type': 'image',
+                        'required': False,
+                        'placeholder': '上传参考图片'
+                    })
+            
+            # 使用模板服务创建模板
+            template_service = TemplateService()
+            template_id = template_service.create_template(
+                name=template_name or f"{history_data.get('topic', '未命名')}模板",
+                category=category,
+                structure=structure,
+                parameters=parameters,
+                template_type='user',
+                description=f"从历史作品转换: {history_data.get('topic', '')}",
+                tags=['用户创建', '历史转换'],
+                thumbnail=history_data.get('thumbnail', ''),
+                example={
+                    'topic': history_data.get('topic', ''),
+                    'result_preview': history_data.get('thumbnail', '')
+                }
+            )
+            
+            if template_id:
+                logger.info(f"历史记录转换为模板成功: {history_id} -> {template_id}")
+                return template_id
+            else:
+                logger.error("模板创建失败")
+                return None
+                
+        except Exception as e:
+            logger.error(f"转换为模板失败: {e}", exc_info=True)
+            return None
             return None

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "tpl_3c16e028bfcc",
+    "name": "产品介绍模板",
+    "type": "user",
+    "category": "营销",
+    "tags": [
+      "营销",
+      "产品"
+    ],
+    "description": "用于产品介绍的通用模板",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-05T16:53:51.611945",
+    "updated_at": "2025-12-05T16:53:51.611945"
+  },
+  {
+    "id": "tpl_0cae133cc199",
+    "name": "产品介绍模板",
+    "type": "user",
+    "category": "营销",
+    "tags": [
+      "营销",
+      "产品"
+    ],
+    "description": "用于产品介绍的通用模板",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-05T16:52:49.789945",
+    "updated_at": "2025-12-05T16:52:49.789945"
+  },
+  {
+    "id": "tpl_db8ffd44e13d",
+    "name": "产品介绍模板",
+    "type": "user",
+    "category": "营销",
+    "tags": [
+      "营销",
+      "产品"
+    ],
+    "description": "用于产品介绍的通用模板",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-05T16:50:34.197121",
+    "updated_at": "2025-12-05T16:50:34.197121"
+  }
+]

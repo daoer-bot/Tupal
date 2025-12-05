@@ -5,7 +5,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/inspiration'
+      name: 'home',
+      component: () => import('../views/HomeView.vue'),
+      meta: { navKey: 'home' }
     },
     {
       path: '/result',
@@ -16,27 +18,32 @@ const router = createRouter({
     {
       path: '/inspiration',
       name: 'inspiration',
-      component: () => import('../views/Inspiration/InspirationView.vue')
+      component: () => import('../views/Inspiration/InspirationView.vue'),
+      meta: { navKey: 'inspiration' }
     },
     {
       path: '/inspiration/trending',
       name: 'inspiration-trending',
-      component: () => import('../views/Inspiration/TrendingTopics.vue')
+      component: () => import('../views/Inspiration/TrendingTopics.vue'),
+      meta: { navKey: 'inspiration' }
     },
     {
       path: '/inspiration/collector',
       name: 'inspiration-collector',
-      component: () => import('../views/Inspiration/ContentCollector.vue')
+      component: () => import('../views/Inspiration/ContentCollector.vue'),
+      meta: { navKey: 'inspiration' }
     },
     {
       path: '/inspiration/templates',
       name: 'inspiration-templates',
-      component: () => import('../views/Inspiration/TemplateGallery.vue')
+      component: () => import('../views/Inspiration/TemplateGallery.vue'),
+      meta: { navKey: 'inspiration' }
     },
     // 板块二：智能创作
     {
       path: '/creation',
       component: () => import('../views/Creation/CreationView.vue'),
+      meta: { navKey: 'creation' },
       children: [
         {
           path: '',
@@ -45,12 +52,14 @@ const router = createRouter({
         {
           path: 'new',
           name: 'creation-new',
-          component: () => import('../views/Creation/NewCreation.vue')
+          component: () => import('../views/Creation/NewCreation.vue'),
+          meta: { navKey: 'creation' }
         },
         {
           path: 'template',
           name: 'creation-template',
-          component: () => import('../views/Creation/TemplateCreation.vue')
+          component: () => import('../views/Creation/TemplateCreation.vue'),
+          meta: { navKey: 'creation' }
         }
       ]
     },
@@ -58,6 +67,7 @@ const router = createRouter({
     {
       path: '/workspace',
       component: () => import('../views/Workspace/WorkspaceView.vue'),
+      meta: { navKey: 'workspace' },
       children: [
         {
           path: '',
@@ -66,19 +76,21 @@ const router = createRouter({
         {
           path: 'works',
           name: 'workspace-works',
-          component: () => import('../views/Workspace/Works.vue')
+          component: () => import('../views/Workspace/Works.vue'),
+          meta: { navKey: 'workspace' }
         },
         {
           path: 'assets',
           name: 'workspace-assets',
-          component: () => import('../views/Workspace/Assets.vue')
+          component: () => import('../views/Workspace/Assets.vue'),
+          meta: { navKey: 'workspace' }
         }
       ]
     },
     // 兼容旧路由的重定向
     {
       path: '/trending',
-      redirect: '/inspiration'
+      redirect: '/inspiration/trending'
     },
     {
       path: '/generator',
@@ -91,10 +103,6 @@ const router = createRouter({
     {
       path: '/materials',
       redirect: '/workspace/assets'
-    },
-    {
-      path: '/home',
-      redirect: '/inspiration/trending'
     }
   ]
 })

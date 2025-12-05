@@ -8,7 +8,8 @@ from flask import current_app
 
 from ..base import BaseGenerator, ContentType, GenerationResult
 from ..prompts.image_prompts import build_image_prompt
-from ..clients.image import OpenAIImageClient, ImageAPIClient, MockImageClient
+from ..clients.image import ImageAPIClient, MockImageClient
+from ..clients.image.image_utils import get_dalle_size
 
 logger = logging.getLogger(__name__)
 
@@ -41,17 +42,28 @@ class ImageGenerator(BaseGenerator):
             if not api_key:
                 raise ValueError("OPENAI_API_KEY 未配置")
             
-            self.client = OpenAIImageClient(api_key=api_key, base_url=base_url, model=model)
+            # 使用 ImageAPIClient 的 openai_dalle 格式
+            self.client = ImageAPIClient(
+                api_key=api_key,
+                api_url=base_url or "https://api.openai.com",
+                model=model,
+                api_format='openai_dalle'
+            )
         elif provider == 'image_api':
             api_key = kwargs.get('api_key') or current_app.config.get('IMAGE_API_KEY')
             api_url = kwargs.get('api_url') or current_app.config.get('IMAGE_API_URL')
-            model = kwargs.get('model') or current_app.config.get('IMAGE_MODEL', 'nano-banana')
-            api_format = kwargs.get('apiFormat', 'chat')
+            model = kwargs.get('model') or current_app.config.get('IMAGE_MODEL', 'dall-e-3')
+            api_format = kwargs.get('apiFormat', 'openai_dalle')
             
             if not api_key or not api_url:
                 raise ValueError("IMAGE_API_KEY 或 IMAGE_API_URL 未配置")
             
-            self.client = ImageAPIClient(api_key=api_key, api_url=api_url, model=model, api_format=api_format)
+            self.client = ImageAPIClient(
+                api_key=api_key,
+                api_url=api_url,
+                model=model,
+                api_format=api_format
+            )
         else:
             raise ValueError(f"不支持的 provider: {provider}")
         
@@ -93,10 +105,8 @@ class ImageGenerator(BaseGenerator):
             # 2. 调用客户端生成
             if isinstance(self.client, MockImageClient):
                 image_url = self.client.generate(prompt, width, height, reference_image)
-            elif isinstance(self.client, OpenAIImageClient):
-                size = OpenAIImageClient.get_dalle_size(width, height)
-                image_url = self.client.generate(prompt, size)
             elif isinstance(self.client, ImageAPIClient):
+                # ImageAPIClient 统一处理所有格式
                 image_url = self.client.generate(prompt, width, height, reference_image)
             else:
                 raise ValueError(f"未知的客户端类型: {type(self.client)}")

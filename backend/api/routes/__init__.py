@@ -8,6 +8,7 @@ from .history import history_bp
 from .trending import trending_bp
 from .upload import upload_bp
 from .material import material_bp
+from .template import template_bp
 
 __all__ = [
     'outline_bp',
@@ -15,5 +16,6 @@ __all__ = [
     'history_bp',
     'trending_bp',
     'upload_bp',
-    'material_bp'
+    'material_bp',
+    'template_bp'
 ]
