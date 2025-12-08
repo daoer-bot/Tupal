@@ -2,86 +2,112 @@
   <div class="home-container">
     <div class="bento-grid">
       <!-- 智能创作 - 核心大卡片 -->
-      <div class="bento-card glass-panel bento-hero hero-card">
+      <div class="bento-card glass-card-premium bento-hero hero-card animate-entry" style="--delay: 0s">
+        <div class="card-bg-glow"></div>
         <div class="card-content">
           <div class="hero-header">
-            <h2 class="hero-title text-gradient">智能创作</h2>
-            <p class="hero-subtitle">AI 驱动的内容创作引擎</p>
+            <div class="badge-pill">AI Powered</div>
+            <h2 class="hero-title text-gradient-animated">智能创作引擎</h2>
+            <p class="hero-subtitle">释放无限灵感，一键生成爆款图文</p>
           </div>
+          
+          <div class="hero-visual">
+            <div class="floating-icon icon-1">✨</div>
+            <div class="floating-icon icon-2">🎨</div>
+            <div class="floating-icon icon-3">🚀</div>
+          </div>
+
           <div class="hero-actions">
-            <button class="hero-btn primary" @click="$router.push('/creation/new')">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              <span>全新创作</span>
+            <button class="btn-3d primary-action" @click="$router.push('/creation/new')">
+              <span class="btn-icon">✨</span>
+              <span>开始全新创作</span>
+              <div class="btn-shine"></div>
             </button>
-            <button class="hero-btn secondary" @click="$router.push('/creation/template')">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5z"/>
-              </svg>
-              <span>模板创作</span>
+            <button class="btn-ghost secondary-action" @click="$router.push('/creation/template')">
+              <span class="btn-icon">📝</span>
+              <span>使用模板</span>
             </button>
           </div>
         </div>
       </div>
 
       <!-- 灵感集市 -->
-      <div class="bento-card glass-panel bento-sidebar feature-card">
+      <div class="bento-card glass-card-premium bento-sidebar feature-card animate-entry" style="--delay: 0.1s">
         <div class="card-content">
-          <h3 class="card-title">灵感与发现</h3>
+          <div class="card-header">
+            <h3 class="card-title">灵感发现</h3>
+            <span class="card-tag">每日更新</span>
+          </div>
+          
           <div class="feature-links">
-            <router-link to="/inspiration/trending" class="feature-link">
-              <svg class="link-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-              </svg>
-              <span class="link-text">热榜观测</span>
-              <svg class="link-arrow" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
+            <router-link to="/inspiration/trending" class="feature-link-item">
+              <div class="link-icon-wrapper hot">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+              </div>
+              <div class="link-info">
+                <span class="link-title">全网热榜</span>
+                <span class="link-desc">实时追踪流量趋势</span>
+              </div>
+              <div class="link-arrow">→</div>
             </router-link>
-            <router-link to="/inspiration/collector" class="feature-link">
-              <svg class="link-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              <span class="link-text">图文采集</span>
-              <svg class="link-arrow" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
+            
+            <router-link to="/inspiration/collector" class="feature-link-item">
+              <div class="link-icon-wrapper collect">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div class="link-info">
+                <span class="link-title">素材采集</span>
+                <span class="link-desc">一键提取优质内容</span>
+              </div>
+              <div class="link-arrow">→</div>
             </router-link>
           </div>
         </div>
       </div>
 
       <!-- 模板广场 -->
-      <router-link to="/inspiration/templates" class="bento-card glass-panel bento-small quick-card">
-        <div class="card-content">
-          <svg class="quick-icon" width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z"/>
-          </svg>
+      <router-link to="/inspiration/templates" class="bento-card glass-card-premium bento-small quick-card animate-entry" style="--delay: 0.2s">
+        <div class="card-bg-decoration template-bg"></div>
+        <div class="card-content center-content">
+          <div class="quick-icon-wrapper template">
+            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z"/>
+            </svg>
+          </div>
           <h3 class="quick-title">模板广场</h3>
-          <p class="quick-desc">探索热门模板</p>
+          <p class="quick-desc">海量爆款模板</p>
         </div>
       </router-link>
 
       <!-- 我的作品 -->
-      <router-link to="/workspace/works" class="bento-card glass-panel bento-small quick-card">
-        <div class="card-content">
-          <svg class="quick-icon" width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
+      <router-link to="/workspace/works" class="bento-card glass-card-premium bento-small quick-card animate-entry" style="--delay: 0.3s">
+        <div class="card-bg-decoration works-bg"></div>
+        <div class="card-content center-content">
+          <div class="quick-icon-wrapper works">
+            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
           <h3 class="quick-title">我的作品</h3>
-          <p class="quick-desc">查看创作历史</p>
+          <p class="quick-desc">管理创作历史</p>
         </div>
       </router-link>
 
       <!-- 我的资产 -->
-      <router-link to="/workspace/assets" class="bento-card glass-panel bento-small quick-card">
-        <div class="card-content">
-          <svg class="quick-icon" width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-          </svg>
+      <router-link to="/workspace/assets" class="bento-card glass-card-premium bento-small quick-card animate-entry" style="--delay: 0.4s">
+        <div class="card-bg-decoration assets-bg"></div>
+        <div class="card-content center-content">
+          <div class="quick-icon-wrapper assets">
+            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+            </svg>
+          </div>
           <h3 class="quick-title">我的资产</h3>
-          <p class="quick-desc">管理素材资源</p>
+          <p class="quick-desc">素材资源库</p>
         </div>
       </router-link>
     </div>
@@ -89,245 +115,397 @@
 </template>
 
 <script setup lang="ts">
+// 逻辑保持简洁，主要依靠 CSS 动画
 </script>
 
 <style scoped>
 .home-container {
-  min-height: calc(100vh - 96px);
-  padding: 2rem 0;
+  min-height: calc(100vh - 72px);
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bento-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, minmax(180px, auto));
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 240px);
   gap: 1.5rem;
-  padding: 2rem;
-  max-width: 1400px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+/* 卡片通用样式 */
+.bento-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bento-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+/* 布局定义 */
+.bento-hero {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.bento-sidebar {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.bento-small {
+  grid-column: span 1; /* 修正为 span 1，因为总列数改为 4 */
+  grid-row: span 1;
+}
+
+/* 修正布局：让 sidebar 占右侧上方两格，下面三个小卡片占右侧下方 */
+.bento-sidebar {
+  grid-column: 3 / 5;
+  grid-row: 1 / 2;
+}
+
+.bento-small:nth-of-type(3) { /* 模板广场 */
+  grid-column: 3 / 4;
+  grid-row: 2 / 3;
+}
+
+.bento-small:nth-of-type(4) { /* 我的作品 */
+  grid-column: 4 / 5;
+  grid-row: 2 / 3;
+}
+
+.bento-small:nth-of-type(5) { /* 我的资产 - 放到哪里？ */
+  /* 重新调整布局策略 */
+  /* 方案：
+     Hero: 2x2 (左侧)
+     Sidebar: 2x1 (右侧上)
+     Small 1: 1x1 (右侧下左)
+     Small 2: 1x1 (右侧下右)
+     Small 3: ... 哎呀，格子不够了。
+     
+     调整方案：
+     Grid 4列 x 2行
+     Hero: 2列 x 2行 (左半边)
+     Sidebar: 2列 x 1行 (右半边上)
+     Small 1: 1列 (右下1)
+     Small 2: 1列 (右下2)
+     Small 3: ... 还是不够。
+     
+     最终方案：
+     Grid 3列 x 2行 (保持原比例，但优化内部)
+     Hero: 2列 x 2行
+     Sidebar: 1列 x 1行 (右上)
+     Small 1: 1列 x 1行 (右中) -> 不对，这样高度不对。
+     
+     让我们用更灵活的 Grid：
+     Grid 3列
+     Hero: 2列 x 2行
+     Sidebar: 1列 x 1.2行 (稍微高一点)
+     Small Cards: 放在 Sidebar 下面？
+     
+     为了视觉平衡，我们把 Small Cards 做成一行三个放在最下面？
+     或者：
+     Hero (2x2) | Sidebar (1x2)
+     Small | Small | Small
+     
+     这样布局更稳重。
+  */
+}
+
+/* 重新定义 Grid 布局 */
+.bento-grid {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 360px 180px; /* 上层高，下层矮 */
 }
 
 .bento-hero {
   grid-column: 1 / 3;
-  grid-row: 1 / 3;
+  grid-row: 1 / 2;
 }
 
 .bento-sidebar {
   grid-column: 3 / 4;
-  grid-row: 1 / 3;
+  grid-row: 1 / 2;
 }
 
 .bento-small {
   grid-column: span 1;
-  grid-row: span 1;
+  grid-row: 2 / 3;
 }
 
+/* Hero Card 内容 */
 .card-content {
   height: 100%;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-}
-
-/* Hero Card 样式 */
-.hero-card {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  position: relative;
+  z-index: 2;
 }
 
 .hero-header {
   margin-bottom: auto;
 }
 
+.badge-pill {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(4px);
+}
+
 .hero-title {
-  font-size: 2.75rem;
+  font-size: 3rem;
   font-weight: 800;
-  margin: 0 0 0.75rem 0;
-  letter-spacing: -0.03em;
+  margin: 0 0 1rem 0;
   line-height: 1.1;
 }
 
 .hero-subtitle {
+  font-size: 1.1rem;
   color: var(--text-secondary);
-  font-size: 1.125rem;
   margin: 0;
-  font-weight: 500;
-  line-height: 1.5;
+  max-width: 80%;
+}
+
+.hero-visual {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  width: 200px;
+  height: 200px;
+  pointer-events: none;
+}
+
+.floating-icon {
+  position: absolute;
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+  animation: float 6s ease-in-out infinite;
+}
+
+.icon-1 { top: 0; right: 20%; animation-delay: 0s; font-size: 4rem; }
+.icon-2 { bottom: 20%; left: 0; animation-delay: -2s; font-size: 2.5rem; }
+.icon-3 { top: 40%; right: 0; animation-delay: -4s; font-size: 3rem; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
 }
 
 .hero-actions {
   display: flex;
   gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 2.5rem;
+  margin-top: 2rem;
 }
 
-.hero-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.primary-action {
   padding: 1rem 2rem;
-  border: none;
+  font-size: 1.1rem;
   border-radius: 16px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;
 }
 
-.hero-btn::before {
-  content: '';
+.btn-shine {
   position: absolute;
   top: 0;
   left: -100%;
-  width: 100%;
+  width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.5s;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: skewX(-20deg);
+  animation: shine 6s infinite;
 }
 
-.hero-btn:hover::before {
-  left: 100%;
+@keyframes shine {
+  0%, 80% { left: -100%; }
+  100% { left: 200%; }
 }
 
-.hero-btn.primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-  color: white;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-}
-
-.hero-btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
-}
-
-.hero-btn.secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-}
-
-.hero-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  transform: translateY(-2px);
-}
-
-/* Feature Card 样式 */
-.feature-card {
+/* Sidebar Card */
+.card-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
-.feature-card .card-title {
-  font-size: 1.75rem;
+.card-title {
+  font-size: 1.25rem;
   font-weight: 700;
-  margin: 0 0 2rem 0;
+  margin: 0;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+}
+
+.card-tag {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--overlay-medium);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
 }
 
 .feature-links {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-.feature-link {
+.feature-link-item {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1.25rem 1.5rem;
-  background: rgba(255, 255, 255, 0.15);
+  padding: 1rem;
+  background: var(--overlay-light);
   border-radius: 16px;
   text-decoration: none;
-  color: var(--text-primary);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.feature-link:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateX(6px);
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-}
-
-.link-icon {
-  flex-shrink: 0;
-  color: var(--primary-color);
-}
-
-.link-text {
-  flex: 1;
-  font-weight: 600;
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
-}
-
-.link-arrow {
-  flex-shrink: 0;
-  opacity: 0.5;
   transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
-.feature-link:hover .link-arrow {
-  opacity: 1;
+.feature-link-item:hover {
+  background: var(--overlay-medium);
+  border-color: var(--glass-border);
   transform: translateX(4px);
 }
 
-/* Quick Card 样式 */
-.quick-card {
-  text-align: center;
+.link-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  color: white;
 }
 
-.quick-card:hover {
-  transform: translateY(-6px) scale(1.02);
+.link-icon-wrapper.hot { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+.link-icon-wrapper.collect { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+
+.link-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.quick-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 1.25rem;
+.link-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.link-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.link-arrow {
+  color: var(--text-tertiary);
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.feature-link-item:hover .link-arrow {
+  transform: translateX(4px);
   color: var(--primary-color);
-  stroke-width: 1.5;
+}
+
+/* Small Cards */
+.center-content {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.quick-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.quick-icon-wrapper.template { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
+.quick-icon-wrapper.works { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.quick-icon-wrapper.assets { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+.quick-card:hover .quick-icon-wrapper {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .quick-title {
-  font-size: 1.375rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  margin: 0 0 0.625rem 0;
+  margin: 0 0 0.5rem 0;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
 }
 
 .quick-desc {
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  font-size: 0.9375rem;
   margin: 0;
-  font-weight: 500;
 }
 
-/* 暗色模式适配 */
-[data-theme='dark'] .hero-btn.secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
+/* 入场动画 */
+.animate-entry {
+  opacity: 0;
+  animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: var(--delay);
 }
 
-[data-theme='dark'] .feature-link {
-  background: rgba(255, 255, 255, 0.05);
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-[data-theme='dark'] .feature-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+/* 响应式 */
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+  }
+  
+  .bento-hero { grid-column: span 2; }
+  .bento-sidebar { grid-column: span 2; }
+  .bento-small { grid-column: span 1; }
+}
+
+@media (max-width: 768px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .bento-hero, .bento-sidebar, .bento-small {
+    grid-column: span 1;
+  }
+  
+  .hero-title { font-size: 2rem; }
+  .hero-visual { display: none; }
 }
 </style>

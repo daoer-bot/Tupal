@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 export interface Page {
   page_number: number
@@ -30,6 +30,9 @@ export interface ImageGenerationConfig {
 }
 
 export const useAppStore = defineStore('app', () => {
+  // 主题状态
+  const theme = ref<'light' | 'dark'>('light')
+  
   // 当前大纲
   const currentOutline = ref<Outline | null>(null)
   
@@ -98,6 +101,22 @@ export const useAppStore = defineStore('app', () => {
     imageGenerationConfig.value = config
   }
   
+  // 切换主题
+  const toggleTheme = () => {
+    theme.value = theme.value === 'light' ? 'dark' : 'light'
+    document.documentElement.setAttribute('data-theme', theme.value)
+    localStorage.setItem('theme', theme.value)
+  }
+  
+  // 初始化主题
+  const initTheme = () => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+    if (savedTheme) {
+      theme.value = savedTheme
+      document.documentElement.setAttribute('data-theme', savedTheme)
+    }
+  }
+  
   // 重置状态
   const reset = () => {
     currentOutline.value = null
@@ -107,6 +126,7 @@ export const useAppStore = defineStore('app', () => {
   }
   
   return {
+    theme,
     currentOutline,
     progress,
     isGenerating,
@@ -122,6 +142,8 @@ export const useAppStore = defineStore('app', () => {
     setTextModelConfig,
     setImageModelConfig,
     setImageGenerationConfig,
+    toggleTheme,
+    initTheme,
     reset
   }
 })

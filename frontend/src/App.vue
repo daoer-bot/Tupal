@@ -1,14 +1,14 @@
 <template>
   <div id="app" class="app-wrapper">
-    <!-- 🌌 动态极光背景层 -->
-    <div class="aurora-bg">
-      <div class="aurora-orb orb-1"></div>
-      <div class="aurora-orb orb-2"></div>
-      <div class="aurora-orb orb-3"></div>
+    <!-- 🌌 全局极光背景 -->
+    <div class="aurora-bg-fixed">
+      <div class="aurora-orb-1"></div>
+      <div class="aurora-orb-2"></div>
+      <div class="aurora-orb-3"></div>
     </div>
 
-    <!-- 🏗️ 顶部导航栏 - 使用新的高级导航组件 -->
-    <NavigationBar @config="showConfigModal = true" @toggle-theme="toggleTheme" />
+    <!-- �️ 顶部导航栏 - 使用新的高级导航组件 -->
+    <NavigationBar @config="showConfigModal = true" />
 
     <!-- 🎨 主舞台 -->
     <main class="main-stage">
@@ -36,19 +36,6 @@ import NavigationBar from './components/NavigationBar.vue'
 
 const store = useAppStore()
 const showConfigModal = ref(false)
-
-// 主题切换逻辑
-const initTheme = () => {
-  const savedTheme = localStorage.getItem('theme') || 'light'
-  document.documentElement.setAttribute('data-theme', savedTheme)
-}
-
-const toggleTheme = () => {
-  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light'
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-theme', newTheme)
-  localStorage.setItem('theme', newTheme)
-}
 
 // 模型配置状态
 const textModels = ref<any[]>([])
@@ -95,7 +82,7 @@ const handleSaveConfig = (
 
 onMounted(() => {
   loadConfig()
-  initTheme()
+  store.initTheme()
 })
 </script>
 
@@ -105,60 +92,6 @@ onMounted(() => {
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-}
-
-/* === 极光背景动画 === */
-.aurora-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  background: var(--bg-color);
-  overflow: hidden;
-}
-
-.aurora-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.6;
-  animation: float-orb 20s infinite ease-in-out;
-}
-
-.orb-1 {
-  width: 500px;
-  height: 500px;
-  background: var(--primary-color);
-  top: -100px;
-  left: -100px;
-  animation-delay: 0s;
-}
-
-.orb-2 {
-  width: 400px;
-  height: 400px;
-  background: var(--secondary-color);
-  bottom: 10%;
-  right: 10%;
-  animation-delay: -5s;
-}
-
-.orb-3 {
-  width: 300px;
-  height: 300px;
-  background: var(--accent-color);
-  top: 40%;
-  left: 40%;
-  animation-delay: -10s;
-}
-
-@keyframes float-orb {
-  0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0, 0) scale(1); }
 }
 
 /* === 主舞台 === */

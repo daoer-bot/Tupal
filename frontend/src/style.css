@@ -2,6 +2,8 @@
    🌌 Aurora Glass Design System - Tupal
    ========================================= */
 
+@import './styles/advanced-ui.css';
+
 :root {
   /* --- 核心极光色板 (Aurora Palette) --- */
   --primary-color: #6366f1;       /* 靛蓝 (Indigo) - 主品牌色 */
@@ -16,9 +18,9 @@
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07); /* 玻璃投影 */
   --glass-blur: 16px;                             /* 毛玻璃模糊度 */
   
-  /* --- 基础色板 --- */
-  --bg-color: #f3f4f6;            /* 基础背景 (会被动态极光覆盖) */
-  --text-primary: #1e293b;        /* 深蓝黑 - 保证阅读性 */
+  /* --- 基础色板 (明亮模式) --- */
+  --bg-color: #f8fafc;            /* 基础背景 (浅色) */
+  --text-primary: #1e293b;        /* 深色 - 保证阅读性 */
   --text-secondary: #64748b;      /* 蓝灰 - 次级文本 */
   --text-tertiary: #94a3b8;
   
@@ -46,11 +48,29 @@
   --bg-color: #0f172a;
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
-  --text-tertiary: #64748b;
+  --text-tertiary: #94a3b8;
   --glass-surface: rgba(30, 41, 59, 0.65);
   --glass-surface-hover: rgba(30, 41, 59, 0.75);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --overlay-light: rgba(255, 255, 255, 0.05);
+  --overlay-medium: rgba(255, 255, 255, 0.1);
+  --overlay-heavy: rgba(255, 255, 255, 0.2);
+}
+
+/* --- 明亮模式变量 --- */
+[data-theme='light'] {
+  --bg-color: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --glass-surface: rgba(255, 255, 255, 0.8);
+  --glass-surface-hover: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(203, 213, 225, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  --overlay-light: rgba(255, 255, 255, 0.6);
+  --overlay-medium: rgba(255, 255, 255, 0.8);
+  --overlay-heavy: rgba(255, 255, 255, 0.95);
 }
 
 /* --- 全局重置 --- */
@@ -87,6 +107,11 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+[data-theme='dark'] .glass-panel-heavy {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* 玻璃按钮 */
@@ -138,6 +163,16 @@ body {
   color: var(--primary-color);
 }
 
+[data-theme='dark'] .btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='dark'] .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary-color);
+}
+
 /* --- 玻璃输入框系统 --- */
 input, textarea, select {
   font-family: inherit;
@@ -167,6 +202,23 @@ input, textarea, select {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
+[data-theme='dark'] .glass-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .glass-input:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] .glass-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
 /* --- 滚动条美化 --- */
 ::-webkit-scrollbar {
   width: 8px;
@@ -184,6 +236,14 @@ input, textarea, select {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* --- 文字排版 --- */

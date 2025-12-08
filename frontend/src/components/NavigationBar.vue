@@ -118,14 +118,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { 
-  Home, 
-  Database, 
-  TrendingUp, 
-  History, 
-  Settings, 
-  Sun, 
-  Moon, 
+import { useAppStore } from '../store'
+import {
+  Home,
+  Database,
+  TrendingUp,
+  History,
+  Settings,
+  Sun,
+  Moon,
   User,
   HelpCircle,
   Info
@@ -133,10 +134,10 @@ import {
 import ModelConfigModal from './ModelConfigModal.vue'
 
 const route = useRoute()
+const store = useAppStore()
 const showConfigModal = ref(false)
 const showUserMenu = ref(false)
 const isTransitioning = ref(false)
-const currentTheme = ref<'light' | 'dark'>('light')
 
 // 导航项
 const navItems = [
@@ -185,7 +186,7 @@ const indicatorStyle = computed(() => {
 
 // 主题图标
 const themeIcon = computed(() => {
-  return currentTheme.value === 'light' ? Moon : Sun
+  return store.theme === 'light' ? Moon : Sun
 })
 
 // 是否有模型配置
@@ -202,15 +203,9 @@ const handleNavLeave = () => {
   // 可以添加离开效果
 }
 
-// 定义 emit
-const emit = defineEmits(['config', 'toggle-theme'])
-
 // 切换主题
 const toggleTheme = () => {
-  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-theme', currentTheme.value)
-  localStorage.setItem('theme', currentTheme.value)
-  emit('toggle-theme')
+  store.toggleTheme()
 }
 
 // 切换用户菜单
@@ -258,13 +253,6 @@ const handleRouteChange = () => {
 }
 
 onMounted(() => {
-  // 初始化主题
-  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
-  if (savedTheme) {
-    currentTheme.value = savedTheme
-    document.documentElement.setAttribute('data-theme', savedTheme)
-  }
-  
   // 监听点击外部
   document.addEventListener('click', handleClickOutside)
   
@@ -285,11 +273,28 @@ onUnmounted(() => {
   right: 0;
   height: 72px;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.navigation-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(99, 102, 241, 0.6) 20%,
+    rgba(236, 72, 153, 0.6) 50%,
+    rgba(139, 92, 246, 0.6) 80%,
+    transparent
+  );
 }
 
 .nav-container {
@@ -322,7 +327,17 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  animation: breathing-glow 3s ease-in-out infinite;
+}
+
+@keyframes breathing-glow {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.6), 0 0 32px rgba(236, 72, 153, 0.3);
+  }
 }
 
 .logo-icon svg {
@@ -340,13 +355,14 @@ onUnmounted(() => {
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 12px rgba(99, 102, 241, 0.4);
 }
 
 .brand-tagline {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: #475569;
   margin: 0;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 导航菜单 */
@@ -354,12 +370,13 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 12px;
+  background: rgba(241, 245, 249, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 14px;
   padding: 0.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 .nav-items {
@@ -373,21 +390,24 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  color: var(--text-secondary);
+  border-radius: 10px;
+  color: #334155;
   text-decoration: none;
   transition: all 0.3s ease;
   position: relative;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.95rem;
 }
 
 .nav-item:hover {
-  color: var(--primary-color);
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .nav-item.active {
-  color: var(--primary-color);
+  color: #6366f1;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.12);
 }
 
 .nav-icon {
@@ -421,10 +441,11 @@ onUnmounted(() => {
   top: 0.25rem;
   bottom: 0.25rem;
   left: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.15));
+  border-radius: 10px;
   z-index: 1;
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
 }
 
 .nav-indicator-bg.transition {
@@ -444,20 +465,32 @@ onUnmounted(() => {
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary);
+  border-radius: 12px;
+  background: rgba(241, 245, 249, 0.8);
+  backdrop-filter: blur(8px);
+  color: #334155;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--primary-color);
+  background: rgba(255, 255, 255, 1);
+  color: #6366f1;
   transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.theme-btn {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-btn:active {
+  transform: rotate(180deg) scale(0.95);
 }
 
 .config-btn {
@@ -524,8 +557,8 @@ onUnmounted(() => {
 
 .user-name {
   font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: #1e293b;
   margin: 0;
 }
 
@@ -554,11 +587,12 @@ onUnmounted(() => {
   padding: 0.75rem;
   background: none;
   border: none;
-  color: var(--text-secondary);
+  color: #475569;
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.3s ease;
   font-size: 0.85rem;
+  font-weight: 500;
   width: 100%;
   text-align: left;
 }
@@ -587,24 +621,87 @@ onUnmounted(() => {
 }
 
 /* 暗色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .navigation-bar {
-    background: rgba(15, 23, 42, 0.8);
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .nav-menu {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .nav-indicator-bg {
-    background: rgba(255, 255, 255, 0.1);
-  }
-  
-  .action-btn {
-    background: rgba(255, 255, 255, 0.05);
-  }
+[data-theme='dark'] .navigation-bar {
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom-color: rgba(51, 65, 85, 0.8);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .navigation-bar::before {
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(99, 102, 241, 0.7) 20%,
+    rgba(236, 72, 153, 0.7) 50%,
+    rgba(139, 92, 246, 0.7) 80%,
+    transparent
+  );
+}
+
+[data-theme='dark'] .brand-name {
+  text-shadow: 0 2px 16px rgba(99, 102, 241, 0.6);
+}
+
+[data-theme='dark'] .brand-tagline {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .nav-menu {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(51, 65, 85, 0.8);
+}
+
+[data-theme='dark'] .nav-item {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .nav-item:hover {
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.15);
+}
+
+[data-theme='dark'] .nav-item.active {
+  color: #a5b4fc;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.2);
+}
+
+[data-theme='dark'] .nav-indicator-bg {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(236, 72, 153, 0.2));
+  box-shadow: 0 2px 16px rgba(99, 102, 241, 0.3);
+}
+
+[data-theme='dark'] .action-btn {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(51, 65, 85, 0.8);
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .action-btn:hover {
+  background: rgba(51, 65, 85, 1);
+  border-color: rgba(99, 102, 241, 0.5);
+  color: #a5b4fc;
+}
+
+[data-theme='dark'] .user-name {
+  color: #f1f5f9;
+}
+
+[data-theme='dark'] .user-dropdown {
+  background: rgba(15, 23, 42, 0.98);
+  border-color: rgba(51, 65, 85, 0.8);
+}
+
+[data-theme='dark'] .dropdown-divider {
+  background: rgba(51, 65, 85, 0.6);
+}
+
+[data-theme='dark'] .dropdown-item {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .dropdown-item:hover {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
 }
 
 /* 响应式设计 */

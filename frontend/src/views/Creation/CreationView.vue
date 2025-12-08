@@ -1,12 +1,19 @@
 <template>
   <div class="creation-view">
-    <div class="sub-nav">
-      <div class="sub-nav-container">
+    <!-- 动态极光背景 -->
+    <div class="aurora-bg-fixed">
+      <div class="aurora-orb-1" style="top: -20%; left: 10%; filter: blur(100px); opacity: 0.6;"></div>
+      <div class="aurora-orb-2" style="bottom: -20%; right: 10%; filter: blur(100px); opacity: 0.6;"></div>
+    </div>
+
+    <!-- 悬浮胶囊导航 -->
+    <div class="nav-container animate-fade-in">
+      <div class="nav-capsule">
         <router-link 
           v-for="tab in tabs" 
           :key="tab.path"
           :to="tab.path"
-          class="sub-nav-item"
+          class="nav-item"
           :class="{ active: $route.path === tab.path }"
         >
           <component :is="tab.icon" :size="18" />
@@ -15,8 +22,13 @@
       </div>
     </div>
     
-    <div class="content-area">
-      <router-view />
+    <!-- 内容区域 -->
+    <div class="content-area animate-slide-up">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </div>
   </div>
 </template>
@@ -33,51 +45,39 @@ const tabs = [
 <style scoped>
 .creation-view {
   min-height: 100vh;
-  padding-top: 72px;
+  padding-top: var(--nav-height);
+  position: relative;
 }
 
-.sub-nav {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+.nav-container {
   position: sticky;
-  top: 72px;
+  top: calc(var(--nav-height) + 1rem);
   z-index: 100;
-}
-
-.sub-nav-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
   display: flex;
-  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  pointer-events: none; /* 让点击穿透容器 */
 }
 
-.sub-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-.sub-nav-item:hover {
-  color: var(--primary-color);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.sub-nav-item.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
+.nav-capsule {
+  pointer-events: auto; /* 恢复导航点击 */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .content-area {
-  padding: 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+/* 路由过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

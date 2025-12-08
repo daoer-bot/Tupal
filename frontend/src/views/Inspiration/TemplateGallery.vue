@@ -90,8 +90,8 @@ const useTemplate = (template: any) => {
 
 .filter-btn {
   padding: 0.75rem 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  background: var(--overlay-medium);
   border-radius: 8px;
   color: var(--text-secondary);
   cursor: pointer;
@@ -100,7 +100,7 @@ const useTemplate = (template: any) => {
 }
 
 .filter-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--overlay-heavy);
   color: var(--primary-color);
 }
 
@@ -132,7 +132,7 @@ const useTemplate = (template: any) => {
 .preview-placeholder {
   width: 100%;
   height: 150px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-medium);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -156,7 +156,7 @@ const useTemplate = (template: any) => {
   width: 100%;
   padding: 0.75rem;
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   color: var(--primary-color);
   cursor: pointer;
@@ -165,7 +165,7 @@ const useTemplate = (template: any) => {
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-surface-hover);
   border-color: var(--primary-color);
 }
 </style>
