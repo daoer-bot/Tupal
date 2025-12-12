@@ -39,6 +39,7 @@ export interface MaterialResponse {
 export interface CreateMaterialRequest {
   name: string
   type: 'text' | 'image' | 'reference'
+  category?: string
   content: any
   tags?: string[]
   description?: string

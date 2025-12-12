@@ -331,7 +331,7 @@ body {
 }
 
 .animate-slide-up {
-  opacity: 0;
+  /* 移除 opacity: 0，避免与 Vue transition 冲突导致UI消失 */
   animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   animation-delay: var(--delay, 0s);
 }
@@ -342,8 +342,14 @@ body {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0.8; /* 从较高的透明度开始，避免完全不可见 */
+    transform: translateY(20px); /* 减小位移距离 */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 滚动条美化 */

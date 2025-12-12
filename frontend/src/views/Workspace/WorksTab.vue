@@ -1,7 +1,32 @@
 <template>
-  <div class="history-container">
+  <div class="works-container">
+    <!-- 数据概览卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ historyList.length }}</div>
+          <div class="stat-label">总作品数</div>
+        </div>
+      </div>
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ completedCount }}</div>
+          <div class="stat-label">已完成</div>
+        </div>
+      </div>
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">📄</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ totalPages }}</div>
+          <div class="stat-label">总页数</div>
+        </div>
+      </div>
+    </div>
+
     <div class="page-header">
-      <h2 class="page-title">历史记录</h2>
+      <h2 class="page-title">作品库</h2>
       <div class="header-actions">
         <button class="btn btn-secondary refresh-btn" @click="loadHistory" :disabled="loading">
           <span class="icon" :class="{ 'spinning': loading }">🔄</span>
@@ -10,34 +35,48 @@
       </div>
     </div>
 
-    <div v-if="loading && historyList.length === 0" class="loading-state">
+    <div v-if="loading && historyList.length === 0" class="loading-state glass-panel">
       <div class="spinner"></div>
       <p>加载中...</p>
     </div>
 
-    <div v-else-if="historyList.length === 0" class="empty-state">
+    <div v-else-if="historyList.length === 0" class="empty-state glass-panel">
       <div class="empty-icon">📂</div>
-      <h3>暂无历史记录</h3>
+      <h3>暂无作品</h3>
       <p>你生成的图文内容将显示在这里</p>
       <router-link to="/" class="btn btn-primary">去创作</router-link>
     </div>
 
-    <div v-else class="history-grid">
-      <div v-for="item in historyList" :key="item.task_id" class="history-card" @click="viewDetails(item)">
+    <div v-else class="works-grid">
+      <div v-for="item in historyList" :key="item.task_id" class="work-card glass-panel" @click="viewDetails(item)">
         <div class="card-preview">
           <div class="preview-image" :style="getPreviewStyle(item)"></div>
           
-          <!-- 左上角删除按钮 -->
-          <button
-            class="delete-btn"
-            @click.stop="handleDelete(item)"
-            :disabled="deleting.has(item.task_id || item.id)"
-            :title="deleting.has(item.task_id || item.id) ? '删除中...' : '删除'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <!-- 右上角操作按钮组 -->
+          <div class="action-buttons">
+            <!-- 编辑按钮 -->
+            <button
+              class="action-btn edit-btn"
+              @click.stop="handleEdit(item)"
+              title="编辑"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+            </button>
+            
+            <!-- 删除按钮 -->
+            <button
+              class="action-btn delete-btn"
+              @click.stop="handleDelete(item)"
+              :disabled="deleting.has(item.task_id || item.id)"
+              :title="deleting.has(item.task_id || item.id) ? '删除中...' : '删除'"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
           
           <div class="status-badge" :class="item.status">
             {{ getStatusText(item.status) }}
@@ -63,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getHistory, deleteHistory } from '../../services/api'
 import { useAppStore } from '../../store'
@@ -73,6 +112,15 @@ const store = useAppStore()
 const historyList = ref<any[]>([])
 const loading = ref(false)
 const deleting = ref<Set<string>>(new Set())
+
+// 计算统计数据
+const completedCount = computed(() =>
+  historyList.value.filter(item => item.status === 'completed').length
+)
+
+const totalPages = computed(() =>
+  historyList.value.reduce((sum, item) => sum + (item.pages?.length || 0), 0)
+)
 
 const loadHistory = async () => {
   loading.value = true
@@ -173,15 +221,87 @@ const handleDelete = async (item: any) => {
   }
 }
 
+const handleEdit = (item: any) => {
+  // 构建符合 Outline 接口的数据结构
+  const outline = {
+    task_id: item.task_id || item.id,
+    topic: item.topic,
+    pages: item.pages || []
+  }
+  store.setOutline(outline)
+  
+  // 如果有参考图片，也设置到 store
+  if (item.reference_image) {
+    store.setReferenceImage(item.reference_image)
+  }
+  
+  // 跳转到创作区进行编辑
+  router.push({
+    path: '/creation/editor',
+    query: {
+      edit: item.task_id || item.id,
+      topic: item.topic
+    }
+  })
+}
+
 onMounted(() => {
   loadHistory()
 })
 </script>
 
 <style scoped>
-.history-container {
-  max-width: 1200px;
+.works-container {
+  max-width: 1400px;
   margin: 0 auto;
+}
+
+/* 数据概览 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
+  border-radius: 16px;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
 .page-header {
@@ -207,33 +327,25 @@ onMounted(() => {
   animation: spin 1s linear infinite;
 }
 
-.history-grid {
+.works-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
 }
 
-.history-card {
-  background: white;
-  border-radius: 1rem;
+.work-card {
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s;
-  border: 1px solid var(--border-color);
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.history-card:hover {
+.work-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.history-card:active {
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .card-preview {
-  height: 180px;
+  height: 220px;
   position: relative;
   overflow: hidden;
 }
@@ -241,18 +353,30 @@ onMounted(() => {
 .preview-image {
   width: 100%;
   height: 100%;
-  transition: transform 0.5s;
+  transition: transform 0.5s ease;
 }
 
-.history-card:hover .preview-image {
+.work-card:hover .preview-image {
   transform: scale(1.05);
 }
 
-/* 左上角删除按钮 */
-.delete-btn {
+/* 右上角操作按钮组 */
+.action-buttons {
   position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.work-card:hover .action-buttons {
+  opacity: 1;
+}
+
+.action-btn {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
@@ -262,35 +386,49 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0;
-  z-index: 10;
 }
 
-.history-card:hover .delete-btn {
-  opacity: 1;
-}
-
-.delete-btn:hover:not(:disabled) {
-  background: #fee2e2;
+.action-btn:hover:not(:disabled) {
   transform: scale(1.1);
 }
 
-.delete-btn:active:not(:disabled) {
+.action-btn:active:not(:disabled) {
   transform: scale(0.95);
 }
 
-.delete-btn:disabled {
+.action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.delete-btn svg {
+.action-btn svg {
   width: 1.1rem;
   height: 1.1rem;
-  color: #ef4444;
   transition: color 0.3s;
+}
+
+/* 编辑按钮样式 */
+.edit-btn:hover {
+  background: #e0e7ff;
+}
+
+.edit-btn svg {
+  color: #6366f1;
+}
+
+.edit-btn:hover svg {
+  color: #4f46e5;
+}
+
+/* 删除按钮样式 */
+.delete-btn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.delete-btn svg {
+  color: #ef4444;
 }
 
 .delete-btn:hover:not(:disabled) svg {
@@ -300,35 +438,37 @@ onMounted(() => {
 .status-badge {
   position: absolute;
   top: 0.75rem;
-  right: 0.75rem;
-  padding: 0.25rem 0.75rem;
+  left: 0.75rem;
+  padding: 0.375rem 0.875rem;
   border-radius: 1rem;
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .status-badge.completed {
-  color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+  color: white;
 }
 
 .status-badge.failed {
-  color: #ef4444;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  color: white;
 }
 
 .status-badge.pending {
-  color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9));
+  color: white;
 }
 
 .card-content {
-  padding: 1.25rem;
+  padding: 1.5rem;
 }
 
 .card-title {
   margin: 0 0 0.75rem;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -349,12 +489,10 @@ onMounted(() => {
   gap: 0.4rem;
 }
 
-.empty-state {
+.empty-state,
+.loading-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: white;
-  border-radius: 1rem;
-  border: 2px dashed var(--border-color);
 }
 
 .empty-icon {
@@ -373,16 +511,11 @@ onMounted(() => {
   margin-bottom: 2rem;
 }
 
-.loading-state {
-  text-align: center;
-  padding: 4rem;
-}
-
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top-color: var(--primary-color);
+  border: 3px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
   border-radius: 50%;
   margin: 0 auto 1rem;
   animation: spin 1s linear infinite;
@@ -390,5 +523,18 @@ onMounted(() => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .works-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 }
 </style>

@@ -13,6 +13,7 @@ from sources.baidu_hot_source import BaiduHotSource
 from sources.zhihu_hot_source import ZhihuHotSource
 from sources.weibo_hot_source import WeiboHotSource
 from sources.bilibili_hot_source import BilibiliHotSource
+from sources.xiaohongshu_source import XiaohongshuSource
 # from sources.douyin_hot_source import DouyinHotSource
 # from sources.toutiao_hot_source import ToutiaoHotSource
 
@@ -35,10 +36,11 @@ class TrendingService:
             ZhihuHotSource(),
             WeiboHotSource(),
             BilibiliHotSource(),
+            XiaohongshuSource(),
             # DouyinHotSource(),  # 暂时禁用：API需要特殊处理
             # ToutiaoHotSource(),  # 暂时禁用：API需要特殊处理
         ]
-        
+
         for source in sources:
             self.source_manager.register(source)
             logger.info(f"注册热榜数据源: {source.source_name}")

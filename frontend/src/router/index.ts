@@ -5,41 +5,41 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('../views/HomeView.vue'),
-      meta: { navKey: 'home' }
+      redirect: '/inspiration/trending'
     },
     {
       path: '/result',
       name: 'result',
-      component: () => import('../views/ResultView.vue')
+      component: () => import('../views/ResultView.vue'),
+      meta: { navKey: 'creation' }
     },
-    // 板块一：灵感与发现
+    // 板块一：灵感与发现 (精简版 - 只保留热榜和采集)
     {
       path: '/inspiration',
-      name: 'inspiration',
       component: () => import('../views/Inspiration/InspirationView.vue'),
-      meta: { navKey: 'inspiration' }
+      meta: { navKey: 'inspiration' },
+      children: [
+        {
+          path: '',
+          redirect: '/inspiration/trending'
+        },
+        {
+          path: 'trending',
+          name: 'trending',
+          component: () => import('../views/Inspiration/TrendingTopics.vue'),
+          meta: { navKey: 'inspiration', title: '平台热榜' }
+        },
+        {
+          path: 'collector',
+          name: 'collector',
+          component: () => import('../views/Inspiration/ContentCollector.vue'),
+          meta: { navKey: 'inspiration', title: '图文采集' }
+        }
+        // 已移除: InspirationHome.vue (首页入口)
+        // 已移除: TemplateGallery.vue (模板广场，将移至AI创作页面)
+      ]
     },
-    {
-      path: '/inspiration/trending',
-      name: 'inspiration-trending',
-      component: () => import('../views/Inspiration/TrendingTopics.vue'),
-      meta: { navKey: 'inspiration' }
-    },
-    {
-      path: '/inspiration/collector',
-      name: 'inspiration-collector',
-      component: () => import('../views/Inspiration/ContentCollector.vue'),
-      meta: { navKey: 'inspiration' }
-    },
-    {
-      path: '/inspiration/templates',
-      name: 'inspiration-templates',
-      component: () => import('../views/Inspiration/TemplateGallery.vue'),
-      meta: { navKey: 'inspiration' }
-    },
-    // 板块二：智能创作
+    // 板块二：AI创作 (整合版)
     {
       path: '/creation',
       component: () => import('../views/Creation/CreationView.vue'),
@@ -47,23 +47,19 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/creation/new'
+          name: 'creation-home',
+          component: () => import('../views/Creation/CreationHome.vue'),
+          meta: { navKey: 'creation', title: 'AI创作' }
         },
         {
-          path: 'new',
-          name: 'creation-new',
-          component: () => import('../views/Creation/NewCreation.vue'),
-          meta: { navKey: 'creation' }
-        },
-        {
-          path: 'template',
-          name: 'creation-template',
-          component: () => import('../views/Creation/TemplateCreation.vue'),
-          meta: { navKey: 'creation' }
+          path: 'editor',
+          name: 'creation-editor',
+          component: () => import('../views/Creation/CreationEditor.vue'),
+          meta: { navKey: 'creation', title: '创作编辑器' }
         }
       ]
     },
-    // 板块三：作品与资产
+    // 板块三：资产与作品 (三分版)
     {
       path: '/workspace',
       component: () => import('../views/Workspace/WorkspaceView.vue'),
@@ -75,34 +71,23 @@ const router = createRouter({
         },
         {
           path: 'works',
-          name: 'workspace-works',
-          component: () => import('../views/Workspace/Works.vue'),
-          meta: { navKey: 'workspace' }
+          name: 'works',
+          component: () => import('../views/Workspace/WorksTab.vue'),
+          meta: { navKey: 'workspace', title: '作品' }
         },
         {
-          path: 'assets',
-          name: 'workspace-assets',
-          component: () => import('../views/Workspace/Assets.vue'),
-          meta: { navKey: 'workspace' }
+          path: 'knowledge',
+          name: 'knowledge',
+          component: () => import('../views/Workspace/KnowledgeTab.vue'),
+          meta: { navKey: 'workspace', title: '知识' }
+        },
+        {
+          path: 'cases',
+          name: 'cases',
+          component: () => import('../views/Workspace/CasesTab.vue'),
+          meta: { navKey: 'workspace', title: '案例' }
         }
       ]
-    },
-    // 兼容旧路由的重定向
-    {
-      path: '/trending',
-      redirect: '/inspiration/trending'
-    },
-    {
-      path: '/generator',
-      redirect: '/creation/new'
-    },
-    {
-      path: '/history',
-      redirect: '/workspace/works'
-    },
-    {
-      path: '/materials',
-      redirect: '/workspace/assets'
     }
   ]
 })

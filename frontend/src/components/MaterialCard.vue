@@ -27,7 +27,7 @@
           {{ getTextPreview(material.content) }}
         </div>
         <div v-else-if="material.type === 'image'" class="preview-image">
-          <img :src="material.content.url" :alt="material.name" />
+          <img :src="material.content.url" :alt="material.name" loading="lazy" />
         </div>
         <div v-else-if="material.type === 'reference'" class="preview-reference">
           <div class="reference-desc">{{ getTextPreview(material.content.content) }}</div>

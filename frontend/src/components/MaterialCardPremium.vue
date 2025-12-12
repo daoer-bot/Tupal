@@ -1,6 +1,7 @@
 <template>
-  <div 
+  <div
     class="material-card-premium glass-card-premium aurora-glow float-element"
+    :data-material-id="material.id"
     @click="$emit('click', material)"
     :style="{
       '--card-accent': getTypeColor(material.type),
@@ -52,7 +53,7 @@
         </div>
         
         <div v-else-if="material.type === 'image'" class="preview-image">
-          <img :src="material.content.url" :alt="material.name" />
+          <img :src="material.content.url" :alt="material.name" loading="lazy" />
           <div class="image-overlay">
             <span class="image-type">{{ getImageType(material.content.url) }}</span>
           </div>
@@ -127,8 +128,7 @@ import {
   Image,
   BookOpen,
   Pencil,
-  Trash2,
-  Camera
+  Trash2
 } from 'lucide-vue-next'
 import type { Material } from '../services/materialApi'
 import type { Component } from 'vue'

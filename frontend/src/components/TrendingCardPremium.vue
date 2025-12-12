@@ -4,7 +4,7 @@
     <div class="card-header">
       <div class="source-info">
         <div class="source-icon-wrapper">
-          <img v-if="source.icon" :src="source.icon" :alt="source.name" class="source-icon" />
+          <img v-if="source.icon" :src="source.icon" :alt="source.name" class="source-icon" loading="lazy" />
           <div v-else class="source-icon-fallback" :style="{ backgroundColor: getSourceColor(source.id) }">
             {{ source.name.charAt(0) }}
           </div>
@@ -102,7 +102,7 @@
           
           <!-- 内容 -->
           <div class="item-content">
-            <h4 class="item-title">{{ item.title }}</h4>
+            <h4 class="item-title" :title="item.title">{{ item.title }}</h4>
             <div class="item-meta">
               <span v-if="item.extra?.label" class="item-label">
                 {{ item.extra.label }}
@@ -165,8 +165,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ChevronDown, RefreshCw } from 'lucide-vue-next'
 import { getTrendingBySource, type TrendingSource, type TrendingItem } from '../services/trendingApi'
+
+const router = useRouter()
 
 interface Props {
   source: TrendingSource
@@ -286,9 +289,10 @@ const formatLastUpdate = (): string => {
 
 // 处理项目点击
 const handleItemClick = (item: TrendingItem) => {
-  if (item.url) {
-    window.open(item.url, '_blank')
-  }
+  router.push({
+    path: '/creation/new',
+    query: { topic: item.title }
+  })
 }
 
 // 切换展开状态
@@ -352,6 +356,37 @@ onUnmounted(() => {
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
+  position: relative;
+  transition: all 300ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.trending-card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  padding: 1px;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.25, 0.8, 0.25, 1);
+  pointer-events: none;
+}
+
+.trending-card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+}
+
+.trending-card-premium:hover::before {
+  opacity: 1;
+}
+
+.trending-card-premium:active {
+  transform: translateY(-4px) scale(0.98);
+  transition: transform 150ms;
 }
 
 /* 卡片头部 */
@@ -642,7 +677,7 @@ onUnmounted(() => {
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 300ms cubic-bezier(0.25, 0.8, 0.25, 1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
 }
@@ -654,6 +689,11 @@ onUnmounted(() => {
 .trending-item:hover {
   background: rgba(255, 255, 255, 0.05);
   transform: translateX(4px);
+}
+
+.trending-item:active {
+  transform: translateX(4px) scale(0.98);
+  transition: transform 150ms;
 }
 
 .trending-item.top-item {
@@ -734,8 +774,9 @@ onUnmounted(() => {
   font-weight: 500;
   color: var(--text-primary);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   line-height: 1.4;
 }
 
@@ -747,7 +788,7 @@ onUnmounted(() => {
 }
 
 .item-label {
-  background: rgba(99, 102, 241, 0.1);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
   color: var(--primary-color);
   padding: 0.125rem 0.5rem;
   border-radius: 4px;

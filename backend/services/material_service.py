@@ -28,19 +28,21 @@ class MaterialService:
         name: str,
         material_type: str,
         content: Dict[str, Any],
+        category: str = "",
         tags: List[str] = None,
         description: str = ""
     ) -> Optional[str]:
         """
         创建素材
-        
+
         Args:
             name: 素材名称
             material_type: 素材类型
             content: 素材内容
+            category: 素材分类
             tags: 标签列表
             description: 描述
-            
+
         Returns:
             素材ID，失败返回None
         """
@@ -54,7 +56,10 @@ class MaterialService:
             elif mat_type == MaterialType.IMAGE:
                 material = create_image(name, content.get('url', ''), **content)
             elif mat_type == MaterialType.REFERENCE:
-                material = create_reference(name, content.get('reference_type', ''), **content)
+                ref_type = content.get('reference_type', '')
+                # 避免重复传递reference_type
+                content_copy = {k: v for k, v in content.items() if k != 'reference_type'}
+                material = create_reference(name, ref_type, **content_copy)
             else:
                 logger.error(f"不支持的素材类型: {material_type}")
                 return None

@@ -1,77 +1,46 @@
 <template>
   <div class="workspace-view">
-    <!-- 动态极光背景 -->
+    <!-- Aurora 背景 -->
     <div class="aurora-bg-fixed">
-      <div class="aurora-orb-3" style="top: 30%; left: 50%; filter: blur(120px); opacity: 0.4;"></div>
+      <div class="aurora-orb-1"></div>
+      <div class="aurora-orb-2"></div>
+      <div class="aurora-orb-3"></div>
     </div>
 
-    <!-- 头部概览区域 -->
-    <div class="dashboard-header animate-fade-in">
-      <div class="bento-grid">
-        <!-- 欢迎卡片 -->
-        <div class="col-span-6 glass-card welcome-card">
-          <div class="card-body">
-            <h1 class="welcome-title text-gradient">早安，创造者</h1>
-            <p class="welcome-subtitle">今天想创作点什么惊艳的作品？</p>
-          </div>
-        </div>
-        
-        <!-- 数据概览卡片 -->
-        <div class="col-span-3 glass-card stat-card">
-          <div class="stat-icon-box purple">
-            <FileText :size="24" />
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">12</span>
-            <span class="stat-label">已发布作品</span>
-          </div>
-        </div>
-        
-        <div class="col-span-3 glass-card stat-card">
-          <div class="stat-icon-box cyan">
-            <Database :size="24" />
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">1.2GB</span>
-            <span class="stat-label">资产库占用</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 悬浮胶囊导航 -->
-    <div class="nav-container animate-slide-up" style="--delay: 0.1s">
-      <div class="nav-capsule">
-        <router-link 
-          v-for="tab in tabs" 
+    <div class="workspace-container">
+      <!-- 顶部Tab导航 -->
+      <div class="tab-navigation glass-panel-heavy">
+        <router-link
+          v-for="tab in tabs"
           :key="tab.path"
           :to="tab.path"
-          class="nav-item"
+          class="tab-item"
           :class="{ active: $route.path === tab.path }"
         >
-          <component :is="tab.icon" :size="18" />
+          <component :is="tab.icon" :size="20" />
           <span>{{ tab.label }}</span>
         </router-link>
       </div>
-    </div>
-    
-    <!-- 内容区域 -->
-    <div class="content-area animate-slide-up" style="--delay: 0.2s">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
+      
+      <!-- 内容区域 -->
+      <div class="content-area">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { FileText, Database } from 'lucide-vue-next'
+import { FileText, Database, Bookmark } from 'lucide-vue-next'
 
 const tabs = [
-  { path: '/workspace/works', label: '作品库', icon: FileText },
-  { path: '/workspace/assets', label: '资产库', icon: Database }
+  { path: '/workspace/works', label: '作品', icon: FileText },
+  { path: '/workspace/knowledge', label: '知识', icon: Database },
+  { path: '/workspace/cases', label: '案例', icon: Bookmark }
 ]
 </script>
 
@@ -82,83 +51,51 @@ const tabs = [
   position: relative;
 }
 
-.dashboard-header {
+.workspace-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* 顶部Tab导航 */
+.tab-navigation {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
   margin-bottom: 2rem;
-}
-
-.welcome-card {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-}
-
-.welcome-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.welcome-subtitle {
-  color: var(--text-secondary);
-  font-size: 1rem;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  padding: 1.5rem;
-  gap: 1.5rem;
-}
-
-.stat-icon-box {
-  width: 56px;
-  height: 56px;
   border-radius: 16px;
+}
+
+.tab-item {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-}
-
-.stat-icon-box.purple { background: rgba(139, 92, 246, 0.2); color: var(--neon-violet); }
-.stat-icon-box.cyan { background: rgba(6, 182, 212, 0.2); color: var(--neon-cyan); }
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.stat-label {
-  font-size: 0.85rem;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
   color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.nav-container {
-  position: sticky;
-  top: calc(var(--nav-height) + 1rem);
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
-  pointer-events: none;
+.tab-item:hover {
+  color: var(--text-primary);
+  background: rgba(99, 102, 241, 0.1);
 }
 
-.nav-capsule {
-  pointer-events: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+.tab-item.active {
+  color: white;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .content-area {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem 4rem;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
 /* 路由过渡动画 */
@@ -172,10 +109,30 @@ const tabs = [
   opacity: 0;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 响应式 */
 @media (max-width: 768px) {
-  .welcome-title { font-size: 1.5rem; }
-  .stat-card { padding: 1rem; }
-  .stat-value { font-size: 1.5rem; }
+  .workspace-container {
+    padding: 1rem;
+  }
+  
+  .tab-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .tab-item span {
+    display: none;
+  }
 }
 </style>

@@ -47,23 +47,13 @@
       <!-- 右侧操作区 -->
       <div class="nav-actions">
         <!-- 模型配置 -->
-        <button 
+        <button
           class="action-btn config-btn glass-card-premium"
           @click="showConfigModal = true"
           title="AI模型配置"
         >
           <Settings :size="18" />
           <span class="btn-label">配置</span>
-          <div class="btn-indicator" v-if="hasModelConfig"></div>
-        </button>
-        
-        <!-- 主题切换 -->
-        <button 
-          class="action-btn theme-btn glass-card-premium"
-          @click="toggleTheme"
-          title="切换主题"
-        >
-          <component :is="themeIcon" :size="18" />
         </button>
         
         <!-- 用户菜单 -->
@@ -91,14 +81,6 @@
                   <Settings :size="16" />
                   <span>设置</span>
                 </button>
-                <button class="dropdown-item" @click="openHelp">
-                  <HelpCircle :size="16" />
-                  <span>帮助</span>
-                </button>
-                <button class="dropdown-item" @click="openAbout">
-                  <Info :size="16" />
-                  <span>关于</span>
-                </button>
               </div>
             </div>
           </transition>
@@ -120,16 +102,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '../store'
 import {
-  Home,
   Database,
   TrendingUp,
   History,
   Settings,
-  Sun,
-  Moon,
-  User,
-  HelpCircle,
-  Info
+  User
 } from 'lucide-vue-next'
 import ModelConfigModal from './ModelConfigModal.vue'
 
@@ -142,12 +119,6 @@ const isTransitioning = ref(false)
 // 导航项
 const navItems = [
   {
-    key: 'home',
-    path: '/',
-    label: '仪表盘',
-    icon: Home
-  },
-  {
     key: 'inspiration',
     path: '/inspiration',
     label: '灵感与发现',
@@ -155,14 +126,14 @@ const navItems = [
   },
   {
     key: 'creation',
-    path: '/creation/new',
-    label: '智能创作',
+    path: '/creation',
+    label: 'AI创作',
     icon: Database
   },
   {
     key: 'workspace',
     path: '/workspace',
-    label: '我的工作台',
+    label: '资产与作品',
     icon: History
   }
 ]
@@ -184,16 +155,6 @@ const indicatorStyle = computed(() => {
   }
 })
 
-// 主题图标
-const themeIcon = computed(() => {
-  return store.theme === 'light' ? Moon : Sun
-})
-
-// 是否有模型配置
-const hasModelConfig = computed(() => {
-  return localStorage.getItem('textModels') || localStorage.getItem('imageModels')
-})
-
 // 处理导航悬停
 const handleNavHover = (item: any) => {
   // 可以添加悬停效果
@@ -201,11 +162,6 @@ const handleNavHover = (item: any) => {
 
 const handleNavLeave = () => {
   // 可以添加离开效果
-}
-
-// 切换主题
-const toggleTheme = () => {
-  store.toggleTheme()
 }
 
 // 切换用户菜单
@@ -216,18 +172,6 @@ const toggleUserMenu = () => {
 // 打开设置
 const openSettings = () => {
   showConfigModal.value = true
-  showUserMenu.value = false
-}
-
-// 打开帮助
-const openHelp = () => {
-  // 实现帮助功能
-  showUserMenu.value = false
-}
-
-// 打开关于
-const openAbout = () => {
-  // 实现关于功能
   showUserMenu.value = false
 }
 
@@ -485,31 +429,12 @@ onUnmounted(() => {
   border-color: rgba(99, 102, 241, 0.4);
 }
 
-.theme-btn {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.theme-btn:active {
-  transform: rotate(180deg) scale(0.95);
-}
-
 .config-btn {
   padding: 0.75rem 1.25rem;
 }
 
 .btn-label {
   font-size: 0.85rem;
-}
-
-.btn-indicator {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 6px;
-  height: 6px;
-  background: #10b981;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
 }
 
 /* 用户菜单 */

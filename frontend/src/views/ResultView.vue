@@ -192,7 +192,7 @@
                   下载全部图片
                 </button>
                 <button @click="goHome" class="btn btn-text">
-                  返回首页
+                  回到灵感与发现
                 </button>
               </div>
             </div>
@@ -294,7 +294,7 @@
     <!-- 无大纲提示 -->
     <div v-if="!store.currentOutline && !isGenerating" class="empty-state">
       <p>暂无生成结果</p>
-      <button @click="goHome" class="btn btn-primary">返回首页</button>
+      <button @click="goHome" class="btn btn-primary">回到灵感与发现</button>
     </div>
 
     <!-- 图片预览模态框 -->
@@ -336,7 +336,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
 import { generateImages, subscribeProgress, saveHistory, type ProgressData } from '../services/api'
@@ -830,7 +830,7 @@ const retry = () => {
 }
 
 const goHome = () => {
-  router.push('/')
+  router.push('/inspiration')
 }
 
 const downloadSingle = async () => {
@@ -917,7 +917,7 @@ const saveGlobalCaption = () => {
 // 生命周期
 onMounted(() => {
   if (!store.currentOutline) {
-    router.push('/')
+    router.push('/inspiration')
     return
   }
 

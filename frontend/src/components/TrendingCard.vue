@@ -2,7 +2,7 @@
   <div class="trending-card">
     <div class="card-header">
       <div class="header-left">
-        <img v-if="source.icon" :src="source.icon" :alt="source.name" class="source-icon" />
+        <img v-if="source.icon" :src="source.icon" :alt="source.name" class="source-icon" loading="lazy" />
         <h3 class="source-name">{{ source.name }}</h3>
       </div>
       <div class="header-right">
@@ -40,24 +40,23 @@
 
       <!-- 数据列表 -->
       <div v-else-if="items.length > 0" class="trending-list">
-        <a
+        <div
           v-for="(item, index) in items.slice(0, 10)"
           :key="item.id"
-          :href="item.url"
-          target="_blank"
           class="trending-item"
+          @click="handleItemClick(item)"
         >
           <div class="item-index" :class="getIndexClass(index)">
             {{ index + 1 }}
           </div>
           <div class="item-content">
-            <div class="item-title">{{ item.title }}</div>
+            <div class="item-title" :title="item.title">{{ item.title }}</div>
             <div v-if="item.extra?.label" class="item-label">{{ item.extra.label }}</div>
           </div>
           <div v-if="item.hot_value" class="item-hot">
             {{ formatHotValue(item.hot_value) }}
           </div>
-        </a>
+        </div>
       </div>
 
       <!-- 空状态 -->
@@ -70,7 +69,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getTrendingBySource, type TrendingSource, type TrendingItem } from '../services/trendingApi'
+
+const router = useRouter()
 
 interface Props {
   source: TrendingSource
@@ -154,6 +156,14 @@ const handleRefresh = () => {
   loadData(true)
 }
 
+// 处理项目点击
+const handleItemClick = (item: TrendingItem) => {
+  router.push({
+    path: '/creation/new',
+    query: { topic: item.title }
+  })
+}
+
 onMounted(() => {
   loadData()
   
@@ -176,15 +186,40 @@ onUnmounted(() => {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: var(--transition);
+  transition: all 300ms cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+}
+
+.trending-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  padding: 1px;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .trending-card:hover {
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
   border-color: var(--border-hover);
+}
+
+.trending-card:hover::before {
+  opacity: 1;
+}
+
+.trending-card:active {
+  transform: translateY(-4px) scale(0.98);
+  transition: transform 150ms;
 }
 
 .card-header {
@@ -337,14 +372,16 @@ onUnmounted(() => {
   flex: 1;
   font-size: 0.875rem;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
 }
 
 .item-label {
   flex-shrink: 0;
   padding: 0.125rem 0.5rem;
-  background: var(--primary-light);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
   color: var(--primary-color);
   border-radius: var(--radius-sm);
   font-size: 0.625rem;
