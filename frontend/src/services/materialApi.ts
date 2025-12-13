@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030
 export interface Material {
   id: string
   name: string
-  type: 'text' | 'image' | 'reference'
+  type: 'text' | 'image' | 'mixed' | 'reference'
   content: any
   tags: string[]
   description: string
@@ -38,7 +38,7 @@ export interface MaterialResponse {
 
 export interface CreateMaterialRequest {
   name: string
-  type: 'text' | 'image' | 'reference'
+  type: 'text' | 'image' | 'mixed' | 'reference'
   category?: string
   content: any
   tags?: string[]

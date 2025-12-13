@@ -1,20 +1,20 @@
 <template>
-  <div class="template-card glass-panel" @click="handleClick">
+  <div class="template-card" @click="handleClick">
     <!-- 预览图区域 -->
     <div class="template-preview">
-      <img 
-        v-if="template.preview_image" 
-        :src="template.preview_image" 
+      <img
+        v-if="template.preview_image"
+        :src="template.preview_image"
         :alt="template.name"
         class="preview-image"
       />
       <div v-else class="preview-placeholder">
-        <component :is="getTypeIcon" :size="48" class="placeholder-icon" />
+        <component :is="getTypeIcon" :size="32" class="placeholder-icon" />
       </div>
       
       <!-- 模板类型标签 -->
       <div class="template-type-badge" :class="template.type">
-        {{ template.type === 'official' ? '官方' : '我的' }}
+        {{ template.type === 'system' ? 'OFFICIAL' : 'CUSTOM' }}
       </div>
     </div>
     
@@ -25,12 +25,12 @@
       
       <!-- 标签 -->
       <div v-if="template.tags && template.tags.length > 0" class="template-tags">
-        <span 
-          v-for="tag in displayTags" 
-          :key="tag" 
+        <span
+          v-for="tag in displayTags"
+          :key="tag"
           class="tag"
         >
-          {{ tag }}
+          #{{ tag }}
         </span>
         <span v-if="template.tags.length > 3" class="tag-more">
           +{{ template.tags.length - 3 }}
@@ -39,12 +39,12 @@
       
       <!-- 操作按钮 -->
       <div class="template-actions">
-        <button 
-          class="btn-use" 
+        <button
+          class="btn-use"
           @click.stop="handleUse"
         >
-          <Sparkles :size="16" />
-          <span>使用模板</span>
+          <Sparkles :size="14" />
+          <span>LOAD TEMPLATE</span>
         </button>
       </div>
     </div>
@@ -72,7 +72,7 @@ const getTypeIcon = computed(() => {
   if (props.template.content_structure?.layout === 'image') {
     return Image
   }
-  if (props.template.type === 'personal') {
+  if (props.template.type === 'user') {
     return Bookmark
   }
   return FileText
@@ -101,33 +101,33 @@ const handleUse = () => {
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
 }
 
 .template-card:hover {
+  border-color: var(--primary-color);
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
 }
 
 /* 预览区域 */
 .template-preview {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 140px;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  background: #f8fafc;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .preview-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.5s ease;
 }
 
 .template-card:hover .preview-image {
@@ -140,50 +140,51 @@ const handleUse = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  background: #f1f5f9;
 }
 
 .placeholder-icon {
-  color: rgba(99, 102, 241, 0.4);
+  color: #cbd5e1;
 }
 
 /* 类型标签 */
 .template-type-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  backdrop-filter: blur(8px);
+  top: 10px;
+  right: 10px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
 }
 
-.template-type-badge.official {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(139, 92, 246, 0.9));
-  color: white;
-}
-
-.template-type-badge.personal {
+.template-type-badge.system {
   background: rgba(255, 255, 255, 0.9);
-  color: #6366f1;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--primary-color);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.template-type-badge.user {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
 }
 
 /* 信息区域 */
 .template-info {
-  padding: 1rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex: 1;
 }
 
 .template-name {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -193,45 +194,43 @@ const handleUse = () => {
 
 .template-description {
   margin: 0;
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.625rem;
+  min-height: 2.5rem;
 }
 
 /* 标签 */
 .template-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: 0.5rem;
   margin-top: 0.25rem;
 }
 
 .tag {
   padding: 2px 8px;
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-  font-size: 12px;
+  background: #f1f5f9;
+  color: var(--text-secondary);
+  font-size: 11px;
   border-radius: 4px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .tag-more {
-  padding: 2px 8px;
-  background: rgba(100, 116, 139, 0.1);
-  color: #64748b;
-  font-size: 12px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--text-tertiary);
+  font-size: 11px;
 }
 
 /* 操作按钮 */
 .template-actions {
   margin-top: auto;
-  padding-top: 0.75rem;
+  padding-top: 1rem;
 }
 
 .btn-use {
@@ -240,43 +239,35 @@ const handleUse = () => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  padding: 0.75rem 1rem;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
 }
 
 .btn-use:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
 }
 
 .btn-use:active {
-  transform: translateY(0);
+  transform: translateY(1px);
 }
 
 /* 响应式 */
 @media (max-width: 640px) {
   .template-preview {
-    height: 140px;
+    height: 120px;
   }
   
   .template-info {
-    padding: 0.875rem;
-  }
-  
-  .template-name {
-    font-size: 0.9375rem;
-  }
-  
-  .template-description {
-    font-size: 0.8125rem;
+    padding: 1rem;
   }
 }
 </style>

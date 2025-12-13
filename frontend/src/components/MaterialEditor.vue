@@ -2,7 +2,7 @@
   <div v-if="show" class="material-editor-overlay" @click.self="$emit('close')">
     <div class="material-editor">
       <div class="editor-header">
-        <h2>{{ isEdit ? '编辑素材' : '创建素材' }}</h2>
+        <h2>{{ isEdit ? '编辑素材' : '添加素材' }}</h2>
         <button class="btn-close" @click="$emit('close')">
           <X :size="20" />
         </button>
@@ -10,32 +10,8 @@
 
       <div class="editor-body">
         <form @submit.prevent="handleSubmit">
-          <!-- 素材类型选择 (仅在创建时显示) -->
-          <div class="form-section" v-if="!isEdit">
-            <h3>选择素材类型</h3>
-            <div class="scene-grid">
-              <div
-                v-for="scene in scenes"
-                :key="scene.type"
-                class="scene-card"
-                :class="{ active: formData.type === scene.type }"
-                @click="selectScene(scene)"
-              >
-                <div class="scene-icon">
-                  <component :is="scene.icon" :size="32" :stroke-width="1.5" />
-                </div>
-                <div class="scene-info">
-                  <div class="scene-name">{{ scene.name }}</div>
-                  <div class="scene-desc">{{ scene.desc }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- 基本信息 -->
           <div class="form-section">
-            <h3>基本信息</h3>
-            
             <div class="form-group">
               <label>素材名称 *</label>
               <input
@@ -47,52 +23,24 @@
             </div>
           </div>
 
-          <!-- 内容格式选择 (仅对参考素材显示) -->
-          <div class="form-section" v-if="formData.type === 'reference'">
-            <h3>内容格式</h3>
-            <div class="content-type-tabs">
-              <button
-                type="button"
-                class="tab-btn"
-                :class="{ active: contentFormat === 'text' }"
-                @click="contentFormat = 'text'"
-              >
-                <FileText :size="18" />
-                <span>文字内容</span>
-              </button>
-              <button
-                type="button"
-                class="tab-btn"
-                :class="{ active: contentFormat === 'image' }"
-                @click="contentFormat = 'image'"
-              >
-                <Image :size="18" />
-                <span>图片内容</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- 内容区域 -->
+          <!-- 图文内容区域 -->
           <div class="form-section">
             <h3>素材内容</h3>
             
-            <!-- 文本输入 -->
-            <div v-if="showTextInput" class="content-editor">
+            <div class="content-editor mixed-editor">
+              <!-- 文本部分 -->
               <div class="form-group">
-                <label>{{ contentLabel }} *</label>
+                <label>文字内容</label>
                 <textarea
                   v-model="contentText"
-                  :placeholder="contentPlaceholder"
-                  rows="10"
-                  required
+                  placeholder="请输入文字内容..."
+                  rows="6"
                 ></textarea>
               </div>
-            </div>
-
-            <!-- 图片上传 -->
-            <div v-else class="content-editor">
+              
+              <!-- 图片部分 -->
               <div class="form-group">
-                <label>上传图片 *</label>
+                <label>图片内容</label>
                 <div
                   class="upload-area"
                   :class="{ 'drag-over': isDragging }"
@@ -105,24 +53,36 @@
                     ref="fileInput"
                     type="file"
                     accept="image/*"
+                    multiple
                     @change="handleFileSelect"
                     style="display: none"
                   />
-                  <div v-if="!imagePreview" class="upload-prompt">
+                  <div class="upload-prompt">
                     <div class="upload-icon">
-                      <FolderOpen :size="48" :stroke-width="1.5" />
+                      <FolderOpen :size="32" :stroke-width="1.5" />
                     </div>
                     <p>拖拽图片到这里或点击上传</p>
-                    <span class="upload-hint">支持 JPG, PNG, GIF, WEBP 格式</span>
+                    <span class="upload-hint">支持多张图片，JPG, PNG, GIF, WEBP 格式</span>
                   </div>
-                  <div v-else class="image-preview-box">
-                    <img :src="imagePreview" alt="预览" />
-                    <button type="button" class="btn-remove" @click.stop="removeImage">
-                      <X :size="16" />
-                      <span>移除</span>
+                </div>
+                
+                <!-- 已上传图片预览 -->
+                <div v-if="images.length > 0" class="images-preview">
+                  <div
+                    v-for="(img, index) in images"
+                    :key="index"
+                    class="image-item"
+                  >
+                    <img :src="img" alt="预览" />
+                    <button type="button" class="btn-remove-small" @click="removeImage(index)">
+                      <X :size="14" />
                     </button>
                   </div>
                 </div>
+              </div>
+              
+              <div class="content-hint">
+                <span>💡 提示：文字和图片至少填写一项</span>
               </div>
             </div>
           </div>
@@ -143,10 +103,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { X, FileText, Image, FolderOpen, Film, ZoomIn, BarChart3, Scale, Type } from 'lucide-vue-next'
+import { ref, reactive, computed, watch } from 'vue'
+import { X, FolderOpen } from 'lucide-vue-next'
 import type { Material } from '../services/materialApi'
-import type { Component } from 'vue'
 
 const props = defineProps<{
   show?: boolean
@@ -161,87 +120,35 @@ const emit = defineEmits<{
 const isEdit = computed(() => !!props.material)
 const loading = ref(false)
 
-
-// 统一的内容文本
+// 内容
 const contentText = ref('')
+const images = ref<string[]>([])
 
 // 图片上传相关
 const fileInput = ref<HTMLInputElement>()
-const imagePreview = ref('')
-const imageFile = ref<File>()
 const isDragging = ref(false)
-
-// 场景定义 - 3种核心类型
-const scenes = [
-  { name: '文本素材', type: 'text', icon: Type, desc: '标题、文案、话术、数据' },
-  { name: '图片素材', type: 'image', icon: Film, desc: '产品图、配图、截图' },
-  { name: '参考素材', type: 'reference', icon: ZoomIn, desc: '优秀案例、对标账号、风格参考' },
-] as const
 
 // 表单数据
 const formData = reactive({
-  name: '',
-  type: 'text' as 'text' | 'image' | 'reference',
-  content: {} as any
+  name: ''
 })
 
-// 内容格式（仅用于参考素材）
-const contentFormat = ref<'text' | 'image'>('text')
-
-// 计算属性：是否显示文本输入
-const showTextInput = computed(() => {
-  if (formData.type === 'text') return true
-  if (formData.type === 'image') return false
-  if (formData.type === 'reference') return contentFormat.value === 'text'
-  return true
-})
-
-// 计算属性：内容标签
-const contentLabel = computed(() => {
-  if (formData.type === 'text') return '文本内容'
-  if (formData.type === 'reference') return '参考内容'
-  return '内容'
-})
-
-// 计算属性：内容占位符
-const contentPlaceholder = computed(() => {
-  if (formData.type === 'text') return '请输入文本内容...'
-  if (formData.type === 'reference') return '请输入参考案例、对标账号或风格描述...'
-  return '请输入内容...'
-})
-
-// 初始化表单数据
-if (props.material) {
-  formData.name = props.material.name
-  formData.type = props.material.type as any
-  formData.content = { ...props.material.content }
-
-  // 设置内容
-  if (props.material.content.text) {
-    contentText.value = props.material.content.text
-    if (props.material.type === 'reference') {
-      contentFormat.value = 'text'
-    }
-  } else if (props.material.content.url) {
-    imagePreview.value = props.material.content.url
-    if (props.material.type === 'reference') {
-      contentFormat.value = 'image'
+// 监听 show 变化，重置或初始化表单
+watch(() => props.show, (newShow) => {
+  if (newShow) {
+    if (props.material) {
+      // 编辑模式：加载现有数据
+      formData.name = props.material.name
+      contentText.value = props.material.content?.text || ''
+      images.value = props.material.content?.images ? [...props.material.content.images] : []
+    } else {
+      // 创建模式：重置表单
+      formData.name = ''
+      contentText.value = ''
+      images.value = []
     }
   }
-} else {
-  // 默认选中第一个场景
-  selectScene(scenes[0])
-}
-
-// 选择场景
-function selectScene(scene: typeof scenes[number]) {
-  formData.type = scene.type
-  // 清空内容
-  contentText.value = ''
-  imagePreview.value = ''
-  imageFile.value = undefined
-  contentFormat.value = 'text'
-}
+}, { immediate: true })
 
 // 触发文件选择
 function triggerFileInput() {
@@ -251,79 +158,77 @@ function triggerFileInput() {
 // 处理文件选择
 function handleFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    processImageFile(file)
+  const files = target.files
+  if (files) {
+    Array.from(files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        processImageFile(file)
+      }
+    })
   }
+  // 清空 input 以便重复选择同一文件
+  if (target) target.value = ''
 }
 
 // 处理拖拽上传
 function handleDrop(event: DragEvent) {
   isDragging.value = false
-  const file = event.dataTransfer?.files[0]
-  if (file && file.type.startsWith('image/')) {
-    processImageFile(file)
+  const files = event.dataTransfer?.files
+  if (files) {
+    Array.from(files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        processImageFile(file)
+      }
+    })
   }
 }
 
 // 处理图片文件
 function processImageFile(file: File) {
-  imageFile.value = file
   const reader = new FileReader()
   reader.onload = (e) => {
-    imagePreview.value = e.target?.result as string
+    const dataUrl = e.target?.result as string
+    if (dataUrl && !images.value.includes(dataUrl)) {
+      images.value.push(dataUrl)
+    }
   }
   reader.readAsDataURL(file)
 }
 
-// 移除图片
-function removeImage() {
-  imagePreview.value = ''
-  imageFile.value = undefined
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
+// 移除单张图片
+function removeImage(index: number) {
+  images.value.splice(index, 1)
 }
 
 async function handleSubmit() {
-  loading.value = true
-
-  // 根据素材类型和内容格式包装内容
-  let content: any = {}
-  let finalType = formData.type
+  const hasText = contentText.value.trim()
+  const hasImages = images.value.length > 0
   
-  if (showTextInput.value) {
-    // 文本内容
-    if (!contentText.value.trim()) {
-      alert('请输入内容')
-      loading.value = false
-      return
-    }
-    content = { text: contentText.value }
-    
-    // 参考素材的文本内容，需要添加 reference_type
-    if (formData.type === 'reference') {
-      content.reference_type = 'text'
-    }
-  } else {
-    // 图片内容
-    if (!imagePreview.value) {
-      alert('请上传图片')
-      loading.value = false
-      return
-    }
-    content = { url: imagePreview.value }
-    
-    // 参考素材的图片内容，需要添加 reference_type
-    if (formData.type === 'reference') {
-      content.reference_type = 'image'
-    }
+  if (!hasText && !hasImages) {
+    alert('请至少输入文字或上传图片')
+    return
+  }
+  
+  if (!formData.name.trim()) {
+    alert('请输入素材名称')
+    return
+  }
+  
+  loading.value = true
+  
+  // 构建内容
+  const content: any = {}
+  if (hasText) {
+    content.text = contentText.value
+  }
+  if (hasImages) {
+    content.images = [...images.value]
   }
 
-  // 提交数据
+  // 提交数据 - 统一使用 mixed 类型
   emit('submit', {
     name: formData.name,
-    type: finalType,
+    type: 'mixed',
     content: content,
     tags: [],
     description: '',
@@ -355,7 +260,7 @@ async function handleSubmit() {
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 900px;
+  max-width: 700px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -401,7 +306,7 @@ async function handleSubmit() {
 }
 
 .form-section {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .form-section h3 {
@@ -409,89 +314,6 @@ async function handleSubmit() {
   font-weight: 600;
   margin: 0 0 16px 0;
   color: #111827;
-}
-
-/* 场景选择网格 */
-.scene-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
-}
-
-.scene-card {
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.scene-card:hover {
-  border-color: #93c5fd;
-  background: #f0f9ff;
-}
-
-.scene-card.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.scene-icon {
-  margin-bottom: 12px;
-  color: #3b82f6;
-  display: flex;
-  justify-content: center;
-}
-
-.scene-name {
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 4px;
-}
-
-.scene-desc {
-  font-size: 12px;
-  color: #6b7280;
-  line-height: 1.4;
-}
-
-/* 内容类型标签 */
-.content-type-tabs {
-  display: flex;
-  gap: 12px;
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 12px 20px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.tab-btn:hover {
-  border-color: #93c5fd;
-  background: #f0f9ff;
-}
-
-.tab-btn.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  color: #3b82f6;
 }
 
 .form-group {
@@ -507,7 +329,6 @@ async function handleSubmit() {
 }
 
 .form-group input,
-.form-group select,
 .form-group textarea {
   width: 100%;
   padding: 10px 12px;
@@ -518,17 +339,23 @@ async function handleSubmit() {
 }
 
 .form-group input:focus,
-.form-group select:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: #3b82f6;
+}
+
+/* 图文混合编辑样式 */
+.mixed-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* 图片上传区域 */
 .upload-area {
   border: 2px dashed #d1d5db;
   border-radius: 8px;
-  padding: 40px;
+  padding: 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
@@ -549,7 +376,7 @@ async function handleSubmit() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .upload-icon {
@@ -560,49 +387,70 @@ async function handleSubmit() {
 
 .upload-prompt p {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: #374151;
 }
 
 .upload-hint {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
 }
 
-.image-preview-box {
+/* 图片预览网格 */
+.images-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.image-item {
   position: relative;
-  display: inline-block;
-  max-width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
 }
 
-.image-preview-box img {
-  max-width: 100%;
-  max-height: 400px;
-  border-radius: 6px;
-  object-fit: contain;
+.image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.btn-remove {
+.btn-remove-small {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   background: rgba(239, 68, 68, 0.9);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
-.btn-remove:hover {
+.image-item:hover .btn-remove-small {
+  opacity: 1;
+}
+
+.btn-remove-small:hover {
   background: #dc2626;
+}
+
+.content-hint {
+  padding: 12px 16px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0369a1;
 }
 
 .editor-actions {

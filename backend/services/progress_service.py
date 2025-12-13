@@ -171,23 +171,36 @@ class ProgressService:
             
             task = self._tasks[task_id]
             task['current_page'] = current_page
-            task['completed_pages'] = current_page
-            task['progress'] = int((current_page / task['total_pages']) * 100)
             task['updated_at'] = datetime.now().isoformat()
             
             if image_url:
-                task['images'].append({
-                    'page_number': current_page,
-                    'url': image_url,
-                    'created_at': datetime.now().isoformat()
-                })
+                # 检查是否已经存在该页面的图片（避免重复添加）
+                existing_pages = {img['page_number'] for img in task['images']}
+                if current_page not in existing_pages:
+                    task['images'].append({
+                        'page_number': current_page,
+                        'url': image_url,
+                        'created_at': datetime.now().isoformat()
+                    })
+                    # 只有新增图片时才增加完成数
+                    task['completed_pages'] = len(task['images'])
+                else:
+                    # 更新已存在的图片 URL
+                    for img in task['images']:
+                        if img['page_number'] == current_page:
+                            img['url'] = image_url
+                            img['created_at'] = datetime.now().isoformat()
+                            break
+            
+            # 基于实际完成的图片数量计算进度
+            task['progress'] = int((task['completed_pages'] / task['total_pages']) * 100) if task['total_pages'] > 0 else 0
             
             if message:
                 task['message'] = message
             else:
-                task['message'] = f'正在生成第 {current_page}/{task["total_pages"]} 页...'
+                task['message'] = f'正在生成第 {task["completed_pages"]}/{task["total_pages"]} 页...'
             
-            logger.info(f"任务进度更新: {task_id}, 进度: {task['progress']}%")
+            logger.info(f"任务进度更新: {task_id}, 完成: {task['completed_pages']}/{task['total_pages']}, 进度: {task['progress']}%")
             return True
     
     def record_failed_page(

@@ -38,7 +38,17 @@ class OpenAITextClient:
         
         self.base_url = base_url or "https://api.openai.com/v1"
         self.model = model
-        self.client = OpenAI(api_key=api_key, base_url=self.base_url)
+        
+        # 添加默认 User-Agent 以绕过某些网关的拦截
+        default_headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url=self.base_url,
+            default_headers=default_headers
+        )
         
         logger.info(f"OpenAI 文本客户端初始化: base_url={self.base_url}, model={self.model}")
     
@@ -59,11 +69,13 @@ class OpenAITextClient:
                 {"role": "system", "content": "你是一个专业的小红书内容策划专家。请务必返回有效的JSON格式。"},
                 {"role": "user", "content": prompt}
             ],
-            temperature=temperature
+            temperature=temperature,
+            response_format={"type": "json_object"}
         )
         
         content = response.choices[0].message.content
-        logger.debug(f"OpenAI 原始响应: {content[:200]}...")
+        logger.info(f"OpenAI 原始响应长度: {len(content) if content else 0}")
+        logger.debug(f"OpenAI 原始响应: {content[:500] if content else '(空)'}")
         
         return content
     
@@ -117,4 +129,6 @@ class OpenAITextClient:
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            raise json.JSONDecodeError("无法从响应中提取有效的 JSON", content, 0)
+            # 记录详细的错误信息
+            logger.error(f"JSON 解析失败，原始内容: {content[:1000] if content else '(空)'}")
+            raise json.JSONDecodeError(f"无法从响应中提取有效的 JSON，原始内容: {content[:200] if content else '(空)'}", content or "", 0)

@@ -1,156 +1,197 @@
 <template>
-  <div class="editor-view">
+  <div class="editor-container">
     <!-- 错误提示 -->
     <div v-if="error" class="error-message">
+      <span class="error-icon">!</span>
       <p>{{ error }}</p>
-      <button @click="error = ''" class="btn-close">×</button>
+      <button @click="error = ''" class="btn-close"><X :size="14" /></button>
     </div>
 
-    <!-- 返回按钮 -->
-    <div class="editor-header">
-      <button class="btn-back" @click="goBack">
-        <ArrowLeft :size="20" />
-        <span>返回</span>
-      </button>
-      <h1 class="editor-title">创作编辑器</h1>
-    </div>
-
-    <div v-if="store.currentOutline" class="editor-container">
-      <!-- 顶部配置区 -->
-      <div class="config-section glass-panel-heavy">
-        <!-- 主题输入 -->
-        <div class="config-group">
-          <label class="config-label">创作主题</label>
-          <textarea
-            v-model="mainCaption"
-            class="theme-input"
-            placeholder="描述你的创作主题和想法..."
-            rows="5"
-          ></textarea>
+    <div v-if="store.currentOutline" class="editor-layout">
+      <!-- 左侧侧边栏：配置与操作 -->
+      <aside class="editor-sidebar">
+        <div class="sidebar-header">
+          <div class="logo-area">
+            <span class="app-name">✨ CREATION STUDIO</span>
+          </div>
         </div>
 
-        <!-- 全局风格和图片配置 -->
-        <div class="config-row-wrapper">
-          <!-- 全局风格 -->
-          <div class="config-group flex-1">
-            <label class="config-label">全局风格</label>
-            <div class="style-tags">
+        <div class="sidebar-content">
+          <!-- 主题设置 -->
+          <div class="config-group">
+            <label class="group-label">Theme 核心主题</label>
+            <div class="input-wrapper">
+              <textarea
+                v-model="mainCaption"
+                class="sidebar-input textarea"
+                placeholder="这个故事是关于什么的..."
+                rows="4"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- 风格设置 -->
+          <div class="config-group">
+            <label class="group-label">Visual Style 画面风格</label>
+            <div class="style-input-row">
               <input
                 v-model="globalStyle"
-                class="style-input"
-                placeholder="如：极简风格、暖色调、自然光..."
+                class="sidebar-input"
+                placeholder="例如：赛博朋克、水彩..."
               />
               <div class="style-actions">
-                <button @click="applyGlobalStyle('append')" class="action-btn-sm">追加</button>
-                <button @click="applyGlobalStyle('replace')" class="action-btn-sm">覆盖</button>
+                <button @click="applyGlobalStyle('append')" class="btn-icon" title="追加到所有帧">
+                  <Plus :size="14" />
+                </button>
+                <button @click="applyGlobalStyle('replace')" class="btn-icon" title="替换所有帧">
+                  <RefreshCw :size="14" />
+                </button>
               </div>
             </div>
           </div>
 
-          <!-- 图片配置 -->
+          <!-- 参数设置 -->
           <div class="config-group">
-            <label class="config-label">图片配置</label>
-            <div class="image-config-inline">
-              <div class="config-item">
-                <span class="config-item-label">清晰度</span>
-                <div class="config-buttons">
-                  <button
-                    v-for="q in qualityOptions"
-                    :key="q.value"
-                    @click="selectQuality(q.value)"
-                    class="config-btn"
-                    :class="{ active: store.imageGenerationConfig.quality === q.value }"
-                  >
-                    {{ q.label }}
-                  </button>
-                </div>
-              </div>
-              <div class="config-item">
-                <span class="config-item-label">比例</span>
-                <div class="config-buttons">
-                  <button
-                    v-for="ratio in ratioOptions"
-                    :key="ratio.value"
-                    @click="selectRatio(ratio.value)"
-                    class="config-btn"
-                    :class="{ active: store.imageGenerationConfig.aspectRatio === ratio.value }"
-                  >
-                    {{ ratio.label }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 分镜脚本区 -->
-      <div class="script-section">
-        <div class="section-header">
-          <h2>分镜脚本 <span class="count-badge">{{ store.currentOutline.pages.length }}</span></h2>
-          <div class="section-actions">
-            <button @click="clearAllPrompts" class="btn-text">清空</button>
-            <button @click="addNewPage" class="btn-text-primary">+ 添加</button>
-          </div>
-        </div>
-
-        <div class="script-grid">
-          <div
-            v-for="(page, index) in store.currentOutline.pages"
-            :key="page.page_number"
-            class="script-card"
-            :class="{ 'focused': focusedIndex === index }"
-          >
-            <div class="page-badge">P{{ page.page_number }}</div>
+            <label class="group-label">Settings 生成参数</label>
             
-            <div class="card-tools">
-              <button @click="copyPrompt(index)" class="tool-icon" title="复制">
-                <Copy :size="16" />
-              </button>
-              <button @click="deletePage(index)" class="tool-icon" title="删除">
-                <X :size="16" />
-              </button>
+            <div class="param-item">
+              <!-- <span class="param-label">Quality</span> -->
+              <div class="segment-control">
+                <button
+                  v-for="q in qualityOptions"
+                  :key="q.value"
+                  @click="selectQuality(q.value)"
+                  class="segment-btn"
+                  :class="{ active: store.imageGenerationConfig.quality === q.value }"
+                >
+                  {{ q.label }}
+                </button>
+              </div>
             </div>
 
-            <MentionInput
-              v-model="page.description"
-              placeholder="描述画面细节...（输入 @ 可引用素材）"
-              :multiline="true"
-              :rows="12"
-              input-class="script-textarea"
-              @focus="focusedIndex = index"
-              @blur="focusedIndex = null"
-            />
+            <div class="param-item">
+              <!-- <span class="param-label">Ratio</span> -->
+              <div class="ratio-grid">
+                <button
+                  v-for="ratio in ratioOptions"
+                  :key="ratio.value"
+                  @click="selectRatio(ratio.value)"
+                  class="ratio-btn"
+                  :class="{ active: store.imageGenerationConfig.aspectRatio === ratio.value }"
+                  :title="ratio.label"
+                >
+                  <div class="ratio-box" :style="{ aspectRatio: ratio.value.replace(':', '/') }"></div>
+                  <span>{{ ratio.label }}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 底部操作栏 -->
-      <div class="bottom-action-bar">
-        <button
-          class="btn-generate"
-          @click="handleGenerate"
-          :disabled="isGenerating"
-        >
-          <span v-if="isGenerating" class="loading-dot"></span>
-          <Sparkles v-else :size="20" />
-          <span v-if="isGenerating">生成中...</span>
-          <span v-else>一键生成小红书图文</span>
-        </button>
-      </div>
+        <!-- 底部生成按钮 -->
+        <div class="sidebar-footer">
+          <div class="status-indicator">
+            <div class="status-dot" :class="{ 'pulsing': isGenerating }"></div>
+            <span class="status-text">{{ isGenerating ? 'AI 正在思考...' : '准备生成' }}</span>
+          </div>
+          <button
+            class="btn-generate"
+            @click="handleGenerate"
+            :disabled="isGenerating"
+          >
+            <Sparkles v-if="!isGenerating" :size="18" class="btn-icon-left" />
+            <span v-if="isGenerating">正在生成画面...</span>
+            <span v-else>✨ 开始生成分镜</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- 右侧主内容：脚本编辑 -->
+      <main class="editor-main">
+        <!-- 顶部导航 -->
+        <header class="main-header">
+          <div class="breadcrumb">
+            <button class="crumb-btn" @click="goBack" title="返回首页">
+              <ArrowLeft :size="18" />
+            </button>
+            <!-- <span class="separator">/</span> -->
+            <span class="current">故事编辑器 Editor</span>
+          </div>
+          
+          <div class="header-actions">
+             <button @click="clearAllPrompts" class="action-link danger">清空所有</button>
+          </div>
+        </header>
+
+        <!-- 脚本内容区 -->
+        <div class="script-content">
+          <div class="storyboard-header">
+            <h2>分镜脚本 Storyboard</h2>
+            <button @click="addNewPage" class="btn-add-frame">
+              <Plus :size="16" />
+              <span>添加新帧</span>
+            </button>
+          </div>
+
+          <div class="script-list">
+            <div
+              v-for="(page, index) in store.currentOutline.pages"
+              :key="page.page_number"
+              class="script-row"
+              :class="{ 'focused': focusedIndex === index }"
+            >
+              <div class="frame-index">
+                <span>{{ String(page.page_number).padStart(2, '0') }}</span>
+              </div>
+              
+              <div class="frame-content">
+                <div class="frame-header">
+                   <span class="frame-title">Frame {{ page.page_number }}</span>
+                   <div class="frame-actions">
+                    <button @click="copyPrompt(index)" class="icon-btn" title="Copy">
+                      <Copy :size="14" />
+                    </button>
+                    <button @click="deletePage(index)" class="icon-btn danger" title="Delete">
+                      <X :size="14" />
+                    </button>
+                   </div>
+                </div>
+                <div class="input-container">
+                  <MentionInput
+                    v-model="page.description"
+                    placeholder="// 描述这一帧的画面..."
+                    :multiline="true"
+                    :rows="4"
+                    input-class="script-input"
+                    @focus="focusedIndex = index"
+                    @blur="focusedIndex = null"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 底部添加按钮占位，方便操作 -->
+          <div class="bottom-spacer" @click="addNewPage">
+            <div class="add-placeholder">
+              <Plus :size="24" />
+              <span>点击添加新画面</span>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
 
-    <!-- 无大纲提示 -->
+    <!-- 空状态 -->
     <div v-if="!store.currentOutline" class="empty-state">
-      <div class="empty-icon">
-        <FileText :size="48" />
+      <div class="empty-content">
+        <FileText :size="48" class="empty-icon"/>
+        <h3>暂无内容</h3>
+        <p>请选择一个模板或开始新项目 🧁</p>
+        <button @click="goToCreationHome" class="btn-primary">
+          返回创作中心
+        </button>
       </div>
-      <h3>还没有创作内容</h3>
-      <p>请先在创作主页输入主题或选择模板开始创作</p>
-      <button @click="goToCreationHome" class="btn-primary">
-        <Sparkles :size="18" />
-        <span>前往创作</span>
-      </button>
     </div>
   </div>
 </template>
@@ -158,7 +199,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ArrowLeft, Copy, X, Sparkles, FileText } from 'lucide-vue-next'
+import { ArrowLeft, Copy, X, Sparkles, FileText, Plus, RefreshCw } from 'lucide-vue-next'
 import { useAppStore } from '../../store'
 import MentionInput from '../../components/MentionInput.vue'
 import materialApi from '../../services/materialApi'
@@ -175,22 +216,17 @@ const globalStyle = ref('')
 
 // 配置选项
 const qualityOptions = [
-  { label: '1K', value: '1k' as const },
-  { label: '2K', value: '2k' as const },
+  { label: 'SD', value: '1k' as const },
+  { label: 'HD', value: '2k' as const },
   { label: '4K', value: '4k' as const }
 ]
 
 const ratioOptions = [
+  { label: '1:1', value: '1:1' as const },
   { label: '4:3', value: '4:3' as const },
   { label: '3:4', value: '3:4' as const },
   { label: '16:9', value: '16:9' as const },
   { label: '9:16', value: '9:16' as const },
-  { label: '2:3', value: '2:3' as const },
-  { label: '3:2', value: '3:2' as const },
-  { label: '1:1', value: '1:1' as const },
-  { label: '4:5', value: '4:5' as const },
-  { label: '5:4', value: '5:4' as const },
-  { label: '21:9', value: '21:9' as const }
 ]
 
 // 计算属性
@@ -236,11 +272,11 @@ const copyPrompt = (index: number) => {
 const deletePage = (index: number) => {
   if (!store.currentOutline) return
   if (store.currentOutline.pages.length <= 1) {
-    error.value = '至少需要保留一个分镜'
+    error.value = 'At least one frame is required'
     return
   }
   
-  if (confirm('确定要删除这个分镜吗？')) {
+  if (confirm('Delete this frame?')) {
     store.currentOutline.pages.splice(index, 1)
     store.currentOutline.pages.forEach((p, i) => {
       p.page_number = i + 1
@@ -250,7 +286,7 @@ const deletePage = (index: number) => {
 
 const clearAllPrompts = () => {
   if (!store.currentOutline) return
-  if (confirm('确定要清空所有提示词吗？')) {
+  if (confirm('Clear all prompts?')) {
     store.currentOutline.pages.forEach(p => p.description = '')
   }
 }
@@ -260,10 +296,11 @@ const addNewPage = () => {
   const newPageNum = store.currentOutline.pages.length + 1
   store.currentOutline.pages.push({
     page_number: newPageNum,
-    title: `页面 ${newPageNum}`,
+    title: `Page ${newPageNum}`,
     description: '',
     xiaohongshu_content: mainCaption.value
   })
+  // Scroll to bottom logic could be added here
 }
 
 const selectQuality = (quality: '1k' | '2k' | '4k') => {
@@ -285,12 +322,12 @@ const handleGenerate = async () => {
   
   const hasEmptyPrompt = store.currentOutline.pages.some(p => !p.description || !p.description.trim())
   if (hasEmptyPrompt) {
-    error.value = '请确保所有分镜都有提示词'
+    error.value = 'Please ensure all frames have prompts'
     return
   }
   
   if (!mainCaption.value || !mainCaption.value.trim()) {
-    error.value = '请输入小红书文案'
+    error.value = 'Please enter theme content'
     return
   }
 
@@ -325,20 +362,17 @@ const handleGenerate = async () => {
     }, 500)
     
   } catch (err: any) {
-    error.value = err.message || '处理素材引用失败'
+    error.value = err.message || 'Generation failed'
     isGenerating.value = false
   }
 }
 
 onMounted(() => {
-  // 接收热点话题参数
   const topic = route.query.topic as string
   if (topic && store.currentOutline) {
-    // 自动填充到主题输入框
     store.currentOutline.pages.forEach(p => {
       p.xiaohongshu_content = topic
     })
-    // 清除 query 参数
     router.replace({ query: {} })
   }
   
@@ -349,522 +383,647 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.editor-view {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 1rem 0;
-  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-}
-
-.editor-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 8px;
-  color: #64748b;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-back:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: #6366f1;
-  border-color: rgba(99, 102, 241, 0.4);
-}
-
-.editor-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.error-message {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fee;
-  color: #ff2442;
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid #ffcdd2;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  color: #ff2442;
-  font-size: 18px;
-  cursor: pointer;
-}
-
 .editor-container {
+  height: calc(100vh - var(--nav-height));
+  width: 100%;
+  position: relative;
+  /* background: transparent; Let the global background show */
+  overflow: hidden;
+}
+
+.editor-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+/* Sidebar */
+.editor-sidebar {
+  width: 320px;
+  background: rgba(255, 255, 255, 0.65); /* Glass effect */
+  border-right: 1px solid white;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 5px 0 30px rgba(0,0,0,0.02);
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.app-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--macaron-pink-deep);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  padding-bottom: 100px;
 }
 
-.config-section {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.glass-panel-heavy {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  border-radius: 24px;
-}
-
+/* Config Groups */
 .config-group {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.config-group.flex-1 {
-  flex: 1;
-}
-
-.config-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
+.group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 1px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.theme-input {
+.sidebar-input {
   width: 100%;
-  min-height: 128px;
-  padding: 1rem;
-  border: 2px solid rgba(99, 102, 241, 0.2);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.6);
-  font-size: 15px;
-  line-height: 1.6;
-  color: #1e293b;
-  resize: vertical;
-  font-family: inherit;
-  transition: all 0.3s;
-}
-
-.theme-input:focus {
-  outline: none;
-  border-color: #6366f1;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-.config-row-wrapper {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-.style-tags {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.style-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-  color: #1e293b;
-  transition: all 0.2s;
-}
-
-.style-input:focus {
-  outline: none;
-  border-color: #6366f1;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.style-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-btn-sm {
-  flex: 1;
-  padding: 0.5rem 1rem;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: #6366f1;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-btn-sm:hover {
-  background: #6366f1;
-  color: white;
-  transform: translateY(-1px);
-}
-
-.image-config-inline {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.config-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.config-item-label {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 500;
-  min-width: 60px;
-}
-
-.config-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.config-btn {
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1.5px solid #e0e0e0;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.config-btn:hover {
-  border-color: #6366f1;
-  color: #6366f1;
-  transform: translateY(-1px);
-}
-
-.config-btn.active {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.script-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(99, 102, 241, 0.2);
-}
-
-.section-header h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.count-badge {
-  font-size: 14px;
-  color: #94a3b8;
-  font-weight: 400;
-}
-
-.section-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.btn-text {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  font-size: 14px;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.btn-text:hover {
-  color: #1e293b;
-}
-
-.btn-text-primary {
-  background: none;
-  border: none;
-  color: #6366f1;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.btn-text-primary:hover {
-  color: #8b5cf6;
-}
-
-.script-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 1.5rem;
-}
-
-.script-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: white;
+  border: 1px solid transparent;
   border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
   transition: all 0.3s;
-  position: relative;
-  min-height: 320px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
 }
 
-.script-card:hover {
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
-  transform: translateY(-4px);
+.sidebar-input:focus {
+  outline: none;
+  border-color: var(--macaron-pink);
+  box-shadow: 0 4px 15px rgba(255, 183, 178, 0.2);
+  transform: translateY(-1px);
 }
 
-.script-card.focused {
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+.sidebar-input.textarea {
+  resize: vertical;
+  min-height: 100px;
 }
 
-.page-badge {
-  position: absolute;
-  top: -12px;
-  left: 1rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.card-tools {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+.style-input-row {
   display: flex;
   gap: 0.5rem;
-  opacity: 0;
-  transition: opacity 0.2s;
 }
 
-.script-card:hover .card-tools {
-  opacity: 1;
-}
-
-.tool-icon {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  color: #64748b;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+.btn-icon {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: white;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.btn-icon:hover {
+  background: var(--macaron-mint-light);
+  color: #6DB398;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(181, 234, 215, 0.3);
+}
+
+/* Segment Control */
+.segment-control {
+  display: flex;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+}
+
+.segment-btn {
+  flex: 1;
+  padding: 8px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 10px;
   transition: all 0.2s;
 }
 
-.tool-icon:hover {
-  background: #6366f1;
-  color: white;
-  border-color: transparent;
+.segment-btn.active {
+  background: white;
+  color: var(--macaron-pink-deep);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.script-textarea {
-  width: 100%;
-  min-height: 280px;
-  border: none;
-  resize: none;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #1e293b;
-  font-family: inherit;
-  background: transparent;
-  padding: 0;
+/* Ratio Grid */
+.ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 0.5rem;
 }
 
-.script-textarea:focus {
-  outline: none;
-}
-
-.bottom-action-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(99, 102, 241, 0.2);
-  padding: 1.5rem 2rem;
+.ratio-btn {
+  background: white;
+  border: 1px solid transparent;
+  padding: 10px;
+  border-radius: 12px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.ratio-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.ratio-btn.active {
+  border-color: var(--macaron-pink);
+  background: #FFF5F5;
+}
+
+.ratio-box {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--text-tertiary);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.ratio-btn.active .ratio-box {
+  border-color: var(--macaron-pink-deep);
+  background: rgba(255, 154, 162, 0.1);
+}
+
+.ratio-btn span {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.ratio-btn.active span {
+  color: var(--macaron-pink-deep);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
   justify-content: center;
-  z-index: 100;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #8EC5B0;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #8EC5B0;
+}
+
+.status-dot.pulsing {
+  background: #FFD93D;
+  box-shadow: 0 0 10px #FFD93D;
+  animation: pulse 1.5s infinite;
+}
+
+.status-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
 }
 
 .btn-generate {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--macaron-pink-deep), var(--macaron-pink));
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 3rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 6px 20px rgba(255, 154, 162, 0.4);
 }
 
 .btn-generate:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(255, 154, 162, 0.6);
 }
 
 .btn-generate:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  background: var(--text-tertiary);
 }
 
-.loading-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+/* Main Content */
+.editor-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: transparent; /* Transparent to show global background */
+}
+
+.main-header {
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* No border/background to feel open */
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.crumb-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: white;
-  animation: pulse 1.5s ease-in-out infinite;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.crumb-btn:hover {
+  background: white;
+  transform: translateY(-2px);
+  color: var(--macaron-pink-deep);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
+.separator {
+  color: var(--text-tertiary);
+}
+
+.current {
+  color: var(--macaron-pink-deep);
+  background: #FFF0F0;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.action-link {
+  background: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.action-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.action-link.danger:hover {
+  color: white;
+  background: #FF9AA2;
+}
+
+/* Script Content */
+.script-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 15% 4rem; /* Centralize content */
+}
+
+.storyboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.storyboard-header h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+}
+
+.btn-add-frame {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: none;
+  color: var(--macaron-pink-deep);
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 154, 162, 0.2);
+}
+
+.btn-add-frame:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 154, 162, 0.3);
+}
+
+/* Script List */
+.script-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.script-row {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 2px solid white;
+  border-radius: 24px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.script-row:hover,
+.script-row.focused {
+  background: white;
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+}
+
+.script-row.focused {
+  border-color: var(--macaron-pink);
+  box-shadow: 0 15px 40px rgba(255, 154, 162, 0.2);
+}
+
+.frame-index {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--macaron-pink-deep);
+  opacity: 0.5;
+  user-select: none;
+  width: 50px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.script-row.focused .frame-index {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.frame-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.frame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.frame-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.frame-actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  transform: translateX(10px);
+}
+
+.script-row:hover .frame-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: none;
+  background: #f8fafc;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: var(--macaron-mint-light);
+  color: #6DB398;
+}
+
+.icon-btn.danger:hover {
+  background: #FFF0F0;
+  color: #FF9AA2;
+}
+
+.input-container {
+  /* Ensure input has enough space */
+}
+
+:deep(.script-input) {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-primary) !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  padding: 0 !important;
+  resize: none !important;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+:deep(.script-input::placeholder) {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* Bottom Spacer */
+.bottom-spacer {
+  margin-top: 2rem;
+  padding-bottom: 4rem;
+  cursor: pointer;
+}
+
+.add-placeholder {
+  height: 80px;
+  border: 2px dashed rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+  transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.bottom-spacer:hover .add-placeholder {
+  border-color: var(--macaron-pink);
+  color: var(--macaron-pink-deep);
+  background: white;
+  transform: scale(1.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+
+/* Empty State */
 .empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.empty-content {
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 4rem 2rem;
-  min-height: 400px;
-}
-
-.empty-icon {
-  width: 100px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-  border-radius: 24px;
-  margin-bottom: 1.5rem;
-  color: #6366f1;
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.empty-state p {
-  margin: 0 0 2rem 0;
-  font-size: 1rem;
-  color: #64748b;
+  gap: 1rem;
+  color: var(--text-secondary);
 }
 
 .btn-primary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  margin-top: 1rem;
+  padding: 12px 30px;
+  background: linear-gradient(135deg, var(--macaron-pink-deep), var(--macaron-pink));
   color: white;
-  font-size: 16px;
-  font-weight: 600;
   border: none;
-  border-radius: 12px;
+  border-radius: 30px;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255, 154, 162, 0.4);
   transition: all 0.3s;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 10px 25px rgba(255, 154, 162, 0.6);
 }
 
-@media (max-width: 1024px) {
-  .config-row-wrapper {
-    flex-direction: column;
-  }
-  
-  .script-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  }
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@media (max-width: 640px) {
-  .editor-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .script-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .btn-generate {
-    width: 100%;
-    justify-content: center;
-  }
+.error-message {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 2px solid #FF9AA2;
+  color: var(--text-primary);
+  padding: 10px 20px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(255, 154, 162, 0.3);
+  font-weight: 600;
+  animation: popDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popDown {
+  from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+.error-icon {
+  width: 20px;
+  height: 20px;
+  background: #FF9AA2;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.btn-close {
+  background: #f1f5f9;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.btn-close:hover {
+  background: #e2e8f0;
 }
 </style>

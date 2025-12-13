@@ -29,26 +29,26 @@ def create_material():
     """
     try:
         data = request.get_json()
-        
-        required_fields = ['name', 'type', 'category', 'content']
+
+        required_fields = ['name', 'type', 'content']
         for field in required_fields:
             if field not in data:
                 return error_response(f'缺少必填字段: {field}', 400)
-        
+
         service = MaterialService()
-        
+
         is_valid, error_msg = service.validate_material_data(
             material_type=data['type'],
             content=data['content']
         )
-        
+
         if not is_valid:
             return error_response(error_msg, 400)
-        
+
         material_id = service.create_material(
             name=data['name'],
             material_type=data['type'],
-            category=data['category'],
+            category=data.get('category', ''),
             content=data['content'],
             tags=data.get('tags', []),
             description=data.get('description', '')
@@ -104,7 +104,6 @@ def get_materials():
         
         result = service.get_materials(
             material_type=material_type,
-            category=category,
             tags=tags,
             page=page,
             page_size=page_size
@@ -137,7 +136,7 @@ def get_material(material_id):
 @material_bp.route('/materials/<material_id>', methods=['PUT'])
 def update_material(material_id):
     """
-    更新素材
+    更新素材（完整更新）
     
     请求体:
     {
@@ -170,8 +169,7 @@ def update_material(material_id):
             name=data.get('name'),
             content=data.get('content'),
             tags=data.get('tags'),
-            description=data.get('description'),
-            category=data.get('category')
+            description=data.get('description')
         )
         
         if success:
@@ -181,6 +179,71 @@ def update_material(material_id):
             
     except Exception as e:
         logger.error(f'更新素材异常: {e}', exc_info=True)
+        return error_response(str(e), 500)
+
+
+@material_bp.route('/materials/<material_id>', methods=['PATCH'])
+def patch_material(material_id):
+    """
+    部分更新素材（用于设置/取消模板等操作）
+    
+    请求体:
+    {
+        "is_template": true/false（可选）,
+        "template_name": "模板名称"（可选）,
+        "name": "新名称（可选）",
+        "content": {...}（可选）,
+        "tags": ["标签"]（可选）,
+        "description": "描述"（可选）
+    }
+    """
+    try:
+        data = request.get_json()
+        service = MaterialService()
+        
+        # 检查素材是否存在
+        existing = service.get_material(material_id)
+        if not existing:
+            return error_response('素材不存在', 404)
+        
+        # 如果更新 content，需要验证
+        if 'content' in data:
+            is_valid, error_msg = service.validate_material_data(
+                material_type=existing['type'],
+                content=data['content']
+            )
+            
+            if not is_valid:
+                return error_response(error_msg, 400)
+        
+        # 处理模板相关字段 - 更新到 content 中
+        content_update = data.get('content', {}) or {}
+        if 'is_template' in data:
+            content_update['is_template'] = data['is_template']
+        if 'template_name' in data:
+            content_update['template_name'] = data['template_name']
+        
+        # 如果有 content 更新，合并现有 content
+        if content_update:
+            merged_content = {**existing.get('content', {}), **content_update}
+        else:
+            merged_content = None
+        
+        success = service.update_material(
+            material_id=material_id,
+            name=data.get('name'),
+            content=merged_content,
+            tags=data.get('tags'),
+            description=data.get('description')
+        )
+        
+        if success:
+            return success_response(message='素材更新成功')
+        else:
+            return error_response('素材更新失败', 500)
+            
+    except Exception as e:
+        logger.error(f'部分更新素材异常: {e}', exc_info=True)
         return error_response(str(e), 500)
 
 

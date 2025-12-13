@@ -9,9 +9,10 @@ from dataclasses import dataclass, field, asdict
 
 
 class MaterialType(str, Enum):
-    """只有3种核心素材"""
+    """4种核心素材类型"""
     TEXT = "text"           # 文本：标题、文案、话术、数据
     IMAGE = "image"         # 图片：产品图、配图、截图
+    MIXED = "mixed"         # 图文混合：同时包含文字和图片
     REFERENCE = "reference" # 参考：优秀案例、对标账号、风格参考
 
 
@@ -80,6 +81,10 @@ class Material:
             if 'url' not in self.content:
                 return False, "图片素材需要url字段"
         
+        elif self.type == MaterialType.MIXED:
+            if 'text' not in self.content and 'images' not in self.content:
+                return False, "图文混合素材需要text或images字段"
+        
         elif self.type == MaterialType.REFERENCE:
             if 'reference_type' not in self.content:
                 return False, "参考素材需要reference_type字段"
@@ -108,6 +113,23 @@ def create_image(name: str, url: str, **kwargs) -> Material:
         name=name,
         type=MaterialType.IMAGE,
         content={"url": url, **kwargs}
+    )
+
+
+def create_mixed(name: str, text: str = "", images: list = None, **kwargs) -> Material:
+    """创建图文混合素材"""
+    import uuid
+    content = {}
+    if text:
+        content["text"] = text
+    if images:
+        content["images"] = images
+    content.update(kwargs)
+    return Material(
+        id=f"mat_{uuid.uuid4().hex[:12]}",
+        name=name,
+        type=MaterialType.MIXED,
+        content=content
     )
 
 

@@ -1,11 +1,5 @@
 <template>
   <div class="result-view">
-    <!-- 错误提示 -->
-    <div v-if="error" class="error-message">
-      <p>{{ error }}</p>
-      <button @click="retry" class="btn btn-secondary">重试</button>
-    </div>
-
     <!-- 主体布局 -->
     <div v-if="store.currentOutline" class="split-layout">
       
@@ -188,114 +182,114 @@
               <p>点击左侧任意图片<br>查看并编辑对应提示词</p>
               
               <div class="global-actions">
-                <button @click="downloadAll" class="btn btn-outline-primary" :disabled="!hasImages">
-                  下载全部图片
-                </button>
-                <button @click="goHome" class="btn btn-text">
-                  回到灵感与发现
-                </button>
-              </div>
-            </div>
-
-            <!-- 提示词编辑模块 -->
-            <div v-else key="editor" class="editor-module">
-            <div class="editor-header">
-              <h3 class="editor-title">当前图片提示词 (P{{ selectedPage?.page_number }})</h3>
-              <button class="close-editor-btn" @click="exitSingleView">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button @click="downloadAll" class="btn btn-primary" :disabled="!hasImages">
+                下载全部图片
+              </button>
+              <button @click="goHome" class="btn btn-secondary">
+                回到灵感与发现
               </button>
             </div>
+          </div>
 
-            <div class="editor-content">
-              <textarea
-                v-model="currentEditingPrompt"
-                class="prompt-input"
-                placeholder="修改提示词（例：小红书风格、奶茶探店、暖色调、胶片感、高清细节）"
-                :disabled="isGenerating"
-              ></textarea>
+          <!-- 提示词编辑模块 -->
+          <div v-else key="editor" class="editor-module">
+          <div class="editor-header">
+            <h3 class="editor-title">当前图片提示词 (P{{ selectedPage?.page_number }})</h3>
+            <button class="close-editor-btn" @click="exitSingleView">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-              <!-- 热门标签 -->
-              <div class="tags-container">
-                <span class="tags-label">推荐风格：</span>
-                <div class="tags-list">
-                  <button 
-                    v-for="tag in styleTags" 
-                    :key="tag" 
-                    class="style-tag"
-                    @click="appendTag(tag)"
-                    :disabled="isGenerating"
-                  >
-                    {{ tag }}
-                  </button>
-                </div>
-              </div>
+          <div class="editor-content">
+            <textarea
+              v-model="currentEditingPrompt"
+              class="glass-input prompt-input"
+              placeholder="修改提示词（例：小红书风格、奶茶探店、暖色调、胶片感、高清细节）"
+              :disabled="isGenerating"
+            ></textarea>
 
-              <!-- 功能按钮 -->
-              <div class="editor-actions">
-                <button 
-                  class="btn btn-regenerate" 
-                  @click="regenerateCurrent"
-                  :disabled="isGenerating"
-                >
-                  <span v-if="isGenerating && isPageGenerating(selectedPage?.page_number)" class="loading-spinner"></span>
-                  <span v-else>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="btn-icon">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                    </svg>
-                    重新生成图片
-                  </span>
-                </button>
-                
-                <button 
-                  class="btn btn-restore" 
-                  @click="restoreDefaultPrompt"
-                  :disabled="isGenerating"
-                >
-                  恢复默认提示词
-                </button>
-              </div>
-              
-              <div class="single-image-actions">
+            <!-- 热门标签 -->
+            <div class="tags-container">
+              <span class="tags-label">推荐风格：</span>
+              <div class="tags-list">
                 <button
-                  v-if="selectedPage?.image_url"
-                  @click="downloadSingle"
-                  class="btn btn-download-single"
+                  v-for="tag in styleTags"
+                  :key="tag"
+                  class="style-tag"
+                  @click="appendTag(tag)"
+                  :disabled="isGenerating"
                 >
-                  下载此图
+                  {{ tag }}
                 </button>
               </div>
             </div>
-            </div>
-          </transition>
-        </div>
 
-        <!-- 下方：小红书文案编辑区（始终显示） -->
-        <div class="caption-editor-section">
-          <h3 class="editor-subtitle">小红书文案</h3>
-          <textarea
-            v-model="globalCaption"
-            class="caption-input"
-            placeholder="编辑小红书文案..."
-            :disabled="isGenerating"
-          ></textarea>
-          <button
-            class="btn btn-save-caption"
-            @click="saveGlobalCaption"
-            :disabled="isGenerating"
-          >
-            保存文案
-          </button>
-        </div>
+            <!-- 功能按钮 -->
+            <div class="editor-actions">
+              <button
+                class="btn btn-primary btn-regenerate"
+                @click="regenerateCurrent"
+                :disabled="isGenerating"
+              >
+                <span v-if="isGenerating && isPageGenerating(selectedPage?.page_number)" class="loading-spinner"></span>
+                <span v-else class="btn-content-wrapper">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                  重新生成
+                </span>
+              </button>
+              
+              <button
+                class="btn btn-secondary btn-restore"
+                @click="restoreDefaultPrompt"
+                :disabled="isGenerating"
+              >
+                恢复
+              </button>
+            </div>
+            
+            <div class="single-image-actions">
+              <button
+                v-if="selectedPage?.image_url"
+                @click="downloadSingle"
+                class="btn-text-link"
+              >
+                下载此图
+              </button>
+            </div>
+          </div>
+          </div>
+        </transition>
+      </div>
+
+      <!-- 下方：小红书文案编辑区（始终显示） -->
+      <div class="caption-editor-section">
+        <h3 class="editor-subtitle">小红书文案</h3>
+        <textarea
+          v-model="globalCaption"
+          class="glass-input caption-input"
+          placeholder="编辑小红书文案..."
+          :disabled="isGenerating"
+        ></textarea>
+        <button
+          class="btn btn-primary btn-save-caption"
+          @click="saveGlobalCaption"
+          :disabled="isGenerating"
+        >
+          保存文案
+        </button>
       </div>
     </div>
-    
-    <!-- 无大纲提示 -->
-    <div v-if="!store.currentOutline && !isGenerating" class="empty-state">
-      <p>暂无生成结果</p>
-      <button @click="goHome" class="btn btn-primary">回到灵感与发现</button>
-    </div>
+  </div>
+  
+  <!-- 无大纲提示 -->
+  <div v-if="!store.currentOutline && !isGenerating" class="glass-panel empty-state">
+    <p>暂无生成结果</p>
+    <button @click="goHome" class="btn btn-primary">回到灵感与发现</button>
+  </div>
 
     <!-- 图片预览模态框 -->
     <div v-if="previewUrl" class="image-modal" @click="closePreview" @mousemove="handleModalMouseMove">
@@ -341,6 +335,7 @@ import { useRouter } from 'vue-router'
 import { useAppStore } from '../store'
 import { generateImages, subscribeProgress, saveHistory, type ProgressData } from '../services/api'
 import materialApi from '../services/materialApi'
+import toast from '../utils/toast'
 
 const router = useRouter()
 const store = useAppStore()
@@ -364,7 +359,6 @@ const styleTags = ['#胶片感', '#ins风', '#韩系穿搭', '#美食特写', '#
 // 状态
 const isGenerating = ref(false)
 const generatingPages = ref<Set<number>>(new Set()) // 记录正在生成的页面
-const error = ref('')
 const eventSource = ref<EventSource | null>(null)
 const selectedGenerator = ref(store.imageModelConfig.generatorType || 'image_api')
 
@@ -612,7 +606,6 @@ const regenerateCurrent = async () => {
   try {
     isGenerating.value = true
     generatingPages.value.add(selectedPage.value.page_number)
-    error.value = ''
     
     // 🎨 处理素材引用
     const currentPrompt = currentEditingPrompt.value
@@ -661,14 +654,14 @@ const regenerateCurrent = async () => {
     })
     
     if (response.success) {
-      console.log(`✅ 重新生成任务已启动，订阅进度: ${response.task_id}`)
-      subscribeToProgress(response.task_id)
+      console.log(`✅ 重新生成任务已启动，订阅进度: ${response.data.task_id}`)
+      subscribeToProgress(response.data.task_id)
     } else {
       throw new Error('启动生成任务失败')
     }
   } catch (err: any) {
     console.error('❌ 重新生成失败:', err)
-    error.value = err.message || '生成失败，请重试'
+    toast.error(err.message || '生成失败，请重试')
     isGenerating.value = false
     generatingPages.value.delete(selectedPage.value.page_number)
   }
@@ -677,18 +670,16 @@ const regenerateCurrent = async () => {
 // 批量生成（初始加载时）
 const startGeneration = async () => {
   if (!store.currentOutline) {
-    error.value = '没有可用的大纲'
+    toast.error('没有可用的大纲')
     return
   }
-  
+
   try {
     isGenerating.value = true
     // 标记所有没有图片的页面为生成中
     store.currentOutline.pages.forEach(p => {
       if (!p.image_url) generatingPages.value.add(p.page_number)
     })
-    
-    error.value = ''
     
     // 🎨 处理素材引用
     const prompts = store.currentOutline.pages.map(p => p.description)
@@ -734,12 +725,12 @@ const startGeneration = async () => {
     })
     
     if (response.success) {
-      subscribeToProgress(response.task_id)
+      subscribeToProgress(response.data.task_id)
     } else {
       throw new Error('启动生成任务失败')
     }
   } catch (err: any) {
-    error.value = err.message || '生成失败，请重试'
+    toast.error(err.message || '生成失败，请重试')
     isGenerating.value = false
     generatingPages.value.clear()
     console.error('Generation error:', err)
@@ -756,42 +747,40 @@ const subscribeToProgress = (taskId: string) => {
     (data: ProgressData) => {
       console.log('收到进度更新:', data)
       
-      if (!data.done) {
-        progressData.value = {
-          ...progressData.value,
-          ...data,
-          images: data.images || progressData.value.images || [],
-          failed_pages: data.failed_pages || progressData.value.failed_pages || []
-        }
-        
-        // 实时更新图片
-        if (data.images && data.images.length > 0) {
-          data.images.forEach(img => {
-            const page = store.currentOutline!.pages.find(p => p.page_number === img.page_number)
-            if (page) {
-              page.image_url = img.url
-              generatingPages.value.delete(page.page_number)
-            }
-          })
-        }
-        
-        // 处理失败页面 - 显示错误信息
-        if (data.failed_pages && data.failed_pages.length > 0) {
-          data.failed_pages.forEach(fail => {
-            generatingPages.value.delete(fail.page_number)
-            // 显示错误提示
-            const errorMsg = `第 ${fail.page_number} 页生成失败: ${fail.error}`
-            console.error(errorMsg)
-            // 如果是第一个错误，显示在界面上
-            if (!error.value) {
-              error.value = errorMsg
-            }
-          })
-        }
+      // 🔧 修复：无论是否 done，都要处理图片数据
+      progressData.value = {
+        ...progressData.value,
+        ...data,
+        images: data.images || progressData.value.images || [],
+        failed_pages: data.failed_pages || progressData.value.failed_pages || []
+      }
+      
+      // 实时更新图片 - 无论是否 done 都要处理
+      if (data.images && data.images.length > 0) {
+        console.log('🖼️ 更新图片:', data.images.length, '张')
+        data.images.forEach(img => {
+          const page = store.currentOutline!.pages.find(p => p.page_number === img.page_number)
+          if (page) {
+            console.log(`✅ 设置页面 ${img.page_number} 的图片: ${img.url}`)
+            page.image_url = img.url
+            generatingPages.value.delete(page.page_number)
+          }
+        })
+      }
+      
+      // 处理失败页面 - 显示错误信息
+      if (data.failed_pages && data.failed_pages.length > 0) {
+        data.failed_pages.forEach(fail => {
+          generatingPages.value.delete(fail.page_number)
+          // 显示错误提示
+          const errorMsg = `第 ${fail.page_number} 页生成失败: ${fail.error}`
+          console.error(errorMsg)
+          toast.error(errorMsg, 5000) // 显示5秒
+        })
       }
     },
     (err: Error) => {
-      error.value = err.message
+      toast.error(err.message || 'SSE连接错误')
       isGenerating.value = false
       generatingPages.value.clear()
     },
@@ -822,11 +811,6 @@ const subscribeToProgress = (taskId: string) => {
       }
     }
   )
-}
-
-const retry = () => {
-  error.value = ''
-  startGeneration()
 }
 
 const goHome = () => {
@@ -1448,15 +1432,23 @@ onUnmounted(() => {
   flex: 1;
   min-width: 500px;
   max-width: 650px;
-  background: #fff;
-  border-radius: 32px; /* 与手机圆角呼应 */
+  background: var(--glass-surface);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 32px;
   padding: 32px;
   height: 812px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.05); /* 柔和阴影 */
-  border: 1px solid rgba(0,0,0,0.02);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
+}
+
+.editor-section:hover {
+  background: var(--glass-surface-hover);
+  border-color: var(--glass-border-hover);
 }
 
 /* 默认提示 */
@@ -1509,9 +1501,9 @@ onUnmounted(() => {
 
 .editor-title {
   font-size: 16px;
-  color: #ff2442;
+  color: var(--primary-color);
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .close-editor-btn {
@@ -1537,21 +1529,12 @@ onUnmounted(() => {
 .prompt-input {
   width: 100%;
   height: 150px;
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
+  padding: 16px;
   resize: vertical;
-  font-family: Consolas, monospace;
+  font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 14px;
-  line-height: 1.5;
-  color: #333;
+  line-height: 1.6;
   margin-bottom: 16px;
-  transition: border-color 0.2s;
-}
-
-.prompt-input:focus {
-  outline: none;
-  border-color: #ff2442;
 }
 
 /* 标签 */
@@ -1573,19 +1556,21 @@ onUnmounted(() => {
 }
 
 .style-tag {
-  background: #f5f5f5;
-  border: none;
-  padding: 4px 12px;
-  border-radius: 16px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 6px 14px;
+  border-radius: 20px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .style-tag:hover {
-  background: #e6e6e6;
-  color: #333;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
 }
 
 /* 按钮 */
@@ -1607,34 +1592,35 @@ onUnmounted(() => {
 }
 
 .btn-regenerate {
-  background: linear-gradient(to right, #ff2442, #ff6b81);
-  color: white;
-  padding: 10px 24px;
-  border-radius: 24px;
   flex: 1;
-}
-
-.btn-regenerate:hover:not(:disabled) {
-  transform: scale(1.03);
-  box-shadow: 0 4px 12px rgba(255, 36, 66, 0.3);
-}
-
-.btn-regenerate:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  border-radius: 24px;
 }
 
 .btn-restore {
-  background: white;
-  border: 1px solid #ddd;
-  color: #666;
-  padding: 10px 24px;
   border-radius: 24px;
+  padding: 10px 24px;
 }
 
-.btn-restore:hover:not(:disabled) {
-  border-color: #999;
-  color: #333;
+.btn-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-text-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.btn-text-link:hover {
+  text-decoration: underline;
 }
 
 .btn-icon {
@@ -1667,47 +1653,24 @@ onUnmounted(() => {
 
 .editor-subtitle {
   font-size: 16px;
-  color: #ff2442;
+  color: var(--primary-color);
   margin: 0 0 12px 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .caption-input {
   width: 100%;
   min-height: 180px;
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
+  padding: 16px;
   resize: vertical;
   font-size: 14px;
   line-height: 1.8;
-  color: #333;
-  margin-bottom: 12px;
-  transition: border-color 0.2s;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.caption-input:focus {
-  outline: none;
-  border-color: #ff2442;
+  margin-bottom: 16px;
 }
 
 .btn-save-caption {
   width: 100%;
-  background: linear-gradient(to right, #ff2442, #ff6b81);
-  color: white;
-  padding: 10px 24px;
   border-radius: 24px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-save-caption:hover:not(:disabled) {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(255, 36, 66, 0.3);
 }
 
 .btn-save-caption:disabled {

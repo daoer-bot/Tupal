@@ -17,6 +17,11 @@ export default defineConfig({
         // 代理到后端服务（后端端口在 backend/.env 中配置）
         target: 'http://localhost:5030',
         changeOrigin: true
+      },
+      '/uploads': {
+        // 🔧 代理上传文件访问到后端
+        target: 'http://localhost:5030',
+        changeOrigin: true
       }
     }
   }

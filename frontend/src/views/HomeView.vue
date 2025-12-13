@@ -2,12 +2,12 @@
   <div class="home-container">
     <div class="bento-grid">
       <!-- 智能创作 - 核心大卡片 -->
-      <div class="bento-card glass-card-premium bento-hero hero-card animate-entry" style="--delay: 0s">
+      <div class="glass-panel bento-hero hero-card animate-entry" style="--delay: 0s">
         <div class="card-bg-glow"></div>
         <div class="card-content">
           <div class="hero-header">
             <div class="badge-pill">AI Powered</div>
-            <h2 class="hero-title text-gradient-animated">智能创作引擎</h2>
+            <h2 class="hero-title text-gradient">智能创作引擎</h2>
             <p class="hero-subtitle">释放无限灵感，一键生成爆款图文</p>
           </div>
           
@@ -18,12 +18,11 @@
           </div>
 
           <div class="hero-actions">
-            <button class="btn-3d primary-action" @click="$router.push('/creation/new')">
+            <button class="btn btn-primary primary-action" @click="$router.push('/creation/new')">
               <span class="btn-icon">✨</span>
               <span>开始全新创作</span>
-              <div class="btn-shine"></div>
             </button>
-            <button class="btn-ghost secondary-action" @click="$router.push('/creation/template')">
+            <button class="btn btn-secondary secondary-action" @click="$router.push('/creation/template')">
               <span class="btn-icon">📝</span>
               <span>使用模板</span>
             </button>
@@ -32,7 +31,7 @@
       </div>
 
       <!-- 灵感集市 -->
-      <div class="bento-card glass-card-premium bento-sidebar feature-card animate-entry" style="--delay: 0.1s">
+      <div class="glass-panel bento-sidebar feature-card animate-entry" style="--delay: 0.1s">
         <div class="card-content">
           <div class="card-header">
             <h3 class="card-title">灵感发现</h3>
@@ -70,7 +69,7 @@
       </div>
 
       <!-- 模板广场 -->
-      <router-link to="/inspiration/templates" class="bento-card glass-card-premium bento-small quick-card animate-entry" style="--delay: 0.2s">
+      <router-link to="/inspiration/templates" class="glass-panel bento-small quick-card animate-entry" style="--delay: 0.2s">
         <div class="card-bg-decoration template-bg"></div>
         <div class="card-content center-content">
           <div class="quick-icon-wrapper template">
@@ -84,7 +83,7 @@
       </router-link>
 
       <!-- 我的作品 -->
-      <router-link to="/workspace/works" class="bento-card glass-card-premium bento-small quick-card animate-entry" style="--delay: 0.3s">
+      <router-link to="/workspace/works" class="glass-panel bento-small quick-card animate-entry" style="--delay: 0.3s">
         <div class="card-bg-decoration works-bg"></div>
         <div class="card-content center-content">
           <div class="quick-icon-wrapper works">
@@ -98,7 +97,7 @@
       </router-link>
 
       <!-- 我的资产 -->
-      <router-link to="/workspace/assets" class="bento-card glass-card-premium bento-small quick-card animate-entry" style="--delay: 0.4s">
+      <router-link to="/workspace/assets" class="glass-panel bento-small quick-card animate-entry" style="--delay: 0.4s">
         <div class="card-bg-decoration assets-bg"></div>
         <div class="card-content center-content">
           <div class="quick-icon-wrapper assets">
@@ -137,20 +136,7 @@
   margin: 0 auto;
 }
 
-/* 卡片通用样式 */
-.bento-card {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.bento-card:hover {
-  transform: translateY(-8px) scale(1.01);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-}
+/* 卡片通用样式已由 glass-panel 接管 */
 
 /* 布局定义 */
 .bento-hero {
@@ -260,14 +246,14 @@
 .badge-pill {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: rgba(99, 102, 241, 0.1);
+  background: white;
   border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: 20px;
   color: var(--primary-color);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 1rem;
-  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.1);
 }
 
 .hero-title {
@@ -275,6 +261,7 @@
   font-weight: 800;
   margin: 0 0 1rem 0;
   line-height: 1.1;
+  color: var(--text-primary);
 }
 
 .hero-subtitle {
@@ -318,25 +305,13 @@
 .primary-action {
   padding: 1rem 2rem;
   font-size: 1.1rem;
-  border-radius: 16px;
-  position: relative;
-  overflow: hidden;
+  border-radius: var(--radius-md);
 }
 
-.btn-shine {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transform: skewX(-20deg);
-  animation: shine 6s infinite;
-}
-
-@keyframes shine {
-  0%, 80% { left: -100%; }
-  100% { left: 200%; }
+.secondary-action {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  border-radius: var(--radius-md);
 }
 
 /* Sidebar Card */
@@ -357,9 +332,10 @@
 .card-tag {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  background: var(--overlay-medium);
+  background: rgba(0, 0, 0, 0.05);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
+  font-weight: 600;
 }
 
 .feature-links {
@@ -373,7 +349,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: var(--overlay-light);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 16px;
   text-decoration: none;
   transition: all 0.3s ease;
@@ -381,9 +357,10 @@
 }
 
 .feature-link-item:hover {
-  background: var(--overlay-medium);
-  border-color: var(--glass-border);
+  background: white;
+  border-color: var(--primary-color);
   transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .link-icon-wrapper {
@@ -396,8 +373,8 @@
   color: white;
 }
 
-.link-icon-wrapper.hot { background: linear-gradient(135deg, #f43f5e, #fb7185); }
-.link-icon-wrapper.collect { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+.link-icon-wrapper.hot { background: linear-gradient(135deg, #f43f5e, #fb7185); box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3); }
+.link-icon-wrapper.collect { background: linear-gradient(135deg, #8b5cf6, #a78bfa); box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3); }
 
 .link-info {
   flex: 1;
@@ -445,9 +422,9 @@
   transition: transform 0.3s ease;
 }
 
-.quick-icon-wrapper.template { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
-.quick-icon-wrapper.works { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
-.quick-icon-wrapper.assets { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.quick-icon-wrapper.template { background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; }
+.quick-icon-wrapper.works { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+.quick-icon-wrapper.assets { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 
 .quick-card:hover .quick-icon-wrapper {
   transform: scale(1.1) rotate(5deg);

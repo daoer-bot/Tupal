@@ -27,7 +27,7 @@ export interface Template {
   name: string
   description: string
   preview_image?: string
-  type: 'official' | 'personal'  // 官方模板或个人模板
+  type: 'system' | 'user'  // 系统模板或用户模板
   style?: string
   content_structure?: {
     pages?: number
@@ -64,7 +64,7 @@ export interface TemplateResponse {
  * 获取模板列表参数
  */
 export interface GetTemplatesParams {
-  type?: 'official' | 'personal' | 'all'
+  type?: 'system' | 'user' | 'all'
   page?: number
   page_size?: number
   keyword?: string
@@ -80,17 +80,17 @@ export const getTemplates = (params?: GetTemplatesParams): Promise<TemplateListR
 }
 
 /**
- * 获取官方模板
+ * 获取系统模板（官方模板）
  */
 export const getOfficialTemplates = (params?: Omit<GetTemplatesParams, 'type'>): Promise<TemplateListResponse> => {
-  return api.get('/templates', { params: { ...params, type: 'official' } })
+  return api.get('/templates', { params: { ...params, type: 'system' } })
 }
 
 /**
- * 获取个人模板（从案例库标记的）
+ * 获取用户模板（个人模板）
  */
 export const getPersonalTemplates = (params?: Omit<GetTemplatesParams, 'type'>): Promise<TemplateListResponse> => {
-  return api.get('/templates', { params: { ...params, type: 'personal' } })
+  return api.get('/templates', { params: { ...params, type: 'user' } })
 }
 
 /**

@@ -1,0 +1,46 @@
+{
+  "id": "tpl_sys_recommend",
+  "name": "好物推荐",
+  "type": "system",
+  "category": "种草",
+  "description": "分享好用的产品、好物种草，帮助粉丝避坑",
+  "structure": {
+    "title": "{{product_type}}好物推荐｜{{benefit}}必入",
+    "content_outline": [
+      "产品基本信息（品牌/价格/规格）",
+      "使用体验与效果",
+      "优缺点分析",
+      "适合人群",
+      "购买渠道与建议"
+    ],
+    "suggested_hashtags": ["好物推荐", "种草", "必买清单", "真实测评"]
+  },
+  "parameters": [
+    {
+      "name": "product_type",
+      "label": "产品类型",
+      "type": "text",
+      "required": true,
+      "default": null,
+      "placeholder": "如：数码、家居、厨房、文具"
+    },
+    {
+      "name": "benefit",
+      "label": "核心卖点",
+      "type": "text",
+      "required": true,
+      "default": null,
+      "placeholder": "如：提升幸福感、高性价比、颜值超高"
+    }
+  ],
+  "example": {
+    "product_type": "家居好物",
+    "benefit": "提升幸福感"
+  },
+  "preview": "",
+  "thumbnail": "",
+  "tags": ["好物", "种草", "推荐", "测评"],
+  "usage_count": 0,
+  "created_at": "2025-12-13T00:00:00.000000",
+  "updated_at": "2025-12-13T00:00:00.000000"
+}

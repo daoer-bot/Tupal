@@ -1,0 +1,46 @@
+{
+  "id": "tpl_sys_skincare",
+  "name": "护肤心得",
+  "type": "system",
+  "category": "美妆",
+  "description": "分享护肤经验、产品测评、护肤技巧",
+  "structure": {
+    "title": "{{skin_type}}护肤｜{{concern}}解决方案",
+    "content_outline": [
+      "肤质分析与护肤需求",
+      "护肤步骤与产品推荐",
+      "使用心得与效果展示",
+      "注意事项与避坑指南",
+      "总结与互动"
+    ],
+    "suggested_hashtags": ["护肤", "护肤心得", "美妆", "护肤品推荐", "变美日记"]
+  },
+  "parameters": [
+    {
+      "name": "skin_type",
+      "label": "肤质类型",
+      "type": "text",
+      "required": true,
+      "default": null,
+      "placeholder": "如：油皮、干皮、混油皮、敏感肌"
+    },
+    {
+      "name": "concern",
+      "label": "护肤诉求",
+      "type": "text",
+      "required": true,
+      "default": null,
+      "placeholder": "如：美白、祛痘、抗老、保湿"
+    }
+  ],
+  "example": {
+    "skin_type": "油皮",
+    "concern": "毛孔粗大"
+  },
+  "preview": "",
+  "thumbnail": "",
+  "tags": ["护肤", "美妆", "变美", "测评"],
+  "usage_count": 0,
+  "created_at": "2025-12-13T00:00:00.000000",
+  "updated_at": "2025-12-13T00:00:00.000000"
+}

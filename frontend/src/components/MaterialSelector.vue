@@ -254,82 +254,108 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   background: white;
-  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 16px;
   overflow: hidden;
+  color: var(--text-primary);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
 .selector-header {
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
 }
 
 .selector-header h3 {
   margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .search-box input {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
 .selector-filters {
   display: flex;
   gap: 8px;
   padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f1f5f9;
   overflow-x: auto;
+  background: white;
 }
 
 .filter-btn {
   padding: 6px 12px;
-  border: 1px solid #e5e7eb;
-  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  background: #f1f5f9;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
+  color: var(--text-secondary);
 }
 
 .filter-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  color: var(--primary-color);
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .filter-btn.active {
-  background: #3b82f6;
+  background: var(--primary-color);
   color: white;
-  border-color: #3b82f6;
+  border-color: var(--primary-color);
 }
 
 .selected-materials {
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
 }
 
 .section-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 12px;
 }
 
 .btn-text {
   background: none;
   border: none;
-  color: #3b82f6;
+  color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.btn-text:hover {
+  color: var(--error);
+  text-decoration: underline;
+}
+
+.btn-text:hover {
+  opacity: 1;
 }
 
 .selected-list {
@@ -344,37 +370,42 @@ onMounted(() => {
   gap: 8px;
   padding: 8px 12px;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
 }
 
 .item-icon {
-  font-size: 16px;
+  font-size: 14px;
+  filter: none;
 }
 
 .item-name {
   flex: 1;
-  font-size: 14px;
-  color: #374151;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .btn-remove {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   padding: 0 4px;
+  transition: color 0.2s;
 }
 
 .btn-remove:hover {
-  color: #ef4444;
+  color: var(--error);
 }
 
 .materials-list {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+  background: white;
 }
 
 .loading-state {
@@ -383,14 +414,14 @@ onMounted(() => {
   justify-content: center;
   gap: 8px;
   padding: 32px;
-  color: #6b7280;
+  color: var(--text-tertiary);
 }
 
 .spinner-small {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e5e7eb;
-  border-top-color: #3b82f6;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -402,7 +433,7 @@ onMounted(() => {
 .empty-state-small {
   text-align: center;
   padding: 32px 16px;
-  color: #6b7280;
+  color: var(--text-tertiary);
 }
 
 .empty-state-small p {
@@ -410,8 +441,9 @@ onMounted(() => {
 }
 
 .link {
-  color: #3b82f6;
-  text-decoration: none;
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-size: 12px;
 }
 
 .material-items {
@@ -422,75 +454,81 @@ onMounted(() => {
 
 .material-item {
   padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  background: #f8fafc;
 }
 
 .material-item:hover {
-  border-color: #3b82f6;
-  background: #f0f9ff;
+  border-color: var(--primary-color);
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .material-item.selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.05);
 }
 
 .item-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .item-type-badge {
-  font-size: 16px;
+  font-size: 14px;
+  filter: none;
 }
 
 .item-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #111827;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .item-preview {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12px;
+  color: var(--text-secondary);
   line-height: 1.5;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .item-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 
 .check-icon {
-  color: #3b82f6;
+  color: var(--primary-color);
   font-weight: bold;
+  font-size: 12px;
 }
 
 .load-more {
   padding: 16px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid rgba(0,0,0,0.05);
   text-align: center;
+  background: #f8fafc;
 }
 
 .btn-load-more {
   padding: 8px 20px;
   background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
   transition: all 0.2s;
 }
 
 .btn-load-more:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 </style>

@@ -7,6 +7,7 @@
 """
 import logging
 import requests
+from requests.exceptions import HTTPError, ConnectionError, Timeout
 from typing import Optional
 
 from .image_utils import (
@@ -89,20 +90,28 @@ class ImageAPIClient:
             'max_tokens': 4096
         }
         
-        response = requests.post(
-            api_endpoint,
-            json=payload,
-            headers={
-                'Authorization': f'Bearer {self.api_key}',
-                'Content-Type': 'application/json'
-            },
-            timeout=120
-        )
-        
-        response.raise_for_status()
-        result = response.json()
-        
-        return self._extract_from_chat_response(result)
+        try:
+            response = requests.post(
+                api_endpoint,
+                json=payload,
+                headers={
+                    'Authorization': f'Bearer {self.api_key}',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                timeout=120
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            return self._extract_from_chat_response(result)
+        except HTTPError as e:
+            raise self._create_friendly_error(e, api_endpoint)
+        except ConnectionError:
+            raise ConnectionError(f"无法连接到图片生成服务，请检查网络连接或 API 地址是否正确: {api_endpoint}")
+        except Timeout:
+            raise Timeout("图片生成请求超时，请稍后重试")
     
     def _generate_openai_dalle(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
         """使用 OpenAI DALL-E API 格式生成图片"""
@@ -125,20 +134,28 @@ class ImageAPIClient:
         if reference_image:
             payload['image'] = clean_base64(reference_image)
         
-        response = requests.post(
-            api_endpoint,
-            json=payload,
-            headers={
-                'Authorization': f'Bearer {self.api_key}',
-                'Content-Type': 'application/json'
-            },
-            timeout=120
-        )
-        
-        response.raise_for_status()
-        result = response.json()
-        
-        return self._extract_from_dalle_response(result)
+        try:
+            response = requests.post(
+                api_endpoint,
+                json=payload,
+                headers={
+                    'Authorization': f'Bearer {self.api_key}',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                timeout=120
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            return self._extract_from_dalle_response(result)
+        except HTTPError as e:
+            raise self._create_friendly_error(e, api_endpoint)
+        except ConnectionError:
+            raise ConnectionError(f"无法连接到图片生成服务，请检查网络连接或 API 地址是否正确: {api_endpoint}")
+        except Timeout:
+            raise Timeout("图片生成请求超时，请稍后重试")
     
     def _generate_gemini(self, prompt: str, width: int, height: int, reference_image: Optional[str]) -> str:
         """使用 Google Gemini API 格式生成图片"""
@@ -172,17 +189,27 @@ class ImageAPIClient:
             }
         }
         
-        response = requests.post(
-            api_endpoint,
-            json=payload,
-            headers={'Content-Type': 'application/json'},
-            timeout=120
-        )
-        
-        response.raise_for_status()
-        result = response.json()
-        
-        return self._extract_from_gemini_response(result)
+        try:
+            response = requests.post(
+                api_endpoint,
+                json=payload,
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                timeout=120
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            return self._extract_from_gemini_response(result)
+        except HTTPError as e:
+            raise self._create_friendly_error(e, api_endpoint)
+        except ConnectionError:
+            raise ConnectionError(f"无法连接到图片生成服务，请检查网络连接或 API 地址是否正确: {api_endpoint}")
+        except Timeout:
+            raise Timeout("图片生成请求超时，请稍后重试")
     
     @staticmethod
     def _extract_from_chat_response(result: dict) -> str:
@@ -238,3 +265,39 @@ class ImageAPIClient:
                         return f"data:{mime_type};base64,{data}"
         
         raise ValueError(f"无法从响应中获取图片数据: {result}")
+    
+    def _create_friendly_error(self, http_error: HTTPError, api_endpoint: str) -> Exception:
+        """
+        根据 HTTP 错误创建友好的错误信息
+        
+        Args:
+            http_error: 原始 HTTP 错误
+            api_endpoint: API 端点
+            
+        Returns:
+            带有友好错误信息的异常
+        """
+        status_code = http_error.response.status_code if http_error.response is not None else 0
+        
+        # 根据状态码提供友好的错误信息
+        error_messages = {
+            400: "请求参数错误，请检查图片生成配置",
+            401: "API 密钥无效或已过期，请检查配置",
+            403: "API 访问被拒绝，请检查账户权限",
+            404: "API 端点不存在，请检查 API 地址配置",
+            429: "请求过于频繁，API 已限流，请稍后重试",
+            500: "图片生成服务内部错误，请稍后重试",
+            502: "图片生成服务网关错误，请稍后重试",
+            503: "图片生成服务暂时不可用，可能正在维护中，请稍后重试",
+            504: "图片生成服务响应超时，请稍后重试",
+        }
+        
+        friendly_message = error_messages.get(
+            status_code,
+            f"图片生成服务返回错误 (HTTP {status_code})"
+        )
+        
+        # 记录详细错误日志
+        logger.error(f"图片 API 错误: {status_code} - {http_error} - 端点: {api_endpoint}")
+        
+        return Exception(friendly_message)

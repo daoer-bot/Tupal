@@ -1,332 +1,226 @@
 /* =========================================
-   🌌 Aurora Glass Design System - Tupal
+   🍬 Macaron Sweet UI - Tupal 3.0
    ========================================= */
 
-@import './styles/advanced-ui.css';
+/* 引入更圆润可爱的字体 */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;600;700&display=swap');
 
 :root {
-  /* --- 核心极光色板 (Aurora Palette) --- */
-  --primary-color: #6366f1;       /* 靛蓝 (Indigo) - 主品牌色 */
-  --primary-hover: #4f46e5;
-  --secondary-color: #ec4899;     /* 霓虹粉 (Pink) - 强调色 */
-  --accent-color: #8b5cf6;        /* 梦幻紫 (Violet) - 辅助色 */
+  /* --- 🎨 奶油马卡龙色板 (Creamy Macaron Palette) --- */
   
-  /* --- 玻璃拟态变量 (Glassmorphism) --- */
-  --glass-surface: rgba(255, 255, 255, 0.65);     /* 玻璃表面色 */
-  --glass-surface-hover: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.4);       /* 玻璃边框 */
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07); /* 玻璃投影 */
-  --glass-blur: 16px;                             /* 毛玻璃模糊度 */
+  /* 草莓奶霜 (主色) */
+  --macaron-pink: #FFB7B2;
+  --macaron-pink-light: #FFDAC1;
+  --macaron-pink-deep: #FF9AA2;
   
-  /* --- 基础色板 (明亮模式) --- */
-  --bg-color: #f8fafc;            /* 基础背景 (浅色) */
-  --text-primary: #1e293b;        /* 深色 - 保证阅读性 */
-  --text-secondary: #64748b;      /* 蓝灰 - 次级文本 */
-  --text-tertiary: #94a3b8;
+  /* 海盐薄荷 (辅助色) */
+  --macaron-mint: #B5EAD7;
+  --macaron-mint-light: #E2F0CB;
   
-  /* --- 功能色 --- */
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --error-color: #ef4444;
+  /* 柠檬芝士 (强调色) */
+  --macaron-yellow: #FFFFD8; /* 极浅黄背景 */
+  --macaron-cream: #FFF5E4;
   
-  /* --- 布局参数 --- */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-full: 9999px;
+  /* 香芋紫 (点缀) */
+  --macaron-purple: #C7CEEA;
   
-  --sidebar-width: 280px;
-  --sidebar-width-collapsed: 88px;
+  /* --- 🌈 语义化变量映射 --- */
+  --primary-color: #FF9AA2;
+  --secondary-color: #B5EAD7;
+  --accent-color: #C7CEEA;
   
-  /* --- 动效 --- */
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-smooth: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* --- ☁️ 背景与玻璃 --- */
+  --bg-base: #FFF9F9; /* 极浅的粉白 */
+  --bg-gradient-1: #FFDAC1;
+  --bg-gradient-2: #E2F0CB;
+  --bg-gradient-3: #C7CEEA;
+  
+  /* 甜点玻璃 (Frosted Glass) */
+  --glass-surface: rgba(255, 255, 255, 0.65);
+  --glass-surface-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 8px 32px rgba(255, 183, 178, 0.15); /* 带粉色的投影 */
+  --glass-blur: 24px;
+  
+  /* 文本系统 - 使用更柔和的深灰 */
+  --text-primary: #5D5656;   /* 暖深灰 */
+  --text-secondary: #8E8484; /* 暖中灰 */
+  --text-tertiary: #C4BBBB;  /* 暖浅灰 */
+  --text-inverse: #FFFFFF;
+
+  /* --- 📐 布局参数 --- */
+  --nav-height: 80px; /* 更高的导航栏，留出悬浮空间 */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-xl: 50px; /* 胶囊圆角 */
+  
+  /* --- ✨ 动效参数 (Bouncy!) --- */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* 强力回弹 */
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- 深色模式变量 --- */
-[data-theme='dark'] {
-  --bg-color: #0f172a;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --glass-surface: rgba(30, 41, 59, 0.65);
-  --glass-surface-hover: rgba(30, 41, 59, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --overlay-light: rgba(255, 255, 255, 0.05);
-  --overlay-medium: rgba(255, 255, 255, 0.1);
-  --overlay-heavy: rgba(255, 255, 255, 0.2);
-}
-
-/* --- 明亮模式变量 --- */
-[data-theme='light'] {
-  --bg-color: #f8fafc;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  --glass-surface: rgba(255, 255, 255, 0.8);
-  --glass-surface-hover: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(203, 213, 225, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-  --overlay-light: rgba(255, 255, 255, 0.6);
-  --overlay-medium: rgba(255, 255, 255, 0.8);
-  --overlay-heavy: rgba(255, 255, 255, 0.95);
-}
-
-/* --- 全局重置 --- */
+/* --- 🛠 全局重置 --- */
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  outline: none; /* 去除默认聚焦框，使用自定义阴影 */
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--bg-color);
+  font-family: 'Quicksand', 'Nunito', system-ui, sans-serif; /* 使用圆体字 */
+  background-color: var(--bg-base);
   color: var(--text-primary);
   line-height: 1.6;
-  overflow-x: hidden; /* 防止背景溢出 */
+  overflow-x: hidden;
 }
 
-/* --- 玻璃拟态工具类 (The Soul of Aurora) --- */
+/* --- ☁️ 动态云朵背景 --- */
+.macaron-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(135deg, #fff5e4 0%, #fff9f9 100%);
+}
 
-/* 核心玻璃面板：用于侧边栏、卡片、模态框 */
+.bg-blob {
+  position: absolute;
+  filter: blur(80px);
+  opacity: 0.6;
+  animation: float-blob 20s infinite ease-in-out alternate;
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+}
+
+.blob-1 {
+  top: -10%;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: var(--bg-gradient-1);
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  bottom: -20%;
+  left: -10%;
+  width: 50vw;
+  height: 50vw;
+  background: var(--bg-gradient-2);
+  animation-delay: -5s;
+}
+
+.blob-3 {
+  top: 40%;
+  left: 30%;
+  width: 40vw;
+  height: 40vw;
+  background: var(--bg-gradient-3);
+  animation-delay: -10s;
+  opacity: 0.4;
+}
+
+@keyframes float-blob {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate(30px, 50px) rotate(10deg) scale(1.1); }
+  100% { transform: translate(-20px, 20px) rotate(-5deg) scale(0.95); }
+}
+
+/* --- 🍰 甜点组件库 (Sweet Kit) --- */
+
+/* 1. 软糖面板 */
 .glass-panel {
   background: var(--glass-surface);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border: 2px solid white; /* 像糖霜一样的白边 */
+  box-shadow: 
+    0 10px 40px -10px rgba(255, 183, 178, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-lg);
+  transition: all 0.4s var(--ease-spring);
 }
 
-/* 强玻璃：用于需要更高不透明度的区域 */
-.glass-panel-heavy {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+.glass-panel:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 
+    0 20px 50px -10px rgba(181, 234, 215, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.8);
+  border-color: white;
 }
 
-[data-theme='dark'] .glass-panel-heavy {
-  background: rgba(30, 41, 59, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-/* 玻璃按钮 */
+/* 2. 糖果按钮 */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
+  padding: 0.8rem 1.8rem;
+  border-radius: var(--radius-xl);
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
+  transition: all 0.3s var(--ease-spring);
   border: none;
-  gap: 0.5rem;
-  letter-spacing: 0.01em;
-  position: relative;
-  overflow: hidden;
+  gap: 0.6rem;
+  letter-spacing: 0.5px;
 }
 
-/* 主按钮 - 渐变流光 */
+/* 主按钮 - 渐变糖果 */
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--macaron-pink-deep), var(--macaron-pink));
   color: white;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 6px 20px rgba(255, 154, 162, 0.4);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45);
-  filter: brightness(1.1);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(255, 154, 162, 0.6);
+  filter: brightness(1.02);
 }
 
 .btn-primary:active {
-  transform: translateY(0);
+  transform: translateY(1px) scale(0.95);
 }
 
-/* 次级按钮 - 玻璃态 */
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  backdrop-filter: blur(4px);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-[data-theme='dark'] .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-[data-theme='dark'] .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: var(--primary-color);
-}
-
-/* --- 玻璃输入框系统 --- */
-input, textarea, select {
-  font-family: inherit;
-  outline: none;
-}
-
-.glass-input {
-  width: 100%;
-  padding: 1rem 1.25rem;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  color: var(--text-primary);
-  transition: var(--transition-fast);
-  backdrop-filter: blur(4px);
-}
-
-.glass-input:hover {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.glass-input:focus {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-[data-theme='dark'] .glass-input {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text-primary);
-}
-
-[data-theme='dark'] .glass-input:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-[data-theme='dark'] .glass-input:focus {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-}
-
-/* --- 滚动条美化 --- */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* --- 文字排版 --- */
-h1, h2, h3, h4, h5, h6 {
-  margin: 0;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-/* 渐变文字效果 */
+/* 3. 文本特效 */
 .text-gradient {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: linear-gradient(135deg, #FF9AA2 0%, #C7CEEA 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-weight: 800;
 }
 
-/* --- 通用容器 --- */
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 2rem;
+/* 滚动条美化 - 细细的粉色 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 154, 162, 0.3);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 154, 162, 0.6);
 }
 
-/* 动效：浮动动画 */
-@keyframes float-slow {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
+/* 动画工具类 */
+.animate-fade-in { animation: fadeIn 0.6s var(--ease-soft) forwards; }
+.animate-pop-up { animation: popUp 0.5s var(--ease-spring) forwards; }
 
-.animate-float {
-  animation: float-slow 4s ease-in-out infinite;
-
-/* --- Bento Box 布局样式 --- */
-.bento-card {
-  padding: 2rem;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  cursor: pointer;
-  border-radius: 32px;
-}
-
-.bento-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px rgba(31, 38, 135, 0.15);
-}
-
-[data-theme='dark'] .bento-card:hover {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-}
-
-/* 响应式布局 */
-@media (max-width: 1024px) {
-  .bento-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    grid-template-rows: auto !important;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  
-  .bento-hero,
-  .bento-sidebar,
-  .bento-small {
-    grid-column: span 1 !important;
-    grid-row: span 1 !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .bento-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-}
-
-/* 动效：渐入 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popUp { 
+  from { opacity: 0; transform: scale(0.8) translateY(20px); } 
+  to { opacity: 1; transform: scale(1) translateY(0); } 
 }

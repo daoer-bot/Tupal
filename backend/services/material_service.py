@@ -9,7 +9,7 @@ from datetime import datetime
 
 from models.material import (
     Material, MaterialType,
-    create_text, create_image, create_reference
+    create_text, create_image, create_mixed, create_reference
 )
 from storage.material_storage import MaterialStorage
 
@@ -55,6 +55,13 @@ class MaterialService:
                 material = create_text(name, content.get('text', ''), **content)
             elif mat_type == MaterialType.IMAGE:
                 material = create_image(name, content.get('url', ''), **content)
+            elif mat_type == MaterialType.MIXED:
+                # 图文混合素材
+                text = content.get('text', '')
+                images = content.get('images', [])
+                # 避免重复传递 text 和 images
+                content_copy = {k: v for k, v in content.items() if k not in ['text', 'images']}
+                material = create_mixed(name, text=text, images=images, **content_copy)
             elif mat_type == MaterialType.REFERENCE:
                 ref_type = content.get('reference_type', '')
                 # 避免重复传递reference_type
@@ -383,19 +390,28 @@ class MaterialService:
                     text_content = material.content.get('text', '')
                     if text_content:
                         enhanced_prompt += f"\n\n【参考信息-{material.name}】\n{text_content}"
-                
+
                 elif material.type == MaterialType.IMAGE:
                     # 图片素材：添加到参考图片列表
                     image_url = material.content.get('url')
                     if image_url:
                         reference_images.append(image_url)
-                
+
+                elif material.type == MaterialType.MIXED:
+                    # 图文混合素材：同时处理文本和图片
+                    text_content = material.content.get('text', '')
+                    if text_content:
+                        enhanced_prompt += f"\n\n【参考信息-{material.name}】\n{text_content}"
+                    images = material.content.get('images', [])
+                    if images:
+                        reference_images.extend(images)
+
                 elif material.type == MaterialType.REFERENCE:
                     # 参考素材：提取参考信息
                     reference_type = material.content.get('reference_type', '')
                     if reference_type:
                         enhanced_prompt += f"\n\n【参考-{material.name}】类型：{reference_type}"
-                    
+
                     # 其他参考内容
                     if 'content' in material.content:
                         enhanced_prompt += f"\n{material.content['content']}"
@@ -441,11 +457,18 @@ class MaterialService:
             if mat_type == MaterialType.TEXT:
                 if 'text' not in content or not content['text']:
                     return False, "文本素材必须包含非空的text字段"
-            
+
             elif mat_type == MaterialType.IMAGE:
                 if 'url' not in content or not content['url']:
                     return False, "图片素材必须包含非空的url字段"
-            
+
+            elif mat_type == MaterialType.MIXED:
+                # 图文混合素材：至少要有文本或图片之一
+                has_text = 'text' in content and content['text']
+                has_images = 'images' in content and content['images']
+                if not has_text and not has_images:
+                    return False, "图文混合素材必须包含text或images字段（至少一个）"
+
             elif mat_type == MaterialType.REFERENCE:
                 if 'reference_type' not in content:
                     return False, "参考素材必须包含reference_type字段"

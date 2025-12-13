@@ -5,6 +5,8 @@
 import os
 import uuid
 import logging
+import base64
+import requests
 from pathlib import Path
 from typing import Optional, Tuple
 from werkzeug.utils import secure_filename
@@ -241,3 +243,208 @@ class FileUtils:
         except Exception as e:
             logger.error(f"清理临时文件失败: {e}", exc_info=True)
             return 0
+    
+    def download_and_save_image(
+        self,
+        image_url: str,
+        subdir: str = 'generated',
+        timeout: int = 60
+    ) -> Tuple[bool, str, str]:
+        """
+        从 URL 下载图片并保存到本地
+        
+        支持两种格式：
+        1. HTTP/HTTPS URL - 从网络下载
+        2. Base64 Data URL - 直接解码保存
+        
+        Args:
+            image_url: 图片 URL（HTTP URL 或 base64 Data URL）
+            subdir: 子目录名称 (references/generated/temp)
+            timeout: 下载超时时间（秒）
+            
+        Returns:
+            (是否成功, 本地文件路径, 错误信息)
+        """
+        try:
+            # 处理 base64 Data URL
+            if image_url.startswith('data:image'):
+                return self._save_base64_image(image_url, subdir)
+            
+            # 处理 HTTP/HTTPS URL
+            if image_url.startswith(('http://', 'https://')):
+                return self._download_http_image(image_url, subdir, timeout)
+            
+            # 如果已经是本地路径，直接返回
+            if self.file_exists(image_url):
+                return True, image_url, ''
+            
+            return False, '', f'不支持的图片 URL 格式: {image_url[:100]}...'
+            
+        except Exception as e:
+            logger.error(f"下载保存图片失败: {e}", exc_info=True)
+            return False, '', str(e)
+    
+    def _save_base64_image(
+        self,
+        data_url: str,
+        subdir: str
+    ) -> Tuple[bool, str, str]:
+        """
+        保存 base64 编码的图片
+        
+        Args:
+            data_url: base64 Data URL (data:image/png;base64,...)
+            subdir: 子目录
+            
+        Returns:
+            (是否成功, 本地文件路径, 错误信息)
+        """
+        try:
+            # 解析 Data URL
+            # 格式: data:image/png;base64,iVBORw0KGgo...
+            header, base64_data = data_url.split(',', 1)
+            
+            # 提取 MIME 类型
+            mime_type = header.split(':')[1].split(';')[0]
+            
+            # 根据 MIME 类型确定扩展名
+            ext_map = {
+                'image/png': 'png',
+                'image/jpeg': 'jpg',
+                'image/jpg': 'jpg',
+                'image/gif': 'gif',
+                'image/webp': 'webp',
+                'image/bmp': 'bmp'
+            }
+            ext = ext_map.get(mime_type, 'png')
+            
+            # 解码 base64
+            image_data = base64.b64decode(base64_data)
+            
+            # 生成唯一文件名
+            unique_filename = f"{uuid.uuid4().hex}.{ext}"
+            
+            # 构建完整路径
+            save_dir = self.upload_dir / subdir
+            file_path = save_dir / unique_filename
+            
+            # 保存文件
+            with open(file_path, 'wb') as f:
+                f.write(image_data)
+            
+            logger.info(f"Base64 图片保存成功: {file_path}")
+            
+            # 返回相对路径
+            relative_path = f"{subdir}/{unique_filename}"
+            return True, relative_path, ''
+            
+        except Exception as e:
+            logger.error(f"保存 base64 图片失败: {e}", exc_info=True)
+            return False, '', str(e)
+    
+    def _download_http_image(
+        self,
+        url: str,
+        subdir: str,
+        timeout: int
+    ) -> Tuple[bool, str, str]:
+        """
+        从 HTTP URL 下载图片
+        
+        Args:
+            url: HTTP/HTTPS URL
+            subdir: 子目录
+            timeout: 超时时间
+            
+        Returns:
+            (是否成功, 本地文件路径, 错误信息)
+        """
+        try:
+            # 发送请求下载图片
+            response = requests.get(
+                url,
+                timeout=timeout,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+                },
+                stream=True
+            )
+            response.raise_for_status()
+            
+            # 从 Content-Type 或 URL 确定扩展名
+            content_type = response.headers.get('Content-Type', '')
+            ext = self._get_extension_from_content_type(content_type)
+            
+            if not ext:
+                # 尝试从 URL 获取扩展名
+                ext = self._get_extension_from_url(url)
+            
+            if not ext:
+                ext = 'png'  # 默认扩展名
+            
+            # 生成唯一文件名
+            unique_filename = f"{uuid.uuid4().hex}.{ext}"
+            
+            # 构建完整路径
+            save_dir = self.upload_dir / subdir
+            file_path = save_dir / unique_filename
+            
+            # 保存文件
+            with open(file_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            
+            logger.info(f"HTTP 图片下载保存成功: {file_path}")
+            
+            # 返回相对路径
+            relative_path = f"{subdir}/{unique_filename}"
+            return True, relative_path, ''
+            
+        except requests.exceptions.Timeout:
+            return False, '', '下载图片超时，请稍后重试'
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code if e.response is not None else 0
+            if status_code == 403:
+                return False, '', '图片链接已过期或无权访问'
+            elif status_code == 404:
+                return False, '', '图片不存在'
+            else:
+                return False, '', f'下载图片失败 (HTTP {status_code})'
+        except Exception as e:
+            logger.error(f"下载 HTTP 图片失败: {e}", exc_info=True)
+            return False, '', str(e)
+    
+    @staticmethod
+    def _get_extension_from_content_type(content_type: str) -> Optional[str]:
+        """从 Content-Type 获取文件扩展名"""
+        type_map = {
+            'image/png': 'png',
+            'image/jpeg': 'jpg',
+            'image/jpg': 'jpg',
+            'image/gif': 'gif',
+            'image/webp': 'webp',
+            'image/bmp': 'bmp'
+        }
+        
+        for mime, ext in type_map.items():
+            if mime in content_type.lower():
+                return ext
+        return None
+    
+    @staticmethod
+    def _get_extension_from_url(url: str) -> Optional[str]:
+        """从 URL 获取文件扩展名"""
+        # 移除查询参数
+        path = url.split('?')[0]
+        
+        # 获取文件名部分
+        filename = path.split('/')[-1]
+        
+        # 检查是否有扩展名
+        if '.' in filename:
+            ext = filename.rsplit('.', 1)[1].lower()
+            if ext in ALLOWED_EXTENSIONS:
+                return ext
+        
+        return None

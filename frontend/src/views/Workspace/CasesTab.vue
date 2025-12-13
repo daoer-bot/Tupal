@@ -1,94 +1,101 @@
 <template>
-  <div class="cases-container">
-    <!-- 数据概览卡片 -->
+  <div class="cases-container animate-fade-in">
+    <!-- 📊 数据概览 (使用更精致的图标) -->
     <div class="stats-grid">
       <div class="stat-card glass-panel">
-        <div class="stat-icon">📑</div>
+        <div class="stat-icon-wrapper orange">
+          <BookOpen :size="24" />
+        </div>
         <div class="stat-info">
           <div class="stat-value">{{ cases.length }}</div>
-          <div class="stat-label">总案例数</div>
+          <div class="stat-label">Total Cases</div>
         </div>
       </div>
       <div class="stat-card glass-panel">
-        <div class="stat-icon">⭐</div>
+        <div class="stat-icon-wrapper yellow">
+          <Star :size="24" />
+        </div>
         <div class="stat-info">
           <div class="stat-value">{{ templateCount }}</div>
-          <div class="stat-label">已设为模板</div>
+          <div class="stat-label">Templates</div>
         </div>
       </div>
       <div class="stat-card glass-panel">
-        <div class="stat-icon">🔗</div>
+        <div class="stat-icon-wrapper blue">
+          <Link :size="24" />
+        </div>
         <div class="stat-info">
           <div class="stat-value">{{ sourceCount }}</div>
-          <div class="stat-label">采集来源</div>
+          <div class="stat-label">Sources</div>
         </div>
       </div>
     </div>
 
-    <!-- 操作栏 -->
-    <div class="action-bar glass-panel-heavy">
-      <div class="search-section">
-        <div class="search-input-wrapper">
-          <Search :size="18" class="search-icon" />
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="搜索案例..."
-            class="search-input"
-          />
-        </div>
+    <!-- 🛠️ 顶部工具栏 -->
+    <div class="toolbar glass-panel">
+      <!-- 搜索 -->
+      <div class="search-box">
+        <Search :size="18" class="search-icon" />
+        <input 
+          v-model="searchQuery" 
+          type="text" 
+          placeholder="Search collected cases..."
+          class="search-input"
+        />
       </div>
-      
-      <div class="filter-section">
+
+      <!-- 筛选切换器 (Toggle Group) -->
+      <div class="filter-group">
         <button 
-          class="filter-btn" 
+          class="filter-pill" 
           :class="{ active: activeFilter === 'all' }"
           @click="setFilter('all')"
         >
-          全部
+          All
         </button>
         <button 
-          class="filter-btn" 
+          class="filter-pill" 
           :class="{ active: activeFilter === 'template' }"
           @click="setFilter('template')"
         >
-          <Star :size="16" />
-          已设为模板
+          <Star :size="14" :fill="activeFilter === 'template' ? 'currentColor' : 'none'" />
+          Templates
         </button>
         <button 
-          class="filter-btn" 
+          class="filter-pill" 
           :class="{ active: activeFilter === 'normal' }"
           @click="setFilter('normal')"
         >
-          <FileText :size="16" />
-          普通案例
+          Normal
         </button>
       </div>
       
-      <div class="action-section">
-        <button class="btn btn-secondary" @click="loadCases" :disabled="loading">
-          <RefreshCw :size="18" :class="{ 'spinning': loading }" />
-          刷新
-        </button>
-      </div>
+      <!-- 刷新按钮 -->
+      <button class="icon-btn refresh-btn" @click="loadCases" :disabled="loading">
+        <RefreshCw :size="18" :class="{ 'spinning': loading }" />
+      </button>
     </div>
 
-    <!-- 案例网格 -->
-    <div v-if="loading" class="loading-state glass-panel">
-      <div class="spinner"></div>
-      <p>正在加载案例...</p>
+    <!-- ⏳ 加载状态 -->
+    <div v-if="loading" class="state-container glass-panel">
+      <div class="loading-spinner-orange"></div>
+      <p>Loading your inspiration collection...</p>
     </div>
     
-    <div v-else-if="filteredCases.length === 0" class="empty-state glass-panel">
-      <div class="empty-icon">📋</div>
-      <h3>暂无案例</h3>
-      <p>通过"灵感与发现"页面的图文采集功能添加优秀案例</p>
+    <!-- 📭 空状态 -->
+    <div v-else-if="filteredCases.length === 0" class="state-container empty-state glass-panel">
+      <div class="empty-illustration">
+        <Compass :size="64" stroke-width="1" />
+      </div>
+      <h3>No Cases Found</h3>
+      <p>Collect inspiration from social media to get started</p>
       <router-link to="/inspiration/collector" class="btn btn-primary">
         <Download :size="18" />
-        去采集
+        Go Collect
       </router-link>
     </div>
     
+    <!-- 🖼️ 案例网格 -->
     <div v-else class="cases-grid">
       <div 
         v-for="caseItem in filteredCases" 
@@ -105,75 +112,55 @@
             class="preview-image"
           />
           <div v-else class="preview-placeholder">
-            <FileText :size="48" />
+            <BookOpen :size="32" opacity="0.5" />
+          </div>
+          
+          <!-- 悬浮操作栏 -->
+          <div class="card-actions">
+            <button
+              class="action-circle-btn star-btn"
+              :class="{ 'is-active': caseItem.content?.is_template }"
+              @click.stop="toggleTemplate(caseItem)"
+              :title="caseItem.content?.is_template ? 'Remove Template' : 'Set as Template'"
+            >
+              <Star :size="16" :fill="caseItem.content?.is_template ? 'currentColor' : 'none'" />
+            </button>
+            <button
+              class="action-circle-btn delete-btn"
+              @click.stop="handleDelete(caseItem)"
+              title="Delete"
+            >
+              <Trash2 :size="16" />
+            </button>
+          </div>
+
+          <!-- 来源标签 -->
+          <div v-if="caseItem.content?.source_url" class="source-tag">
+            <Link :size="10" />
+            {{ getSourceName(caseItem.content?.source_url) }}
           </div>
         </div>
         
-        <!-- 操作按钮 -->
-        <div class="action-buttons">
-          <button
-            class="action-btn template-btn"
-            :class="{ 'is-template': caseItem.content?.is_template }"
-            @click.stop="toggleTemplate(caseItem)"
-            :title="caseItem.content?.is_template ? '取消模板' : '设为模板'"
-          >
-            <Star :size="16" :fill="caseItem.content?.is_template ? 'currentColor' : 'none'" />
-          </button>
-          <button
-            class="action-btn delete-btn"
-            @click.stop="handleDelete(caseItem)"
-            title="删除"
-          >
-            <Trash2 :size="16" />
-          </button>
-        </div>
-        
-        <!-- 模板标签 -->
-        <div v-if="caseItem.content?.is_template" class="template-badge">
-          <Star :size="12" fill="currentColor" />
-          模板
-        </div>
-        
-        <!-- 来源标签 -->
-        <div v-if="caseItem.content?.source_url" class="source-badge">
-          <Link :size="12" />
-          {{ getSourceName(caseItem.content?.source_url) }}
-        </div>
-        
+        <!-- 内容区域 -->
         <div class="card-content">
-          <h3 class="card-title" :title="caseItem.name">{{ caseItem.name }}</h3>
-          <p v-if="caseItem.description" class="card-description">
-            {{ truncateText(caseItem.description, 60) }}
-          </p>
-          <div class="card-meta">
-            <span class="meta-item">
-              <span class="icon">📅</span>
-              {{ formatDate(caseItem.created_at) }}
-            </span>
-            <span v-if="caseItem.tags?.length" class="meta-item tags">
-              <span v-for="tag in caseItem.tags.slice(0, 2)" :key="tag" class="tag">
-                {{ tag }}
-              </span>
+          <div class="content-header">
+            <h3 class="card-title" :title="caseItem.name">{{ caseItem.name }}</h3>
+            <span v-if="caseItem.content?.is_template" class="template-mark">
+              TEMPLATE
             </span>
           </div>
           
-          <!-- 快捷操作 -->
-          <div class="card-actions">
-            <button 
-              class="quick-action-btn"
-              :class="{ active: caseItem.content?.is_template }"
-              @click.stop="toggleTemplate(caseItem)"
-            >
-              <Star :size="14" :fill="caseItem.content?.is_template ? 'currentColor' : 'none'" />
-              {{ caseItem.content?.is_template ? '已设为模板' : '设为模板' }}
-            </button>
+          <p class="card-desc">{{ truncateText(caseItem.description, 60) }}</p>
+          
+          <div class="card-footer">
+            <span class="date">{{ formatDate(caseItem.created_at) }}</span>
             <button 
               v-if="caseItem.content?.is_template"
-              class="quick-action-btn use-btn"
+              class="use-template-btn"
               @click.stop="useAsTemplate(caseItem)"
             >
-              <Zap :size="14" />
-              使用模板
+              <Zap :size="12" />
+              Use
             </button>
           </div>
         </div>
@@ -189,19 +176,7 @@
       >
         <ChevronLeft :size="16" />
       </button>
-      
-      <div class="page-numbers">
-        <button 
-          v-for="page in visiblePages" 
-          :key="page"
-          class="page-number"
-          :class="{ active: page === currentPage }"
-          @click="currentPage = page"
-        >
-          {{ page }}
-        </button>
-      </div>
-      
+      <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
       <button 
         class="page-btn" 
         :disabled="currentPage === totalPages"
@@ -219,21 +194,20 @@ import { useRouter } from 'vue-router'
 import {
   Search,
   Star,
-  FileText,
+  BookOpen,
   RefreshCw,
   Download,
   Trash2,
   Link,
   Zap,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Compass
 } from 'lucide-vue-next'
 import materialApi, { type Material } from '../../services/materialApi'
 import templateApi from '../../services/templateApi'
 
 const router = useRouter()
-
-// 状态
 const cases = ref<Material[]>([])
 const loading = ref(true)
 const searchQuery = ref('')
@@ -241,79 +215,40 @@ const activeFilter = ref<'all' | 'template' | 'normal'>('all')
 const currentPage = ref(1)
 const itemsPerPage = ref(12)
 
-// 计算属性
-const templateCount = computed(() =>
-  cases.value.filter(c => c.content?.is_template).length
-)
-
-const sourceCount = computed(() => {
-  const sources = new Set(
-    cases.value
-      .filter(c => c.content?.source_url)
-      .map(c => getSourceName(c.content?.source_url))
-  )
-  return sources.size
-})
+const templateCount = computed(() => cases.value.filter(c => c.content?.is_template).length)
+const sourceCount = computed(() => new Set(cases.value.filter(c => c.content?.source_url).map(c => getSourceName(c.content?.source_url))).size)
 
 const filteredCases = computed(() => {
   let filtered = cases.value
-  
-  // 搜索过滤
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(caseItem => 
       caseItem.name.toLowerCase().includes(query) ||
-      caseItem.description?.toLowerCase().includes(query) ||
-      caseItem.tags?.some(tag => tag.toLowerCase().includes(query))
+      caseItem.description?.toLowerCase().includes(query)
     )
   }
+  if (activeFilter.value === 'template') filtered = filtered.filter(c => c.content?.is_template)
+  else if (activeFilter.value === 'normal') filtered = filtered.filter(c => !c.content?.is_template)
   
-  // 类型过滤
-  if (activeFilter.value === 'template') {
-    filtered = filtered.filter(c => c.content?.is_template)
-  } else if (activeFilter.value === 'normal') {
-    filtered = filtered.filter(c => !c.content?.is_template)
-  }
-  
-  // 分页
   const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filtered.slice(start, end)
+  return filtered.slice(start, start + itemsPerPage.value)
 })
 
 const totalPages = computed(() => {
   let filtered = cases.value
-  if (activeFilter.value === 'template') {
-    filtered = filtered.filter(c => c.content?.is_template)
-  } else if (activeFilter.value === 'normal') {
-    filtered = filtered.filter(c => !c.content?.is_template)
-  }
+  // ... (duplicate logic for brevity, ideally shared)
+  if (activeFilter.value === 'template') filtered = filtered.filter(c => c.content?.is_template)
+  else if (activeFilter.value === 'normal') filtered = filtered.filter(c => !c.content?.is_template)
   return Math.ceil(filtered.length / itemsPerPage.value)
 })
 
-const visiblePages = computed(() => {
-  const pages = []
-  const start = Math.max(1, currentPage.value - 2)
-  const end = Math.min(totalPages.value, currentPage.value + 2)
-  
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-  
-  return pages
-})
-
-// 方法
 const loadCases = async () => {
   loading.value = true
   try {
-    // 只获取 reference 类型的素材（案例）
     const response = await materialApi.getMaterials({ type: 'reference' })
-    if (response.success) {
-      cases.value = response.data.items || []
-    }
+    if (response.success) cases.value = response.data.items || []
   } catch (error) {
-    console.error('加载案例失败:', error)
+    console.error('Failed to load cases:', error)
   } finally {
     loading.value = false
   }
@@ -324,128 +259,56 @@ const setFilter = (filter: typeof activeFilter.value) => {
   currentPage.value = 1
 }
 
-const truncateText = (text: string, maxLength: number) => {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength) + '...'
-}
-
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit'
-  })
-}
-
+const truncateText = (text: string, max: number) => text?.length > max ? text.slice(0, max) + '...' : text
+const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
 const getSourceName = (url: string) => {
-  if (!url) return '未知'
+  if (!url) return 'Unknown'
   try {
-    const hostname = new URL(url).hostname
-    if (hostname.includes('xiaohongshu')) return '小红书'
-    if (hostname.includes('weibo')) return '微博'
-    if (hostname.includes('douyin')) return '抖音'
-    if (hostname.includes('bilibili')) return 'B站'
-    if (hostname.includes('zhihu')) return '知乎'
-    return hostname.replace('www.', '').split('.')[0]
-  } catch {
-    return '未知'
-  }
+    const host = new URL(url).hostname
+    if (host.includes('xiaohongshu')) return 'RedBook'
+    if (host.includes('weibo')) return 'Weibo'
+    if (host.includes('douyin')) return 'Douyin'
+    return host.replace('www.', '').split('.')[0]
+  } catch { return 'Web' }
 }
 
-const viewCase = (caseItem: Material) => {
-  // 可以添加详情预览功能
-  console.log('查看案例:', caseItem)
-}
+const viewCase = (item: Material) => { /* Preview logic */ }
 
-const toggleTemplate = async (caseItem: Material) => {
+const toggleTemplate = async (item: Material) => {
   try {
-    const isTemplate = caseItem.content?.is_template
-    
-    if (isTemplate) {
-      // 取消模板
-      const response = await templateApi.unmarkAsTemplate(caseItem.id)
-      if (response.success) {
-        // 更新本地状态
-        const index = cases.value.findIndex(c => c.id === caseItem.id)
-        if (index !== -1) {
-          cases.value[index] = {
-            ...cases.value[index],
-            content: {
-              ...cases.value[index].content,
-              is_template: false,
-              template_name: null
-            }
-          }
-        }
-      }
-    } else {
-      // 设为模板
-      const response = await templateApi.markAsTemplate(caseItem.id, caseItem.name)
-      if (response.success) {
-        // 更新本地状态
-        const index = cases.value.findIndex(c => c.id === caseItem.id)
-        if (index !== -1) {
-          cases.value[index] = {
-            ...cases.value[index],
-            content: {
-              ...cases.value[index].content,
-              is_template: true,
-              template_name: caseItem.name
-            }
-          }
-        }
+    const isTemplate = item.content?.is_template
+    const res = isTemplate 
+      ? await templateApi.unmarkAsTemplate(item.id)
+      : await templateApi.markAsTemplate(item.id, item.name)
+      
+    if (res.success) {
+      const idx = cases.value.findIndex(c => c.id === item.id)
+      if (idx !== -1) {
+        cases.value[idx].content = { ...cases.value[idx].content, is_template: !isTemplate }
       }
     }
-  } catch (error) {
-    console.error('切换模板状态失败:', error)
-    alert('操作失败，请重试')
+  } catch (err) { console.error(err) }
+}
+
+const useAsTemplate = (item: Material) => {
+  router.push({ path: '/creation', query: { template_id: item.id } })
+}
+
+const handleDelete = async (item: Material) => {
+  if (confirm(`Delete "${item.name}"?`)) {
+    const res = await materialApi.deleteMaterial(item.id)
+    if (res.success) await loadCases()
   }
 }
 
-const useAsTemplate = (caseItem: Material) => {
-  // 跳转到创作页面，使用该模板
-  router.push({
-    path: '/creation',
-    query: {
-      template_id: caseItem.id,
-      template_name: caseItem.name
-    }
-  })
-}
-
-const handleDelete = async (caseItem: Material) => {
-  if (confirm(`确定要删除案例 "${caseItem.name}" 吗？`)) {
-    try {
-      const response = await materialApi.deleteMaterial(caseItem.id)
-      if (response.success) {
-        await loadCases()
-      }
-    } catch (error) {
-      console.error('删除案例失败:', error)
-      alert('删除失败，请重试')
-    }
-  }
-}
-
-// 监听
-watch([searchQuery, activeFilter], () => {
-  currentPage.value = 1
-})
-
-onMounted(() => {
-  loadCases()
-})
+watch([searchQuery, activeFilter], () => { currentPage.value = 1 })
+onMounted(() => { loadCases() })
 </script>
 
 <style scoped>
-.cases-container {
-  max-width: 1400px;
-  margin: 0 auto;
-}
+.cases-container { width: 100%; }
 
-/* 数据概览 */
+/* Stats */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -456,467 +319,201 @@ onMounted(() => {
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.2rem;
   padding: 1.5rem;
-  transition: all 0.3s ease;
+  background: white;
+  border-radius: 20px;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-icon {
-  font-size: 2.5rem;
-  width: 64px;
-  height: 64px;
+.stat-icon-wrapper {
+  width: 50px; height: 50px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
-  border-radius: 16px;
 }
 
-.stat-info {
-  flex: 1;
-}
+.stat-icon-wrapper.orange { background: #FFF7ED; color: #F97316; }
+.stat-icon-wrapper.yellow { background: #FEFCE8; color: #EAB308; }
+.stat-icon-wrapper.blue { background: #EFF6FF; color: #3B82F6; }
 
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
+.stat-value { font-size: 1.8rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 0.8rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; }
 
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-}
-
-/* 操作栏 */
-.action-bar {
+/* Toolbar */
+.toolbar {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1rem 1.5rem;
+  padding: 0.8rem 1.2rem;
   margin-bottom: 2rem;
+  background: white;
   border-radius: 16px;
-  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.search-section {
+.search-box {
   flex: 1;
-  min-width: 200px;
-}
-
-.search-input-wrapper {
-  position: relative;
   display: flex;
   align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  color: var(--text-secondary);
-  pointer-events: none;
+  background: #F8F9FA;
+  border-radius: 10px;
+  padding: 0 1rem;
 }
 
 .search-input {
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
+  border: none; background: transparent; width: 100%; padding: 0.8rem 0;
+  font-size: 0.95rem; color: var(--text-primary);
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.filter-section {
+.filter-group {
   display: flex;
-  gap: 0.5rem;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: 12px;
 }
 
-.filter-btn {
+.filter-pill {
+  border: none;
+  background: transparent;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  gap: 0.4rem;
+  transition: all 0.2s;
+}
+
+.filter-pill.active { background: white; color: var(--text-primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+.icon-btn {
+  width: 36px; height: 36px;
+  border: none; background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  font-weight: 500;
+  border-radius: 8px;
 }
+.icon-btn:hover { background: #F8F9FA; color: var(--text-primary); }
+.spinning { animation: spin 1s linear infinite; }
 
-.filter-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
-}
-
-.filter-btn.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-section {
-  margin-left: auto;
-}
-
-.spinning {
-  animation: spin 1s linear infinite;
-}
-
-/* 案例网格 */
+/* Grid */
 .cases-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
 .case-card {
-  position: relative;
+  background: white;
+  border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.03);
 }
 
-.case-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
+.case-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
 
 .card-preview {
   height: 180px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+  background: #F1F5F9;
 }
 
-.preview-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
+.preview-image { width: 100%; height: 100%; object-fit: cover; }
+.preview-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94A3B8; }
 
-.case-card:hover .preview-image {
-  transform: scale(1.05);
-}
-
-.preview-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
-  color: var(--text-tertiary);
-}
-
-/* 操作按钮 */
-.action-buttons {
+.source-tag {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  display: flex;
-  gap: 0.5rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 10;
-}
-
-.case-card:hover .action-buttons {
-  opacity: 1;
-}
-
-.action-btn {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.action-btn:hover {
-  transform: scale(1.1);
-}
-
-.template-btn:hover,
-.template-btn.is-template {
-  background: #fef3c7;
-  color: #f59e0b;
-}
-
-.delete-btn:hover {
-  background: #fee2e2;
-  color: #ef4444;
-}
-
-/* 模板标签 */
-.template-badge {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(251, 191, 36, 0.9));
+  bottom: 8px; left: 8px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
   color: white;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 来源标签 */
-.source-badge {
-  position: absolute;
-  bottom: 0.75rem;
-  left: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 0.5rem;
   font-size: 0.7rem;
-  font-weight: 500;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  backdrop-filter: blur(8px);
-}
-
-.card-content {
-  padding: 1.25rem;
-}
-
-.card-title {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-description {
-  margin: 0 0 0.75rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  margin-bottom: 0.75rem;
-}
-
-.meta-item {
+  padding: 4px 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 4px;
 }
 
-.tags {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.tag {
-  padding: 0.125rem 0.5rem;
-  background: rgba(99, 102, 241, 0.1);
-  border-radius: 4px;
-  font-size: 0.7rem;
-  color: var(--primary-color);
-}
-
-/* 快捷操作 */
+/* Actions */
 .card-actions {
+  position: absolute;
+  top: 8px; right: 8px;
   display: flex;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.2s;
 }
 
-.quick-action-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
+.case-card:hover .card-actions { opacity: 1; transform: translateY(0); }
 
-.quick-action-btn:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-.quick-action-btn.active {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border-color: #f59e0b;
-}
-
-.quick-action-btn.use-btn {
-  background: linear-gradient(135deg, #6366f1, #ec4899);
-  color: white;
-  border: none;
-}
-
-.quick-action-btn.use-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* 空状态和加载状态 */
-.empty-state,
-.loading-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem;
-  color: var(--text-primary);
-}
-
-.empty-state p {
-  color: var(--text-secondary);
-  margin-bottom: 2rem;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(99, 102, 241, 0.2);
-  border-top-color: #6366f1;
+.action-circle-btn {
+  width: 30px; height: 30px;
   border-radius: 50%;
-  margin: 0 auto 1rem;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* 分页 */
-.pagination {
+  border: none;
+  background: rgba(255,255,255,0.95);
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.page-btn,
-.page-number {
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary);
+  justify-content: center;
   cursor: pointer;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.star-btn:hover { color: #EAB308; transform: scale(1.1); }
+.star-btn.is-active { color: #EAB308; }
+.delete-btn:hover { color: #EF4444; transform: scale(1.1); }
+
+/* Content */
+.card-content { padding: 1rem; }
+.content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.card-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 70%; }
+
+.template-mark {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #EAB308;
+  background: #FEFCE8;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.card-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 1rem; }
+
+.card-footer { display: flex; justify-content: space-between; align-items: center; }
+.date { font-size: 0.75rem; color: var(--text-tertiary); }
+
+.use-template-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.page-btn:hover,
-.page-number:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-number.active {
-  background: var(--primary-color);
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
   color: white;
-  border-color: var(--primary-color);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.page-numbers {
-  display: flex;
-  gap: 0.5rem;
-}
+/* States */
+.state-container { padding: 4rem; text-align: center; }
+.loading-spinner-orange { width: 30px; height: 30px; border: 3px solid #FFEDD5; border-top-color: #F97316; border-radius: 50%; animation: spin 1s infinite; margin: 0 auto 1rem; }
+.empty-illustration { color: #F97316; opacity: 0.5; margin-bottom: 1rem; }
 
-/* 响应式 */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsive */
 @media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .action-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .filter-section {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .action-section {
-    margin-left: 0;
-  }
-  
-  .cases-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .card-actions {
-    flex-direction: column;
-  }
+  .stats-grid { grid-template-columns: 1fr; }
+  .cases-grid { grid-template-columns: 1fr; }
 }
 </style>

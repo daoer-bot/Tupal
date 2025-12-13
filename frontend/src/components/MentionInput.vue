@@ -386,43 +386,45 @@ onMounted(() => {
 <style scoped>
 .mention-input-wrapper { position: relative; width: 100%; }
 .mention-editor {
-  width: 100%; min-height: 80px; padding: 8px 12px; box-sizing: border-box;
-  border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px;
-  line-height: 1.5; color: #111827; background: white; outline: none; overflow-y: auto;
-  word-wrap: break-word; white-space: pre-wrap;
+  width: 100%; min-height: 80px; padding: 12px; box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,0.05); border-radius: 8px; font-family: inherit; font-size: 14px;
+  line-height: 1.6; color: var(--text-primary); background: rgba(255,255,255,0.5); outline: none; overflow-y: auto;
+  word-wrap: break-word; white-space: pre-wrap; transition: all 0.2s;
 }
 .mention-editor.single-line { min-height: auto; white-space: nowrap; overflow-x: auto; overflow-y: hidden; }
-.mention-editor:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-.mention-editor:empty:before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; }
+.mention-editor:focus { border-color: var(--primary-color); background: white; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+.mention-editor:empty:before { content: attr(data-placeholder); color: var(--text-tertiary); pointer-events: none; }
 .mention-editor :deep(.mention-tag) {
-  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
-  border-radius: 4px; font-size: 13px; font-weight: 500; white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(102, 126, 234, 0.3); margin: 0 2px; cursor: default;
+  display: inline-flex; align-items: center; gap: 4px; padding: 0 6px;
+  background: rgba(99, 102, 241, 0.1); color: var(--primary-color); border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 4px; font-size: 13px; font-weight: 600; white-space: nowrap;
+  margin: 0 2px; cursor: default;
 }
 .mention-dropdown {
-  position: absolute; z-index: 1000; background: white; border: 1px solid #e5e7eb;
-  border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); max-height: 300px; overflow-y: auto;
+  position: absolute; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); max-height: 300px; overflow-y: auto;
+  backdrop-filter: blur(10px);
 }
 .dropdown-loading, .dropdown-empty {
-  padding: 16px; text-align: center; color: #6b7280; font-size: 14px;
+  padding: 16px; text-align: center; color: var(--text-tertiary); font-size: 13px;
 }
 .dropdown-loading { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .spinner-mini {
-  width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #3b82f6;
+  width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.1); border-top-color: var(--primary-color);
   border-radius: 50%; animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.dropdown-list { padding: 4px; }
+.dropdown-list { padding: 0; }
 .dropdown-item {
-  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px;
-  cursor: pointer; transition: background 0.15s;
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 0;
+  cursor: pointer; transition: background 0.15s; border-bottom: 1px solid rgba(0,0,0,0.05);
 }
-.dropdown-item:hover, .dropdown-item.active { background: #f0f9ff; }
-.item-icon { font-size: 20px; flex-shrink: 0; }
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-item:hover, .dropdown-item.active { background: rgba(99, 102, 241, 0.05); }
+.item-icon { font-size: 16px; flex-shrink: 0; filter: none; }
 .item-content { flex: 1; min-width: 0; }
-.item-name { font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 2px; }
+.item-name { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
 .item-preview {
-  font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 </style>

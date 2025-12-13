@@ -1,99 +1,116 @@
 <template>
-  <div class="works-container">
-    <!-- 数据概览卡片 -->
+  <div class="works-container animate-fade-in">
+    <!-- 📊 数据概览卡片 -->
     <div class="stats-grid">
       <div class="stat-card glass-panel">
-        <div class="stat-icon">📊</div>
+        <div class="stat-icon-wrapper pink">
+          <BarChart2 :size="24" />
+        </div>
         <div class="stat-info">
           <div class="stat-value">{{ historyList.length }}</div>
-          <div class="stat-label">总作品数</div>
+          <div class="stat-label">Total Works</div>
         </div>
       </div>
       <div class="stat-card glass-panel">
-        <div class="stat-icon">✅</div>
+        <div class="stat-icon-wrapper mint">
+          <CheckCircle2 :size="24" />
+        </div>
         <div class="stat-info">
           <div class="stat-value">{{ completedCount }}</div>
-          <div class="stat-label">已完成</div>
+          <div class="stat-label">Completed</div>
         </div>
       </div>
       <div class="stat-card glass-panel">
-        <div class="stat-icon">📄</div>
+        <div class="stat-icon-wrapper purple">
+          <Files :size="24" />
+        </div>
         <div class="stat-info">
           <div class="stat-value">{{ totalPages }}</div>
-          <div class="stat-label">总页数</div>
+          <div class="stat-label">Total Pages</div>
         </div>
       </div>
     </div>
 
+    <!-- 🏷️ 页面标题与操作 -->
     <div class="page-header">
-      <h2 class="page-title">作品库</h2>
+      <h2 class="section-title">我的作品库</h2>
       <div class="header-actions">
-        <button class="btn btn-secondary refresh-btn" @click="loadHistory" :disabled="loading">
-          <span class="icon" :class="{ 'spinning': loading }">🔄</span>
-          刷新
+        <button class="icon-btn refresh-btn" @click="loadHistory" :disabled="loading" title="刷新">
+          <RefreshCw :size="20" :class="{ 'spinning': loading }" />
         </button>
       </div>
     </div>
 
-    <div v-if="loading && historyList.length === 0" class="loading-state glass-panel">
-      <div class="spinner"></div>
-      <p>加载中...</p>
+    <!-- ⏳ 加载状态 -->
+    <div v-if="loading && historyList.length === 0" class="state-container glass-panel">
+      <div class="loading-spinner-pink"></div>
+      <p>正在获取作品数据...</p>
     </div>
 
-    <div v-else-if="historyList.length === 0" class="empty-state glass-panel">
-      <div class="empty-icon">📂</div>
+    <!-- 📭 空状态 -->
+    <div v-else-if="historyList.length === 0" class="state-container empty-state glass-panel">
+      <div class="empty-illustration">
+        <FolderOpen :size="64" stroke-width="1" />
+      </div>
       <h3>暂无作品</h3>
-      <p>你生成的图文内容将显示在这里</p>
-      <router-link to="/" class="btn btn-primary">去创作</router-link>
+      <p>开始你的第一次创作之旅吧</p>
+      <router-link to="/creation" class="btn btn-primary">
+        <Sparkles :size="18" />
+        立即创作
+      </router-link>
     </div>
 
+    <!-- 🖼️ 作品网格 -->
     <div v-else class="works-grid">
-      <div v-for="item in historyList" :key="item.task_id" class="work-card glass-panel" @click="viewDetails(item)">
+      <div 
+        v-for="item in historyList" 
+        :key="item.task_id" 
+        class="work-card glass-panel" 
+        @click="viewDetails(item)"
+      >
+        <!-- 预览图区域 -->
         <div class="card-preview">
-          <div class="preview-image" :style="getPreviewStyle(item)"></div>
+          <div class="preview-bg" :style="getPreviewStyle(item)"></div>
+          <div class="preview-overlay"></div>
           
-          <!-- 右上角操作按钮组 -->
-          <div class="action-buttons">
-            <!-- 编辑按钮 -->
+          <!-- 状态标签 -->
+          <div class="status-badge" :class="item.status">
+            <span class="status-dot"></span>
+            {{ getStatusText(item.status) }}
+          </div>
+
+          <!-- 悬浮操作栏 -->
+          <div class="card-actions">
             <button
-              class="action-btn edit-btn"
+              class="action-circle-btn edit-btn"
               @click.stop="handleEdit(item)"
               title="编辑"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
+              <Edit3 :size="16" />
             </button>
-            
-            <!-- 删除按钮 -->
             <button
-              class="action-btn delete-btn"
+              class="action-circle-btn delete-btn"
               @click.stop="handleDelete(item)"
               :disabled="deleting.has(item.task_id || item.id)"
-              :title="deleting.has(item.task_id || item.id) ? '删除中...' : '删除'"
+              title="删除"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <Trash2 :size="16" />
             </button>
-          </div>
-          
-          <div class="status-badge" :class="item.status">
-            {{ getStatusText(item.status) }}
           </div>
         </div>
         
+        <!-- 内容区域 -->
         <div class="card-content">
-          <h3 class="card-title" :title="item.topic">{{ item.topic }}</h3>
-          <div class="card-meta">
-            <span class="meta-item">
-              <span class="icon">📅</span>
-              {{ formatDate(item.created_at) }}
-            </span>
-            <span class="meta-item">
-              <span class="icon">📄</span>
-              {{ item.pages?.length || 0 }} 页
-            </span>
+          <h3 class="work-title" :title="item.topic">{{ item.topic }}</h3>
+          <div class="work-meta">
+            <div class="meta-item">
+              <Calendar :size="14" />
+              <span>{{ formatDate(item.created_at) }}</span>
+            </div>
+            <div class="meta-item">
+              <Layers :size="14" />
+              <span>{{ item.pages?.length || 0 }} 页</span>
+            </div>
           </div>
         </div>
       </div>
@@ -106,6 +123,18 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getHistory, deleteHistory } from '../../services/api'
 import { useAppStore } from '../../store'
+import { 
+  BarChart2, 
+  CheckCircle2, 
+  Files, 
+  RefreshCw, 
+  FolderOpen, 
+  Sparkles,
+  Edit3,
+  Trash2,
+  Calendar,
+  Layers
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useAppStore()
@@ -127,7 +156,6 @@ const loadHistory = async () => {
   try {
     const response = await getHistory()
     if (response.success && response.data) {
-      // 修复：正确获取历史记录列表
       historyList.value = response.data.items || response.data || []
     } else {
       historyList.value = []
@@ -141,25 +169,19 @@ const loadHistory = async () => {
 }
 
 const viewDetails = (item: any) => {
-  // 构建符合 Outline 接口的数据结构
   const outline = {
     task_id: item.task_id || item.id,
     topic: item.topic,
     pages: item.pages || []
   }
   store.setOutline(outline)
-  
-  // 如果有参考图片，也设置到 store
   if (item.reference_image) {
     store.setReferenceImage(item.reference_image)
   }
-  
-  // 跳转到结果页面查看已完成的内容
   router.push('/result')
 }
 
 const getPreviewStyle = (item: any) => {
-  // 尝试获取第一张图片的 URL
   const firstImage = item.pages?.[0]?.image_url
   if (firstImage) {
     return {
@@ -168,17 +190,16 @@ const getPreviewStyle = (item: any) => {
       backgroundPosition: 'center'
     }
   }
-  // 如果没有图片，使用渐变背景
   return {
-    background: 'linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%)'
+    background: 'linear-gradient(135deg, #FFDAC1 0%, #FFB7B2 100%)'
   }
 }
 
 const getStatusText = (status: string) => {
   const map: Record<string, string> = {
-    'completed': '已完成',
-    'failed': '失败',
-    'pending': '进行中'
+    'completed': 'Completed',
+    'failed': 'Failed',
+    'pending': 'Processing'
   }
   return map[status] || status
 }
@@ -186,56 +207,42 @@ const getStatusText = (status: string) => {
 const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
   })
 }
 
 const handleDelete = async (item: any) => {
   const historyId = item.task_id || item.id
-  
-  if (!confirm(`确定要删除"${item.topic}"吗？此操作无法撤销。`)) {
+  if (!confirm(`Are you sure you want to delete "${item.topic}"?`)) {
     return
   }
-  
   deleting.value.add(historyId)
-  
   try {
     const response = await deleteHistory(historyId)
     if (response.success) {
-      // 从列表中移除
       historyList.value = historyList.value.filter(h =>
         (h.task_id || h.id) !== historyId
       )
-    } else {
-      alert('删除失败，请重试')
     }
   } catch (error: any) {
-    console.error('删除历史记录失败:', error)
-    alert('删除失败：' + (error?.message || '请重试'))
+    console.error('Delete failed:', error)
   } finally {
     deleting.value.delete(historyId)
   }
 }
 
 const handleEdit = (item: any) => {
-  // 构建符合 Outline 接口的数据结构
   const outline = {
     task_id: item.task_id || item.id,
     topic: item.topic,
     pages: item.pages || []
   }
   store.setOutline(outline)
-  
-  // 如果有参考图片，也设置到 store
   if (item.reference_image) {
     store.setReferenceImage(item.reference_image)
   }
-  
-  // 跳转到创作区进行编辑
   router.push({
     path: '/creation/editor',
     query: {
@@ -252,289 +259,261 @@ onMounted(() => {
 
 <style scoped>
 .works-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
 }
 
-/* 数据概览 */
+/* --- 📊 Stats Cards --- */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.2rem;
   padding: 1.5rem;
-  transition: all 0.3s ease;
+  background: white;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.6);
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-icon {
-  font-size: 2.5rem;
-  width: 64px;
-  height: 64px;
+.stat-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
-  border-radius: 16px;
 }
 
-.stat-info {
-  flex: 1;
-}
+.stat-icon-wrapper.pink { background: #FFF0F0; color: var(--macaron-pink-deep); }
+.stat-icon-wrapper.mint { background: #F0FFF9; color: #6DB398; }
+.stat-icon-wrapper.purple { background: #F8F7FF; color: #9FA8DA; }
 
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
+.stat-info { display: flex; flex-direction: column; }
+.stat-value { font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 0.85rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
 
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-}
-
+/* --- 🏷️ Header --- */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
 }
 
-.page-title {
-  font-size: 1.75rem;
-  font-weight: 700;
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--text-primary);
   margin: 0;
+  font-family: 'Quicksand', sans-serif;
 }
 
-.refresh-btn .icon {
-  display: inline-block;
-  transition: transform 0.5s;
+.icon-btn {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.refresh-btn .icon.spinning {
-  animation: spin 1s linear infinite;
+.icon-btn:hover {
+  background: var(--macaron-pink);
+  color: white;
+  transform: rotate(15deg);
 }
 
+.spinning { animation: spin 1s linear infinite; }
+
+/* --- 🖼️ Grid Layout --- */
 .works-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
 }
 
 .work-card {
+  position: relative;
+  border-radius: 24px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s ease;
+  background: white;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255,255,255,0.8);
 }
 
 .work-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
 }
 
+/* Preview Area */
 .card-preview {
-  height: 220px;
+  height: 200px;
   position: relative;
   overflow: hidden;
 }
 
-.preview-image {
+.preview-bg {
   width: 100%;
   height: 100%;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s ease;
 }
 
-.work-card:hover .preview-image {
-  transform: scale(1.05);
+.work-card:hover .preview-bg {
+  transform: scale(1.1);
 }
 
-/* 右上角操作按钮组 */
-.action-buttons {
+.preview-overlay {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4));
+  opacity: 0.6;
+}
+
+/* Status Badge */
+.status-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(4px);
+  font-size: 0.75rem;
+  font-weight: 700;
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; }
+.status-badge.completed { color: #059669; }
+.status-badge.completed .status-dot { background: #10B981; }
+.status-badge.failed { color: #DC2626; }
+.status-badge.failed .status-dot { background: #EF4444; }
+
+/* Action Buttons */
+.card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 10;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
 }
 
-.work-card:hover .action-buttons {
+.work-card:hover .card-actions {
   opacity: 1;
+  transform: translateY(0);
 }
 
-.action-btn {
-  width: 2rem;
-  height: 2rem;
+.action-circle-btn {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
+  background: white;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.action-btn:hover:not(:disabled) {
-  transform: scale(1.1);
-}
+.edit-btn:hover { color: #6366F1; transform: scale(1.1); }
+.delete-btn:hover { color: #EF4444; transform: scale(1.1); }
 
-.action-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.action-btn svg {
-  width: 1.1rem;
-  height: 1.1rem;
-  transition: color 0.3s;
-}
-
-/* 编辑按钮样式 */
-.edit-btn:hover {
-  background: #e0e7ff;
-}
-
-.edit-btn svg {
-  color: #6366f1;
-}
-
-.edit-btn:hover svg {
-  color: #4f46e5;
-}
-
-/* 删除按钮样式 */
-.delete-btn:hover:not(:disabled) {
-  background: #fee2e2;
-}
-
-.delete-btn svg {
-  color: #ef4444;
-}
-
-.delete-btn:hover:not(:disabled) svg {
-  color: #dc2626;
-}
-
-.status-badge {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  padding: 0.375rem 0.875rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.status-badge.completed {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
-  color: white;
-}
-
-.status-badge.failed {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
-  color: white;
-}
-
-.status-badge.pending {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9));
-  color: white;
-}
-
+/* Content Area */
 .card-content {
-  padding: 1.5rem;
+  padding: 1.2rem;
 }
 
-.card-title {
-  margin: 0 0 0.75rem;
-  font-size: 1.125rem;
-  font-weight: 600;
+.work-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 0.8rem 0;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: 'Quicksand', sans-serif;
 }
 
-.card-meta {
+.work-meta {
   display: flex;
-  justify-content: space-between;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  gap: 1rem;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-weight: 600;
 }
 
-.empty-state,
-.loading-state {
-  text-align: center;
+/* States */
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 4rem 2rem;
+  text-align: center;
+  border-radius: 24px;
 }
 
-.empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
+.empty-illustration {
+  color: var(--macaron-pink);
+  margin-bottom: 1.5rem;
+  opacity: 0.8;
 }
 
-.empty-state h3 {
-  margin: 0 0 0.5rem;
+.state-container h3 {
+  font-size: 1.25rem;
   color: var(--text-primary);
+  margin-bottom: 0.5rem;
 }
 
-.empty-state p {
+.state-container p {
   color: var(--text-secondary);
   margin-bottom: 2rem;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(99, 102, 241, 0.2);
-  border-top-color: #6366f1;
+/* Loading Spinner */
+.loading-spinner-pink {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #FFE0E0;
+  border-top-color: var(--macaron-pink-deep);
   border-radius: 50%;
-  margin: 0 auto 1rem;
   animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* 响应式 */
+/* Responsive */
 @media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .works-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
+  .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .works-grid { grid-template-columns: 1fr; }
 }
 </style>

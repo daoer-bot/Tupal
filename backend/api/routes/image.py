@@ -84,9 +84,15 @@ def get_progress(task_id):
     """
     def generate_progress():
         progress_service = ProgressService()
-        
+
         if not progress_service.task_exists(task_id):
-            yield f"data: {json.dumps({'error': '任务不存在', 'task_id': task_id})}\n\n"
+            error_data = {
+                'error': '任务已过期或不存在',
+                'task_id': task_id,
+                'message': '该任务可能已完成或已被清理，请刷新页面重新生成',
+                'code': 'TASK_NOT_FOUND'
+            }
+            yield f"data: {json.dumps(error_data)}\n\n"
             return
         
         logger.info(f"开始SSE进度推送: {task_id}")
@@ -118,10 +124,12 @@ def get_progress(task_id):
                     final_data = {
                         'done': True,
                         'status': progress['status'],
-                        'task_id': task_id
+                        'task_id': task_id,
+                        'images': progress['images'],  # 🔧 修复：包含完整的图片数组
+                        'failed_pages': progress.get('failed_pages', [])
                     }
                     yield f"data: {json.dumps(final_data)}\n\n"
-                    logger.info(f"SSE进度推送完成: {task_id}")
+                    logger.info(f"SSE进度推送完成: {task_id}, 图片数量: {len(progress['images'])}")
                     break
                 
                 time.sleep(0.5)

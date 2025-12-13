@@ -1,35 +1,32 @@
 <template>
   <div class="workspace-view">
-    <!-- Aurora 背景 -->
-    <div class="aurora-bg-fixed">
-      <div class="aurora-orb-1"></div>
-      <div class="aurora-orb-2"></div>
-      <div class="aurora-orb-3"></div>
-    </div>
-
     <div class="workspace-container">
-      <!-- 顶部Tab导航 -->
-      <div class="tab-navigation glass-panel-heavy">
-        <router-link
-          v-for="tab in tabs"
-          :key="tab.path"
-          :to="tab.path"
-          class="tab-item"
-          :class="{ active: $route.path === tab.path }"
-        >
-          <component :is="tab.icon" :size="20" />
-          <span>{{ tab.label }}</span>
-        </router-link>
+      
+      <!-- 🍬 简约糖果 Tab 导航 -->
+      <div class="tabs-wrapper animate-fade-in">
+        <div class="simple-tabs">
+          <router-link
+            v-for="tab in tabs"
+            :key="tab.path"
+            :to="tab.path"
+            class="tab-item"
+            :class="{ active: $route.path === tab.path }"
+          >
+            <component :is="tab.icon" :size="16" class="tab-icon" />
+            <span>{{ tab.label }}</span>
+          </router-link>
+        </div>
       </div>
       
-      <!-- 内容区域 -->
-      <div class="content-area">
+      <!-- 📦 内容展示柜 -->
+      <div class="content-display-case">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
+          <transition name="pop" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
       </div>
+      
     </div>
   </div>
 </template>
@@ -38,86 +35,87 @@
 import { FileText, Database, Bookmark } from 'lucide-vue-next'
 
 const tabs = [
-  { path: '/workspace/works', label: '作品', icon: FileText },
-  { path: '/workspace/knowledge', label: '知识', icon: Database },
-  { path: '/workspace/cases', label: '案例', icon: Bookmark }
+  { path: '/workspace/works', label: '我的作品', icon: FileText },
+  { path: '/workspace/knowledge', label: '知识库', icon: Database },
+  { path: '/workspace/cases', label: '灵感收藏', icon: Bookmark }
 ]
 </script>
 
 <style scoped>
 .workspace-view {
   min-height: 100vh;
-  padding-top: var(--nav-height);
+  /* padding-top 由 App.vue 的全局 padding 处理 */
   position: relative;
 }
 
 .workspace-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  position: relative;
-  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* 顶部Tab导航 */
-.tab-navigation {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem;
+/* --- 🍬 Tabs --- */
+.tabs-wrapper {
   margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.simple-tabs {
+  display: flex;
+  padding: 4px;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
   border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .tab-item {
-  flex: 1;
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
+  padding: 0.6rem 1.5rem;
   border-radius: 12px;
-  color: var(--text-secondary);
-  font-weight: 500;
   text-decoration: none;
-  transition: all 0.3s ease;
-  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
 }
 
 .tab-item:hover {
   color: var(--text-primary);
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .tab-item.active {
   color: white;
-  background: linear-gradient(135deg, #6366f1, #ec4899);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  background: var(--macaron-pink);
+  box-shadow: 0 4px 12px rgba(255, 154, 162, 0.3);
 }
 
-.content-area {
-  animation: fadeIn 0.5s ease-in-out;
+/* --- 📦 内容区域 --- */
+.content-display-case {
+  width: 100%;
+  min-height: 400px;
 }
 
-/* 路由过渡动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
+/* 路由动画 */
+.pop-enter-active,
+.pop-leave-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.pop-enter-from,
+.pop-leave-to {
   opacity: 0;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  transform: scale(0.95) translateY(10px);
 }
 
 /* 响应式 */
@@ -126,13 +124,17 @@ const tabs = [
     padding: 1rem;
   }
   
-  .tab-item {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
+  .simple-tabs {
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
   }
   
-  .tab-item span {
-    display: none;
+  .tab-item {
+    flex: 1;
+    justify-content: center;
+    padding: 0.6rem 1rem;
+    white-space: nowrap;
   }
 }
 </style>

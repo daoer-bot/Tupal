@@ -85,8 +85,10 @@ export const generateOutline = (params: GenerateOutlineParams) => {
 export const generateImages = (params: GenerateImagesParams) => {
   return api.post<any, {
     success: boolean
-    task_id: string
-    total_pages: number
+    data: {
+      task_id: string
+      total_pages: number
+    }
     message?: string
   }>('/generate-images', params)
 }
@@ -99,24 +101,33 @@ export const subscribeProgress = (
   onComplete?: () => void
 ): EventSource => {
   const eventSource = new EventSource(`${API_BASE_URL}/progress/${taskId}`)
-  
+
   eventSource.onmessage = (event) => {
     try {
       const data: ProgressData = JSON.parse(event.data)
-      
+
       // 检查是否有错误
       if (data.error) {
         console.error('Progress error:', data.error)
+
+        // 根据错误代码提供更友好的错误信息
+        let errorMessage = data.error
+        if ((data as any).code === 'TASK_NOT_FOUND') {
+          errorMessage = (data as any).message || '任务已过期，请重新生成'
+        }
+
         if (onError) {
-          onError(new Error(data.error))
+          const error = new Error(errorMessage)
+          ;(error as any).code = (data as any).code
+          onError(error)
         }
         eventSource.close()
         return
       }
-      
+
       // 调用进度回调
       onProgress(data)
-      
+
       // 如果任务完成，关闭连接
       if (data.done) {
         if (onComplete) {
@@ -131,15 +142,15 @@ export const subscribeProgress = (
       }
     }
   }
-  
+
   eventSource.onerror = (error) => {
     console.error('SSE connection error:', error)
     if (onError) {
-      onError(new Error('SSE连接错误'))
+      onError(new Error('连接中断，请检查网络'))
     }
     eventSource.close()
   }
-  
+
   return eventSource
 }
 

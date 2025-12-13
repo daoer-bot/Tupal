@@ -1,10 +1,10 @@
 <template>
   <div id="app" class="app-wrapper">
-    <!-- 🌌 全局极光背景 -->
-    <div class="aurora-bg-fixed">
-      <div class="aurora-orb-1"></div>
-      <div class="aurora-orb-2"></div>
-      <div class="aurora-orb-3"></div>
+    <!-- ☁️ 奶油云朵背景 -->
+    <div class="macaron-bg">
+      <div class="bg-blob blob-1"></div>
+      <div class="bg-blob blob-2"></div>
+      <div class="bg-blob blob-3"></div>
     </div>
 
     <!-- �️ 顶部导航栏 - 使用新的高级导航组件 -->
@@ -97,11 +97,13 @@ onMounted(() => {
 /* === 主舞台 === */
 .main-stage {
   flex: 1;
-  margin-top: 72px; /* 留出顶部导航栏的高度 */
-  padding: 24px;
-  min-height: calc(100vh - 72px);
+  /* margin-top 由 NavHeight 决定，这里使用 padding 来避免内容被遮挡 */
+  padding-top: var(--nav-height);
+  min-height: 100vh;
   position: relative;
   z-index: 10;
+  overflow-x: hidden;
+  /* 确保内容在背景之上 */
 }
 
 .animate-pulse-slow {

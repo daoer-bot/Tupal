@@ -1,13 +1,82 @@
 [
   {
+    "id": "tpl_sys_ootd",
+    "name": "穿搭分享",
+    "type": "system",
+    "category": "时尚",
+    "tags": ["穿搭", "时尚", "OOTD", "搭配"],
+    "description": "分享日常穿搭、搭配技巧，展示个人风格",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-13T00:00:00.000000",
+    "updated_at": "2025-12-13T00:00:00.000000"
+  },
+  {
+    "id": "tpl_sys_food",
+    "name": "美食探店",
+    "type": "system",
+    "category": "美食",
+    "tags": ["美食", "探店", "餐厅", "吃货"],
+    "description": "分享餐厅探店体验、美食推荐，帮助粉丝发现好吃的",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-13T00:00:00.000000",
+    "updated_at": "2025-12-13T00:00:00.000000"
+  },
+  {
+    "id": "tpl_sys_travel",
+    "name": "旅行攻略",
+    "type": "system",
+    "category": "旅行",
+    "tags": ["旅行", "攻略", "旅游", "度假"],
+    "description": "分享旅行目的地攻略、行程规划、实用tips",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-13T00:00:00.000000",
+    "updated_at": "2025-12-13T00:00:00.000000"
+  },
+  {
+    "id": "tpl_sys_recommend",
+    "name": "好物推荐",
+    "type": "system",
+    "category": "种草",
+    "tags": ["好物", "种草", "推荐", "测评"],
+    "description": "分享好用的产品、好物种草，帮助粉丝避坑",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-13T00:00:00.000000",
+    "updated_at": "2025-12-13T00:00:00.000000"
+  },
+  {
+    "id": "tpl_sys_skincare",
+    "name": "护肤心得",
+    "type": "system",
+    "category": "美妆",
+    "tags": ["护肤", "美妆", "变美", "测评"],
+    "description": "分享护肤经验、产品测评、护肤技巧",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-13T00:00:00.000000",
+    "updated_at": "2025-12-13T00:00:00.000000"
+  },
+  {
+    "id": "tpl_sys_fitness",
+    "name": "健身打卡",
+    "type": "system",
+    "category": "健身",
+    "tags": ["健身", "运动", "打卡", "自律"],
+    "description": "分享健身日常、运动记录、健身心得",
+    "thumbnail": "",
+    "usage_count": 0,
+    "created_at": "2025-12-13T00:00:00.000000",
+    "updated_at": "2025-12-13T00:00:00.000000"
+  },
+  {
     "id": "tpl_3c16e028bfcc",
     "name": "产品介绍模板",
     "type": "user",
     "category": "营销",
-    "tags": [
-      "营销",
-      "产品"
-    ],
+    "tags": ["营销", "产品"],
     "description": "用于产品介绍的通用模板",
     "thumbnail": "",
     "usage_count": 0,
@@ -19,10 +88,7 @@
     "name": "产品介绍模板",
     "type": "user",
     "category": "营销",
-    "tags": [
-      "营销",
-      "产品"
-    ],
+    "tags": ["营销", "产品"],
     "description": "用于产品介绍的通用模板",
     "thumbnail": "",
     "usage_count": 0,
@@ -34,10 +100,7 @@
     "name": "产品介绍模板",
     "type": "user",
     "category": "营销",
-    "tags": [
-      "营销",
-      "产品"
-    ],
+    "tags": ["营销", "产品"],
     "description": "用于产品介绍的通用模板",
     "thumbnail": "",
     "usage_count": 0,

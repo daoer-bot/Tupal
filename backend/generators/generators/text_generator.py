@@ -24,9 +24,11 @@ class TextGenerator(BaseGenerator):
         
         Args:
             provider: 服务提供商 ('openai' 或 'mock')
-            **kwargs: 其他配置参数
+            **kwargs: 其他配置参数 (api_key, base_url, model 等)
         """
-        super().__init__(api_key=kwargs.get('api_key', ''), **kwargs)
+        # 从 kwargs 中提取 api_key，避免重复传递
+        api_key = kwargs.pop('api_key', '')
+        super().__init__(api_key=api_key, **kwargs)
         
         self.provider = provider
         
@@ -34,14 +36,15 @@ class TextGenerator(BaseGenerator):
         if provider == 'mock':
             self.client = MockTextClient()
         elif provider == 'openai':
-            api_key = kwargs.get('api_key') or current_app.config.get('OPENAI_API_KEY')
+            # 使用已提取的 api_key 或从配置获取
+            effective_api_key = api_key or current_app.config.get('OPENAI_API_KEY')
             base_url = kwargs.get('base_url') or current_app.config.get('OPENAI_BASE_URL')
             model = kwargs.get('model') or current_app.config.get('OPENAI_MODEL', 'gpt-4')
             
-            if not api_key:
+            if not effective_api_key:
                 raise ValueError("OPENAI_API_KEY 未配置")
             
-            self.client = OpenAITextClient(api_key=api_key, base_url=base_url, model=model)
+            self.client = OpenAITextClient(api_key=effective_api_key, base_url=base_url, model=model)
         else:
             raise ValueError(f"不支持的 provider: {provider}")
         

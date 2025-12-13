@@ -5,7 +5,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/inspiration/trending'
+      redirect: '/inspiration'
     },
     {
       path: '/result',
@@ -13,31 +13,12 @@ const router = createRouter({
       component: () => import('../views/ResultView.vue'),
       meta: { navKey: 'creation' }
     },
-    // 板块一：灵感与发现 (精简版 - 只保留热榜和采集)
+    // 板块一：灵感与发现 (整合版 - 图文采集 + 平台热榜)
     {
       path: '/inspiration',
+      name: 'inspiration',
       component: () => import('../views/Inspiration/InspirationView.vue'),
-      meta: { navKey: 'inspiration' },
-      children: [
-        {
-          path: '',
-          redirect: '/inspiration/trending'
-        },
-        {
-          path: 'trending',
-          name: 'trending',
-          component: () => import('../views/Inspiration/TrendingTopics.vue'),
-          meta: { navKey: 'inspiration', title: '平台热榜' }
-        },
-        {
-          path: 'collector',
-          name: 'collector',
-          component: () => import('../views/Inspiration/ContentCollector.vue'),
-          meta: { navKey: 'inspiration', title: '图文采集' }
-        }
-        // 已移除: InspirationHome.vue (首页入口)
-        // 已移除: TemplateGallery.vue (模板广场，将移至AI创作页面)
-      ]
+      meta: { navKey: 'inspiration', title: '灵感与发现' }
     },
     // 板块二：AI创作 (整合版)
     {

@@ -11,6 +11,7 @@ from datetime import datetime
 from generators.factory import get_image_generator
 from generators.base import BaseGenerator, ContentType
 from .progress_service import ProgressService
+from utils.file_utils import FileUtils
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class ImageService:
         self.model_config = model_config or {}
         self.generator = None
         self.progress_service = ProgressService()
+        self.file_utils = FileUtils()
         
         logger.info(f"图片生成服务已初始化: 生成器={generator_type}, 最大并发={max_workers}, 配置={bool(model_config)}")
     
@@ -244,9 +246,13 @@ class ImageService:
             
             # 转换为旧格式以保持兼容性
             if generation_result.success:
+                # 下载图片并保存到本地
+                image_url = generation_result.url
+                local_url = self._save_image_locally(image_url)
+                
                 return {
                     'success': True,
-                    'image_url': generation_result.url
+                    'image_url': local_url  # 返回本地 URL
                 }
             else:
                 return {
@@ -260,6 +266,42 @@ class ImageService:
                 'success': False,
                 'error': str(e)
             }
+    
+    def _save_image_locally(self, image_url: str) -> str:
+        """
+        将图片保存到本地，返回本地访问 URL
+        
+        Args:
+            image_url: 原始图片 URL（可能是临时 URL 或 base64）
+            
+        Returns:
+            本地访问 URL
+        """
+        try:
+            # 如果已经是本地路径，直接返回
+            if image_url.startswith('/uploads/'):
+                return image_url
+            
+            # 下载并保存图片
+            success, local_path, error = self.file_utils.download_and_save_image(
+                image_url=image_url,
+                subdir='generated'
+            )
+            
+            if success:
+                # 返回本地访问 URL
+                local_url = self.file_utils.get_file_url(local_path)
+                logger.info(f"图片已保存到本地: {local_url}")
+                return local_url
+            else:
+                # 保存失败，返回原始 URL（可能会过期，但至少暂时可用）
+                logger.warning(f"图片保存到本地失败: {error}，使用原始 URL")
+                return image_url
+                
+        except Exception as e:
+            logger.error(f"保存图片到本地异常: {e}", exc_info=True)
+            # 出错时返回原始 URL
+            return image_url
     
     def _calculate_dimensions(self, config: Optional[Dict[str, Any]]) -> tuple[int, int]:
         """
@@ -482,46 +524,93 @@ class ImageService:
         
         return True, ''
     
+    def _normalize_api_format(self, api_format: str) -> str:
+        """
+        将前端的 API 格式映射为后端支持的格式
+        
+        前端格式: chat, generations, official
+        后端格式: openai_chat, openai_dalle, gemini
+        
+        Args:
+            api_format: 前端传入的格式
+            
+        Returns:
+            后端支持的格式
+        """
+        format_mapping = {
+            'chat': 'openai_chat',
+            'generations': 'openai_dalle',
+            'official': 'openai_dalle',
+            'dalle': 'openai_dalle',
+            # 如果已经是后端格式，保持不变
+            'openai_chat': 'openai_chat',
+            'openai_dalle': 'openai_dalle',
+            'gemini': 'gemini',
+        }
+        
+        normalized = format_mapping.get(api_format.lower(), 'openai_dalle')
+        if api_format != normalized:
+            logger.info(f"API 格式映射: {api_format} -> {normalized}")
+        return normalized
+    
     def _create_generator_with_config(self) -> Optional[BaseGenerator]:
         """
         根据配置创建生成器
+        
+        前端配置优先：如果前端传了配置，就直接使用前端的配置，不回退到 Flask 配置
         
         Returns:
             生成器实例
         """
         try:
-            # 检查是否有有效的自定义配置（非空字符串）
-            has_custom_config = (
-                self.model_config and
-                self.model_config.get('url') and
-                self.model_config.get('url').strip() and
-                self.model_config.get('apiKey') and
-                self.model_config.get('apiKey').strip()
-            )
-            
-            if has_custom_config:
-                logger.info(f"使用自定义配置创建图片生成器: {self.generator_type}")
-                logger.info(f"自定义配置 - URL: {self.model_config['url']}, Model: {self.model_config.get('model', 'dall-e-3')}")
+            # 检查是否有自定义配置（前端传入的配置）
+            if self.model_config:
+                logger.info(f"使用前端配置创建图片生成器: {self.generator_type}")
+                
+                # 直接使用前端传入的配置，不回退到 Flask 配置
+                custom_url = self.model_config.get('url', '').strip()
+                custom_key = self.model_config.get('apiKey', '').strip()
+                custom_model = self.model_config.get('model', '').strip()
+                raw_api_format = self.model_config.get('apiFormat', 'openai_dalle')
+                api_format = self._normalize_api_format(raw_api_format)
+                
+                # 验证必要配置
+                if not custom_key:
+                    raise ValueError("前端配置缺少 apiKey")
+                if not custom_url:
+                    raise ValueError("前端配置缺少 url")
+                
+                logger.info(f"前端配置 - URL: {custom_url}, Model: {custom_model or '默认'}, HasKey: {bool(custom_key)}, Format: {api_format}")
+                
+                from generators.generators.image_generator import ImageGenerator
                 
                 if self.generator_type == 'image_api':
-                    from generators.generators.image_generator import ImageGenerator
                     return ImageGenerator(
                         provider='image_api',
-                        api_key=self.model_config['apiKey'],
-                        api_url=self.model_config['url'],
-                        model=self.model_config.get('model', 'dall-e-3'),
-                        apiFormat=self.model_config.get('apiFormat', 'openai_dalle')
+                        api_key=custom_key,
+                        api_url=custom_url,
+                        model=custom_model or 'dall-e-3',
+                        apiFormat=api_format
                     )
+                    
                 elif self.generator_type == 'openai':
-                    from generators.generators.image_generator import ImageGenerator
                     return ImageGenerator(
                         provider='openai',
-                        api_key=self.model_config['apiKey'],
-                        base_url=self.model_config['url'],
-                        model=self.model_config.get('model', 'dall-e-3')
+                        api_key=custom_key,
+                        base_url=custom_url,
+                        model=custom_model or 'dall-e-3'
+                    )
+                else:
+                    # 其他类型也使用 image_api 格式
+                    return ImageGenerator(
+                        provider='image_api',
+                        api_key=custom_key,
+                        api_url=custom_url,
+                        model=custom_model or 'dall-e-3',
+                        apiFormat=api_format
                     )
             
-            # 否则使用默认配置
+            # 如果没有前端配置，使用默认配置（工厂方法会从环境变量读取）
             logger.info(f"使用默认配置创建图片生成器: {self.generator_type}")
             return get_image_generator(self.generator_type)
             
