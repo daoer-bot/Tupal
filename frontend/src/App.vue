@@ -91,7 +91,7 @@ onMounted(() => {
   display: flex;
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* === 主舞台 === */
@@ -100,10 +100,13 @@ onMounted(() => {
   /* margin-top 由 NavHeight 决定，这里使用 padding 来避免内容被遮挡 */
   padding-top: var(--nav-height);
   min-height: 100vh;
+  height: auto;
   position: relative;
   z-index: 10;
-  overflow-x: hidden;
-  /* 确保内容在背景之上 */
+  overflow-y: auto; /* 允许页面滚动 */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box; /* 包含 padding 在高度内 */
 }
 
 .animate-pulse-slow {

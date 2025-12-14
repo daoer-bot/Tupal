@@ -119,7 +119,8 @@
 
 <style scoped>
 .home-container {
-  min-height: calc(100vh - 72px);
+  height: 100%; /* 占满父容器剩余空间 */
+  overflow-y: auto; /* 允许内部滚动 */
   padding: 2rem;
   display: flex;
   align-items: center;

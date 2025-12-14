@@ -167,6 +167,15 @@
                     @blur="focusedIndex = null"
                   />
                 </div>
+                <div class="caption-container">
+                  <label class="caption-label">文案 Caption</label>
+                  <textarea
+                    v-model="page.xiaohongshu_content"
+                    class="caption-input"
+                    rows="3"
+                    placeholder="这一帧要写的文案内容..."
+                  ></textarea>
+                </div>
               </div>
             </div>
           </div>
@@ -232,13 +241,11 @@ const ratioOptions = [
 // 计算属性
 const mainCaption = computed({
   get: () => {
-    return store.currentOutline?.pages[0]?.xiaohongshu_content || ''
+    return store.currentOutline?.topic || ''
   },
   set: (val: string) => {
     if (!store.currentOutline) return
-    store.currentOutline.pages.forEach(p => {
-      p.xiaohongshu_content = val
-    })
+    store.currentOutline.topic = val
   }
 })
 
@@ -298,7 +305,7 @@ const addNewPage = () => {
     page_number: newPageNum,
     title: `Page ${newPageNum}`,
     description: '',
-    xiaohongshu_content: mainCaption.value
+    xiaohongshu_content: ''
   })
   // Scroll to bottom logic could be added here
 }
@@ -325,7 +332,15 @@ const handleGenerate = async () => {
     error.value = 'Please ensure all frames have prompts'
     return
   }
-  
+
+  const hasEmptyCaption = store.currentOutline.pages.some(
+    p => !p.xiaohongshu_content || !p.xiaohongshu_content.trim()
+  )
+  if (hasEmptyCaption) {
+    error.value = 'Please fill in the copy for each frame'
+    return
+  }
+
   if (!mainCaption.value || !mainCaption.value.trim()) {
     error.value = 'Please enter theme content'
     return
@@ -901,6 +916,40 @@ onMounted(() => {
 :deep(.script-input::placeholder) {
   color: var(--text-tertiary);
   font-weight: 500;
+}
+
+.caption-container {
+  background: rgba(248, 250, 252, 0.6);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 18px;
+  padding: 0.75rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.caption-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.caption-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.caption-input::placeholder {
+  color: rgba(15, 23, 42, 0.4);
 }
 
 /* Bottom Spacer */

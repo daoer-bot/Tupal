@@ -1,129 +1,149 @@
 <template>
   <div class="inspiration-view">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1 class="page-title">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="title-icon">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-        </svg>
-        灵感与发现
-      </h1>
-      <p class="page-subtitle">探索热点，采集灵感，激发创作</p>
-    </div>
+    <section class="hero glass-panel animate-fade-in">
+      <div class="hero-copy">
+        <p class="eyebrow">Inspiration Hub · 灵感工作室</p>
+        <h1>每天十分钟，刷新创作雷达</h1>
+        <p class="hero-desc">
+          我们从社交舆情、消费热点与视觉趋势中精选最具潜力的灵感线索，帮你快速建立今日创作方向。
+        </p>
 
-    <!-- 图文采集区域 -->
-    <section class="section-collector">
-      <div class="section-header">
-        <div class="section-title-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="section-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-          </svg>
-          <h2 class="section-title">图文采集</h2>
+        <div class="hero-metrics">
+          <div v-for="metric in heroMetricCards" :key="metric.label" class="metric">
+            <span class="metric-value">{{ metric.value }}</span>
+            <span class="metric-label">{{ metric.label }}</span>
+          </div>
         </div>
-        <p class="section-desc">从网络采集优质图文内容，快速构建素材库</p>
-      </div>
 
-      <div class="collector-card glass-panel">
-        <div class="input-row">
-          <input
-            v-model="contentUrl"
-            type="text"
-            class="url-input"
-            placeholder="粘贴小红书、微博等平台的内容链接..."
-            @keyup.enter="handleCollect"
-          />
-          <button
-            class="collect-btn"
-            @click="handleCollect"
-            :disabled="!contentUrl || isCollecting"
-          >
-            <span v-if="isCollecting" class="loading-spinner"></span>
-            <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            {{ isCollecting ? '采集中...' : '采集' }}
+        <div class="hero-actions">
+          <router-link to="/workspace/cases" class="btn btn-primary">前往灵感收藏</router-link>
+          <button class="btn ghost-btn" @click="handleRefreshAll" :disabled="insightLoading">
+            {{ insightLoading ? '刷新中...' : '刷新灵感' }}
           </button>
+          <span v-if="lastUpdatedText" class="update-hint">更新于 {{ lastUpdatedText }}</span>
         </div>
       </div>
-
-      <!-- 采集预览 -->
-      <transition name="slide-fade">
-        <div v-if="collectedContent" class="collected-preview glass-panel">
-          <div class="preview-header">
-            <h3 class="preview-title">采集预览</h3>
-            <button
-              class="save-btn"
-              @click="handleSave"
-              :disabled="isSaving"
-            >
-              <span v-if="isSaving" class="loading-spinner"></span>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
-              </svg>
-              {{ isSaving ? '保存中...' : '保存到素材库' }}
-            </button>
+      <div class="hero-visual">
+        <template v-if="heroHighlights.length">
+          <div
+            v-for="(highlight, index) in heroHighlights"
+            :key="highlight.id"
+            :class="getBubbleClass(index)"
+          >
+            <strong>{{ highlight.title }}</strong>
+            <span>{{ highlight.metric }}</span>
           </div>
-
-          <div class="preview-content">
-            <div class="content-meta">
-              <div class="meta-item">
-                <span class="meta-label">作者</span>
-                <span class="meta-value">{{ collectedContent.author }}</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">标题</span>
-                <span class="meta-value">{{ collectedContent.title }}</span>
-              </div>
-            </div>
-
-            <div v-if="collectedContent.desc" class="content-description">
-              <span class="meta-label">描述</span>
-              <p>{{ collectedContent.desc }}</p>
-            </div>
-
-            <div v-if="collectedContent.cover" class="content-cover">
-              <span class="meta-label">封面</span>
-              <img :src="collectedContent.cover" alt="封面" class="preview-image" />
-            </div>
-
-            <div v-if="collectedContent.imgurl && collectedContent.imgurl.length" class="content-images">
-              <span class="meta-label">图片 ({{ collectedContent.imgurl.length }})</span>
-              <div class="image-grid">
-                <img v-for="(img, idx) in collectedContent.imgurl" :key="idx" :src="img" alt="图片" class="preview-image" />
-              </div>
-            </div>
-          </div>
+        </template>
+        <div v-else class="hero-placeholder">数据加载中...</div>
+        <div class="floating-tags" v-if="liveSignals.length">
+          <span v-for="tag in topTags" :key="tag">#{{ tag }}</span>
         </div>
-      </transition>
+      </div>
     </section>
 
-    <!-- 分隔线 -->
-    <div class="section-divider">
-      <div class="divider-line"></div>
-      <span class="divider-text">热门话题</span>
-      <div class="divider-line"></div>
-    </div>
-
-    <!-- 平台热榜区域 -->
-    <section class="section-trending">
+    <section class="signals-section animate-fade-in">
       <div class="section-header">
-        <div class="section-title-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="section-icon fire-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
-          </svg>
-          <h2 class="section-title">平台热榜</h2>
+        <div>
+          <p class="section-eyebrow">今日灵感雷达</p>
+          <h2>实时信号 · 连接灵感与数据</h2>
         </div>
-        <p class="section-desc">实时追踪全网热点，发现当下最热门的话题与趋势</p>
+        <p class="section-desc">每条信号都附带洞察提示，帮助你判断是否值得延伸为创作选题。</p>
       </div>
 
-      <!-- 加载状态 -->
-      <div v-if="trendingLoading && sources.length === 0" class="loading-container">
+      <div v-if="insightLoading" class="signals-placeholder glass-panel">
+        <div class="placeholder-row" v-for="i in 3" :key="i">
+          <div class="placeholder-bar short"></div>
+          <div class="placeholder-bar"></div>
+          <div class="placeholder-tags"></div>
+        </div>
+      </div>
+      <div v-else-if="insightError" class="state-card glass-panel">
+        <p>{{ insightError }}</p>
+        <button class="retry-btn" @click="handleRefreshAll">重试</button>
+      </div>
+      <div v-else-if="liveSignals.length === 0" class="state-card glass-panel">
+        <p>暂无实时信号，稍后再试或刷新热榜。</p>
+        <button class="retry-btn ghost" @click="handleRefreshAll">刷新</button>
+      </div>
+      <div v-else class="signals-grid">
+        <article v-for="signal in liveSignals" :key="signal.id" class="signal-card glass-panel">
+          <div class="signal-header">
+            <span class="signal-badge">{{ signal.channel }}</span>
+            <span class="signal-metric">{{ signal.metric }}</span>
+          </div>
+          <h3>{{ signal.title }}</h3>
+          <p>{{ signal.description }}</p>
+          <div class="signal-tags">
+            <span v-for="tag in signal.tags" :key="`tag-${signal.id}-${tag}`">{{ tag }}</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="spotlight-section animate-fade-in">
+      <div class="section-header">
+        <div>
+          <p class="section-eyebrow">灵感提案</p>
+          <h2>编辑精选 · 案例拆解</h2>
+        </div>
+        <p class="section-desc">挑选值得跟进的内容方向，并附上潜在执行策略。</p>
+      </div>
+
+      <div v-if="insightLoading" class="spotlight-grid">
+        <article v-for="i in 3" :key="`spot-skeleton-${i}`" class="spotlight-card glass-panel skeleton-card"></article>
+      </div>
+      <div v-else-if="curatedSpots.length === 0" class="state-card glass-panel">
+        <p>正在整理精选案例，稍后自动更新。</p>
+      </div>
+      <div v-else class="spotlight-grid">
+        <article v-for="spot in curatedSpots" :key="spot.title" class="spotlight-card glass-panel">
+          <div class="spotlight-type">{{ spot.type }}</div>
+          <h3>{{ spot.title }}</h3>
+          <p class="spotlight-summary">{{ spot.summary }}</p>
+          <p class="spotlight-insight">{{ spot.insight }}</p>
+          <div class="spotlight-footer">
+            <span>{{ spot.stat }}</span>
+            <span>{{ spot.callout }}</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="workflow-section glass-panel animate-fade-in">
+      <div class="section-header compact">
+        <div>
+          <p class="section-eyebrow">灵感工作流</p>
+          <h2>把灵感变成可执行计划</h2>
+        </div>
+        <p class="section-desc">跟随 4 个阶段将零散想法沉淀成可复用的创作资产。</p>
+      </div>
+
+      <div class="workflow-steps">
+        <div v-for="step in workflowSteps" :key="step.title" class="workflow-step">
+          <div class="step-icon">{{ step.icon }}</div>
+          <div class="step-content">
+            <p class="step-label">{{ step.label }}</p>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.detail }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-trending animate-fade-in">
+      <div class="section-header">
+        <div>
+          <p class="section-eyebrow">热度雷达</p>
+          <h2>平台热榜 · 实时更新</h2>
+        </div>
+        <p class="section-desc">追踪关键平台上的关注度变化，随时捕捉下一波热点。</p>
+      </div>
+
+      <div v-if="trendingLoading && sources.length === 0" class="loading-container glass-panel">
         <div class="loading-spinner large"></div>
         <p>正在加载热榜数据...</p>
       </div>
 
-      <!-- 错误状态 -->
       <div v-else-if="trendingError" class="error-container glass-panel">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="error-icon">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -132,7 +152,6 @@
         <button class="retry-btn" @click="loadSources">重试</button>
       </div>
 
-      <!-- 热榜网格 -->
       <div v-else class="trending-grid">
         <TrendingCard 
           v-for="source in sources" 
@@ -145,88 +164,128 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 import TrendingCard from '../../components/TrendingCard.vue'
-import { getTrendingSources, type TrendingSource } from '../../services/trendingApi'
-import materialApi from '../../services/materialApi'
+import { getTrendingSources, getAllTrending, type TrendingSource, type TrendingResponse } from '../../services/trendingApi'
 
-const router = useRouter()
+interface LiveSignal {
+  id: string
+  channel: string
+  metric: string
+  title: string
+  description: string
+  tags: string[]
+}
 
-// 图文采集相关状态
-const contentUrl = ref('')
-const isCollecting = ref(false)
-const isSaving = ref(false)
-const collectedContent = ref<any>(null)
+interface Spotlight {
+  type: string
+  title: string
+  summary: string
+  insight: string
+  stat: string
+  callout: string
+}
 
-// 平台热榜相关状态
+const liveSignals = ref<LiveSignal[]>([])
+const curatedSpots = ref<Spotlight[]>([])
+const workflowSteps = [
+  { label: '01 LISTEN', title: '捕捉信号', detail: '实时收集全网热度、关键词与人群场景，形成灵感收件箱。', icon: '👂' },
+  { label: '02 CLUSTER', title: '聚合主题', detail: '把相似线索聚成主题卡片，评估可行性与投入优先级。', icon: '🧩' },
+  { label: '03 DESIGN', title: '生成提案', detail: '结合模板与案例拆解，输出脚本、视觉要求与素材清单。', icon: '🧠' },
+  { label: '04 DEPLOY', title: '发布复盘', detail: '同步到灵感收藏与作品库，追踪表现并沉淀为可复用资产。', icon: '🚀' }
+]
+
 const sources = ref<TrendingSource[]>([])
 const trendingLoading = ref(false)
 const trendingError = ref('')
+const insightLoading = ref(false)
+const insightError = ref('')
+const lastUpdatedAt = ref<Date | null>(null)
 
-// 图文采集方法
-const handleCollect = async () => {
-  if (!contentUrl.value) return
+const sourceMap = computed(() => {
+  const map: Record<string, TrendingSource> = {}
+  sources.value.forEach(src => {
+    map[src.id] = src
+  })
+  return map
+})
 
-  isCollecting.value = true
-  try {
-    const response = await fetch('http://localhost:5030/api/xiaohongshu/parse', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ url: contentUrl.value })
-    })
+const heroMetricCards = computed(() => [
+  { label: '实时信号', value: liveSignals.value.length || '—' },
+  { label: '精选案例', value: curatedSpots.value.length || '—' },
+  { label: '活跃数据源', value: sources.value.length || '—' }
+])
 
-    const result = await response.json()
+const heroHighlights = computed(() => liveSignals.value.slice(0, 3))
+const lastUpdatedText = computed(() => lastUpdatedAt.value ? lastUpdatedAt.value.toLocaleTimeString() : '')
+const topTags = computed(() => {
+  const tags = liveSignals.value.flatMap(signal => signal.tags)
+  return [...new Set(tags)].slice(0, 4)
+})
+const bubbleClassList = ['bubble bubble-large', 'bubble bubble-medium', 'bubble bubble-small']
+const getBubbleClass = (index: number) => bubbleClassList[index] || 'bubble bubble-medium'
 
-    if (result.success) {
-      collectedContent.value = result.data
-    } else {
-      alert('解析失败: ' + (result.error || '未知错误'))
-    }
-  } catch (error) {
-    alert('请求失败: ' + error)
-  } finally {
-    isCollecting.value = false
-  }
+const formatHotValue = (value?: string | number): string => {
+  if (!value) return '热度飙升'
+  const num = typeof value === 'string' ? parseInt(value) : value
+  if (isNaN(num)) return String(value)
+  if (num >= 100000000) return (num / 100000000).toFixed(1) + '亿热度'
+  if (num >= 10000) return (num / 10000).toFixed(1) + '万热度'
+  return `${num}热度`
 }
 
-const handleSave = async () => {
-  if (!collectedContent.value) return
-
-  isSaving.value = true
-  try {
-    const response = await materialApi.createMaterial({
-      name: collectedContent.value.title || '未命名素材',
-      type: 'reference',
-      category: '小红书采集',
-      content: {
-        author: collectedContent.value.author,
-        title: collectedContent.value.title,
-        description: collectedContent.value.desc,
-        cover: collectedContent.value.cover,
-        images: collectedContent.value.imgurl || [],
-        source_url: contentUrl.value,
-        reference_type: 'xiaohongshu'
-      },
-      description: collectedContent.value.desc || '',
-      tags: ['小红书', '采集']
-    })
-
-    if (response.success && response.material_id) {
-      router.push(`/workspace/knowledge?type=reference&highlight=${response.material_id}`)
-    } else {
-      alert('保存失败: ' + (response.error || '未知错误'))
-    }
-  } catch (error) {
-    alert('保存失败: ' + error)
-  } finally {
-    isSaving.value = false
+const buildTags = (item: any): string[] => {
+  const tags: string[] = []
+  if (item.extra?.label) tags.push(item.extra.label)
+  if (item.extra?.desc) {
+    const words = item.extra.desc.split(/[#，、,]/).map(w => w.trim()).filter(Boolean)
+    tags.push(...words.slice(0, 2))
   }
+  if (tags.length === 0) tags.push('热门话题')
+  return [...new Set(tags)].slice(0, 3)
 }
 
-// 平台热榜方法
+const itemStatText = (rankCount: number, hot?: string | number) => {
+  const heat = formatHotValue(hot)
+  return `${heat} · 覆盖 ${rankCount} 条趋势`
+}
+
+const generateInsights = (data: Record<string, TrendingResponse>) => {
+  const signals: LiveSignal[] = []
+  const spots: Spotlight[] = []
+
+  Object.entries(data).forEach(([sourceId, response]) => {
+    const sourceInfo = sourceMap.value[sourceId]
+    const channelName = sourceInfo ? sourceInfo.name : `数据源 ${sourceId}`
+
+    response.data.slice(0, 3).forEach((item, index) => {
+      signals.push({
+        id: `${sourceId}-${item.id}-${index}`,
+        channel: `${channelName} · TOP${index + 1}`,
+        metric: item.hot_value ? formatHotValue(item.hot_value) : `热度上升`,
+        title: item.title,
+        description: item.extra?.desc || '该话题热度持续攀升，适合快速跟进内容创作。',
+        tags: buildTags(item)
+      })
+    })
+
+    if (response.data.length > 0) {
+      const topItem = response.data[0]
+      spots.push({
+        type: channelName,
+        title: topItem.title,
+        summary: topItem.extra?.desc || '该主题在目标人群中保持高互动，可延展为深度内容或活动玩法。',
+        insight: topItem.extra?.label ? `关联标签：${topItem.extra.label}` : '建议结合品牌场景或节日节点延展。',
+        stat: itemStatText(response.data.length, topItem.hot_value),
+        callout: response.update_time ? `更新于 ${new Date(response.update_time).toLocaleTimeString()}` : '实时监控中'
+      })
+    }
+  })
+
+  liveSignals.value = signals.slice(0, 6)
+  curatedSpots.value = spots.slice(0, 3)
+}
+
 const loadSources = async () => {
   trendingLoading.value = true
   trendingError.value = ''
@@ -241,8 +300,28 @@ const loadSources = async () => {
   }
 }
 
+const refreshInsights = async (force = false) => {
+  insightLoading.value = true
+  insightError.value = ''
+  try {
+    const responses = await getAllTrending(force)
+    generateInsights(responses)
+    lastUpdatedAt.value = new Date()
+  } catch (e: any) {
+    insightError.value = e.message || '获取趋势洞察失败'
+    console.error('获取趋势洞察失败:', e)
+  } finally {
+    insightLoading.value = false
+  }
+}
+
+const handleRefreshAll = () => {
+  refreshInsights(true)
+}
+
 onMounted(() => {
   loadSources()
+  refreshInsights()
 })
 </script>
 
@@ -251,470 +330,444 @@ onMounted(() => {
   min-height: 100vh;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-
-/* 页面标题 */
-.page-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.page-title {
+  padding: 2.5rem 1.5rem 3rem;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  font-size: 2.25rem;
-  font-weight: 800;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  padding: 2.5rem;
+  border-radius: 28px;
+}
+
+.hero-copy h1 {
   margin: 0 0 0.75rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color, #ec4899));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: 2.5rem;
+  color: var(--text-primary);
 }
 
-.title-icon {
-  width: 36px;
-  height: 36px;
-  color: var(--primary-color);
-}
-
-.page-subtitle {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* 区块样式 */
-.section-collector,
-.section-trending {
-  margin-bottom: 2rem;
-}
-
-.section-header {
-  margin-bottom: 1.5rem;
-}
-
-.section-title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.eyebrow {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
   margin-bottom: 0.5rem;
 }
 
-.section-icon {
-  width: 24px;
-  height: 24px;
+.hero-desc {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.metric-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
   color: var(--primary-color);
 }
 
-.fire-icon {
-  color: #f97316;
+.metric-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.update-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  align-self: center;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+}
+
+.ghost-btn:disabled {
+  opacity: 0.5;
+}
+
+.hero-visual {
+  position: relative;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 24px;
+  padding: 1.2rem 1.5rem;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.bubble span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.bubble-large { background: linear-gradient(135deg, #ff9aa2, #ffb17a); top: 10%; left: 10%; }
+.bubble-medium { background: linear-gradient(135deg, #b5ead7, #8fe1c2); bottom: 15%; right: 15%; }
+.bubble-small { background: linear-gradient(135deg, #c7ceea, #b197fc); top: 45%; right: 5%; }
+
+.floating-tags {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.floating-tags span {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.hero-placeholder {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.section-eyebrow {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--text-tertiary);
+  margin: 0 0 0.4rem;
+}
+
+.section-header h2 {
   margin: 0;
+  font-size: 1.8rem;
+  color: var(--text-primary);
 }
 
 .section-desc {
-  font-size: 0.95rem;
-  color: var(--text-secondary);
   margin: 0;
-  padding-left: 2rem;
+  max-width: 360px;
+  color: var(--text-secondary);
 }
 
-/* 玻璃面板 */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  border-radius: 16px;
+.signals-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
 }
 
-/* 采集卡片 */
-.collector-card {
+.signal-card {
   padding: 1.5rem;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.input-row {
+.signal-header {
   display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.signal-badge {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.signal-card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.signal-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.signal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.signal-tags span {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.signals-placeholder {
+  padding: 1.5rem;
+  border-radius: 20px;
+}
+
+.placeholder-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.placeholder-bar {
+  height: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+}
+
+.placeholder-bar.short {
+  width: 40%;
+}
+
+.placeholder-tags {
+  height: 10px;
+  width: 60%;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
+}
+
+.state-card {
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 20px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
   align-items: center;
 }
 
-.url-input {
-  flex: 1;
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  background: rgba(255, 255, 255, 0.8);
+.retry-btn.ghost {
+  background: transparent;
+  border: 1px dashed var(--primary-color);
+  color: var(--primary-color);
+}
+
+.spotlight-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.spotlight-card {
+  padding: 1.75rem;
+  border-radius: 24px;
+}
+
+.spotlight-card.skeleton-card {
+  min-height: 220px;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.spotlight-type {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--secondary-color);
+  margin-bottom: 0.5rem;
+}
+
+.spotlight-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
   color: var(--text-primary);
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
 }
 
-.url-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+.spotlight-summary,
+.spotlight-insight {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
-.url-input::placeholder {
-  color: var(--text-tertiary, #94a3b8);
-}
-
-.collect-btn,
-.save-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color, #8b5cf6));
-  color: white;
-  font-size: 0.95rem;
+.spotlight-insight {
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
+  color: var(--text-primary);
 }
 
-.collect-btn:hover:not(:disabled),
-.save-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+.spotlight-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-top: 1rem;
 }
 
-.collect-btn:disabled,
-.save-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.workflow-section {
+  padding: 2rem;
+  border-radius: 28px;
 }
 
-.btn-icon {
-  width: 18px;
-  height: 18px;
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-/* 加载动画 */
-.loading-spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 1s linear infinite;
+.workflow-step {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.step-icon {
+  font-size: 1.8rem;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.workflow-step h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.workflow-step p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.section-trending .loading-container,
+.section-trending .error-container {
+  min-height: 200px;
+  border-radius: 24px;
+  text-align: center;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
 }
 
 .loading-spinner.large {
-  width: 40px;
-  height: 40px;
-  border-width: 3px;
-  border-color: var(--border-color, rgba(99, 102, 241, 0.2));
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255, 154, 162, 0.2);
   border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.retry-btn {
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trending-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* 采集预览 */
-.collected-preview {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
-}
-
-.preview-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.preview-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.content-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.meta-item {
-  padding: 1rem;
-  background: rgba(99, 102, 241, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(99, 102, 241, 0.1);
-}
-
-.meta-label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.meta-value {
-  display: block;
-  font-size: 0.95rem;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.content-description,
-.content-cover,
-.content-images {
-  padding: 1rem;
-  background: rgba(99, 102, 241, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(99, 102, 241, 0.1);
-}
-
-.content-description p {
-  margin: 0.5rem 0 0;
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-
-.preview-image {
-  max-width: 100%;
-  border-radius: 8px;
-  margin-top: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-}
-
-.image-grid .preview-image {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  margin-top: 0;
-}
-
-/* 分隔线 */
-.section-divider {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin: 3rem 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
-}
-
-.divider-text {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-/* 加载和错误状态 */
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 2rem;
-  color: var(--text-secondary);
-}
-
-.error-container {
-  background: rgba(255, 255, 255, 0.65);
-}
-
-.error-icon {
-  width: 48px;
-  height: 48px;
-  color: #f97316;
-  margin-bottom: 1rem;
-}
-
-.error-message {
-  margin: 0 0 1.5rem;
-  font-size: 1rem;
-}
-
-.retry-btn {
-  padding: 0.75rem 1.5rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.retry-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* 热榜网格 */
-.trending-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.5rem;
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 过渡动画 */
-.slide-fade-enter-active {
-  transition: all 0.4s ease-out;
-}
-
-.slide-fade-leave-active {
-  transition: all 0.3s ease-in;
-}
-
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateY(-20px);
-  opacity: 0;
-}
-
-/* 响应式设计 */
 @media (max-width: 768px) {
   .inspiration-view {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 2rem;
   }
 
-  .page-title {
-    font-size: 1.75rem;
+  .hero {
+    padding: 1.5rem;
   }
 
-  .title-icon {
-    width: 28px;
-    height: 28px;
+  .hero-copy h1 {
+    font-size: 2rem;
   }
 
-  .input-row {
-    flex-direction: column;
-  }
-
-  .collect-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .preview-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .save-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .content-meta {
-    grid-template-columns: 1fr;
-  }
-
-  .trending-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .section-desc {
-    padding-left: 0;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .trending-grid {
+  .hero-metrics {
     grid-template-columns: repeat(2, 1fr);
   }
-}
 
-@media (min-width: 1025px) and (max-width: 1400px) {
-  .trending-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1401px) {
-  .trending-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* 暗色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .glass-panel {
-    background: rgba(30, 41, 59, 0.65);
-    border-color: rgba(255, 255, 255, 0.1);
+  .hero-actions {
+    flex-direction: column;
   }
 
-  .url-input {
-    background: rgba(30, 41, 59, 0.8);
-    border-color: rgba(99, 102, 241, 0.3);
-    color: #f1f5f9;
+  .section-header {
+    flex-direction: column;
   }
 
-  .url-input::placeholder {
-    color: #64748b;
-  }
-
-  .meta-item,
-  .content-description,
-  .content-cover,
-  .content-images {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: rgba(99, 102, 241, 0.2);
-  }
-
-  .error-container {
-    background: rgba(30, 41, 59, 0.65);
+  .spotlight-footer {
+    flex-direction: column;
+    gap: 0.3rem;
   }
 }
 </style>

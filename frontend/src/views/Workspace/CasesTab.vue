@@ -1,5 +1,92 @@
 <template>
   <div class="cases-container animate-fade-in">
+    <!-- ✨ 图文采集入口 -->
+    <section class="collector-section">
+      <div class="section-header">
+        <div class="section-title-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="section-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          <div>
+            <h2 class="section-title">图文采集</h2>
+            <p class="section-desc">粘贴链接即可采集灵感，直接存入灵感收藏</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="collector-card glass-panel">
+        <div class="input-row">
+          <input
+            v-model="contentUrl"
+            type="text"
+            class="url-input"
+            placeholder="粘贴小红书、微博等平台的内容链接..."
+            @keyup.enter="handleCollect"
+          />
+          <button
+            class="collect-btn"
+            @click="handleCollect"
+            :disabled="!contentUrl || isCollecting"
+          >
+            <span v-if="isCollecting" class="loading-spinner"></span>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            {{ isCollecting ? '采集中...' : '采集' }}
+          </button>
+        </div>
+      </div>
+
+      <transition name="slide-fade">
+        <div v-if="collectedContent" class="collected-preview glass-panel">
+          <div class="preview-header">
+            <h3 class="preview-title">采集预览</h3>
+            <button
+              class="save-btn"
+              @click="handleSave"
+              :disabled="isSaving"
+            >
+              <span v-if="isSaving" class="loading-spinner"></span>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+              </svg>
+              {{ isSaving ? '保存中...' : '保存到灵感收藏' }}
+            </button>
+          </div>
+
+          <div class="preview-content">
+            <div class="content-meta">
+              <div class="meta-item">
+                <span class="meta-label">作者</span>
+                <span class="meta-value">{{ collectedContent.author }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">标题</span>
+                <span class="meta-value">{{ collectedContent.title }}</span>
+              </div>
+            </div>
+
+            <div v-if="collectedContent.desc" class="content-description">
+              <span class="meta-label">描述</span>
+              <p>{{ collectedContent.desc }}</p>
+            </div>
+
+            <div v-if="collectedContent.cover" class="content-cover">
+              <span class="meta-label">封面</span>
+              <img :src="collectedContent.cover" alt="封面" class="preview-image" />
+            </div>
+
+            <div v-if="collectedContent.imgurl && collectedContent.imgurl.length" class="content-images">
+              <span class="meta-label">图片 ({{ collectedContent.imgurl.length }})</span>
+              <div class="image-grid">
+                <img v-for="(img, idx) in collectedContent.imgurl" :key="idx" :src="img" alt="图片" class="preview-image" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </section>
+
     <!-- 📊 数据概览 (使用更精致的图标) -->
     <div class="stats-grid">
       <div class="stat-card glass-panel">
@@ -214,6 +301,10 @@ const searchQuery = ref('')
 const activeFilter = ref<'all' | 'template' | 'normal'>('all')
 const currentPage = ref(1)
 const itemsPerPage = ref(12)
+const contentUrl = ref('')
+const isCollecting = ref(false)
+const isSaving = ref(false)
+const collectedContent = ref<any | null>(null)
 
 const templateCount = computed(() => cases.value.filter(c => c.content?.is_template).length)
 const sourceCount = computed(() => new Set(cases.value.filter(c => c.content?.source_url).map(c => getSourceName(c.content?.source_url))).size)
@@ -301,11 +392,263 @@ const handleDelete = async (item: Material) => {
   }
 }
 
+const handleCollect = async () => {
+  if (!contentUrl.value) return
+  isCollecting.value = true
+  try {
+    const response = await fetch('http://localhost:5030/api/xiaohongshu/parse', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: contentUrl.value })
+    })
+
+    const result = await response.json()
+    if (result.success) {
+      collectedContent.value = result.data
+    } else {
+      alert('解析失败: ' + (result.error || '未知错误'))
+    }
+  } catch (error) {
+    alert('请求失败: ' + error)
+  } finally {
+    isCollecting.value = false
+  }
+}
+
+const handleSave = async () => {
+  if (!collectedContent.value) return
+
+  isSaving.value = true
+  try {
+    const response = await materialApi.createMaterial({
+      name: collectedContent.value.title || '未命名素材',
+      type: 'reference',
+      category: '小红书采集',
+      content: {
+        author: collectedContent.value.author,
+        title: collectedContent.value.title,
+        description: collectedContent.value.desc,
+        cover: collectedContent.value.cover,
+        images: collectedContent.value.imgurl || [],
+        source_url: contentUrl.value,
+        reference_type: 'xiaohongshu'
+      },
+      description: collectedContent.value.desc || '',
+      tags: ['小红书', '采集']
+    })
+
+    if (response.success) {
+      alert('素材已保存到灵感收藏')
+      collectedContent.value = null
+      contentUrl.value = ''
+      await loadCases()
+    } else {
+      alert('保存失败: ' + (response.error || '未知错误'))
+    }
+  } catch (error) {
+    alert('保存失败: ' + error)
+  } finally {
+    isSaving.value = false
+  }
+}
+
 watch([searchQuery, activeFilter], () => { currentPage.value = 1 })
 onMounted(() => { loadCases() })
 </script>
 
 <style scoped>
+.collector-section {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.section-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--primary-color);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.section-desc {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.collector-card {
+  padding: 1.5rem;
+}
+
+.input-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.url-input {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.collect-btn,
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color, #8b5cf6));
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.collect-btn:disabled,
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.collect-btn:not(:disabled):hover,
+.save-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+}
+
+.collected-preview {
+  padding: 1.5rem;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.preview-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.content-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.meta-item {
+  background: rgba(99, 102, 241, 0.04);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+}
+
+.meta-value {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 0.35rem;
+}
+
+.content-description p {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.content-cover,
+.content-images {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.preview-image {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
 .cases-container { width: 100%; }
 
 /* Stats */

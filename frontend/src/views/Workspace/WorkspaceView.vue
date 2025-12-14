@@ -22,7 +22,9 @@
       <div class="content-display-case">
         <router-view v-slot="{ Component }">
           <transition name="pop" mode="out-in">
-            <component :is="Component" />
+            <KeepAlive>
+              <component :is="Component" />
+            </KeepAlive>
           </transition>
         </router-view>
       </div>
