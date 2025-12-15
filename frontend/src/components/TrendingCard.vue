@@ -156,12 +156,11 @@ const handleRefresh = () => {
   loadData(true)
 }
 
-// 处理项目点击
+// 处理项目点击 - 跳转到原链接
 const handleItemClick = (item: TrendingItem) => {
-  router.push({
-    path: '/creation/new',
-    query: { topic: item.title }
-  })
+  if (item.url) {
+    window.open(item.url, '_blank', 'noopener,noreferrer')
+  }
 }
 
 onMounted(() => {

@@ -35,9 +35,6 @@
           </div>
         </template>
         <div v-else class="hero-placeholder">数据加载中...</div>
-        <div class="floating-tags" v-if="liveSignals.length">
-          <span v-for="tag in topTags" :key="tag">#{{ tag }}</span>
-        </div>
       </div>
     </section>
 
@@ -218,10 +215,6 @@ const heroMetricCards = computed(() => [
 
 const heroHighlights = computed(() => liveSignals.value.slice(0, 3))
 const lastUpdatedText = computed(() => lastUpdatedAt.value ? lastUpdatedAt.value.toLocaleTimeString() : '')
-const topTags = computed(() => {
-  const tags = liveSignals.value.flatMap(signal => signal.tags)
-  return [...new Set(tags)].slice(0, 4)
-})
 const bubbleClassList = ['bubble bubble-large', 'bubble bubble-medium', 'bubble bubble-small']
 const getBubbleClass = (index: number) => bubbleClassList[index] || 'bubble bubble-medium'
 
@@ -238,7 +231,7 @@ const buildTags = (item: any): string[] => {
   const tags: string[] = []
   if (item.extra?.label) tags.push(item.extra.label)
   if (item.extra?.desc) {
-    const words = item.extra.desc.split(/[#，、,]/).map(w => w.trim()).filter(Boolean)
+    const words = item.extra.desc.split(/[#，、,]/).map((w: string) => w.trim()).filter(Boolean)
     tags.push(...words.slice(0, 2))
   }
   if (tags.length === 0) tags.push('热门话题')
@@ -443,24 +436,6 @@ onMounted(() => {
 .bubble-large { background: linear-gradient(135deg, #ff9aa2, #ffb17a); top: 10%; left: 10%; }
 .bubble-medium { background: linear-gradient(135deg, #b5ead7, #8fe1c2); bottom: 15%; right: 15%; }
 .bubble-small { background: linear-gradient(135deg, #c7ceea, #b197fc); top: 45%; right: 5%; }
-
-.floating-tags {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.floating-tags span {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.4rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
 
 .hero-placeholder {
   color: var(--text-secondary);

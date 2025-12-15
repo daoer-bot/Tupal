@@ -9,8 +9,7 @@ from .routes import (
     trending_bp,
     upload_bp,
     material_bp,
-    template_bp,
-    xiaohongshu_bp
+    template_bp
 )
 
 __all__ = [
@@ -20,6 +19,5 @@ __all__ = [
     'trending_bp',
     'upload_bp',
     'material_bp',
-    'template_bp',
-    'xiaohongshu_bp'
+    'template_bp'
 ]

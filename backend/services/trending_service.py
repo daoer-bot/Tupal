@@ -13,9 +13,12 @@ from sources.baidu_hot_source import BaiduHotSource
 from sources.zhihu_hot_source import ZhihuHotSource
 from sources.weibo_hot_source import WeiboHotSource
 from sources.bilibili_hot_source import BilibiliHotSource
-from sources.xiaohongshu_source import XiaohongshuSource
-# from sources.douyin_hot_source import DouyinHotSource
-# from sources.toutiao_hot_source import ToutiaoHotSource
+from sources.douyin_hot_source import DouyinHotSource
+from sources.toutiao_hot_source import ToutiaoHotSource
+from sources.kuaishou_hot_source import KuaishouHotSource
+from sources.qq_news_hot_source import QQNewsHotSource
+from sources.netease_hot_source import NeteaseHotSource
+from sources.thepaper_hot_source import ThePaperHotSource
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +39,12 @@ class TrendingService:
             ZhihuHotSource(),
             WeiboHotSource(),
             BilibiliHotSource(),
-            XiaohongshuSource(),
-            # DouyinHotSource(),  # 暂时禁用：API需要特殊处理
-            # ToutiaoHotSource(),  # 暂时禁用：API需要特殊处理
+            DouyinHotSource(),
+            ToutiaoHotSource(),
+            KuaishouHotSource(),
+            QQNewsHotSource(),
+            NeteaseHotSource(),
+            ThePaperHotSource(),
         ]
 
         for source in sources:

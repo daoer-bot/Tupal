@@ -1,7 +1,7 @@
 """
 热榜数据路由
 """
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 import logging
 import asyncio
 
@@ -46,7 +46,8 @@ def get_trending_by_source(source_id):
         )
         
         if result.get('success'):
-            return success_response(result)
+            # 直接返回结果，不再包装一层
+            return jsonify(result)
         else:
             return error_response(result.get('error', '获取失败'), 500)
             
