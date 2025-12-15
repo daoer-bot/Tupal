@@ -56,6 +56,12 @@ class Config:
     TRENDING_PROXY = os.getenv('TRENDING_PROXY', '')  # 代理地址，如 http://127.0.0.1:7890
     TRENDING_BACKOFF_FACTOR = float(os.getenv('TRENDING_BACKOFF_FACTOR', '0.5'))  # 重试退避因子，优化为0.5
     
+    # 小红书配置
+    XHS_COOKIE = os.getenv('XHS_COOKIE', '')  # 小红书 cookie（可选，用于服务端默认配置）
+    XHS_USER_AGENT = os.getenv('XHS_USER_AGENT', '')  # 小红书自定义 User-Agent（可选）
+    XHS_TIMEOUT = int(os.getenv('XHS_TIMEOUT', '10'))  # 小红书请求超时时间（秒）
+    XHS_PROXY = os.getenv('XHS_PROXY', '')  # 小红书代理地址（可选）
+    
     @staticmethod
     def init_app(app):
         """初始化应用配置"""
