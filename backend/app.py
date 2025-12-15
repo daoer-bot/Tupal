@@ -61,7 +61,8 @@ def register_blueprints(app):
         trending_bp,
         upload_bp,
         material_bp,
-        template_bp
+        template_bp,
+        xiaohongshu_bp
     )
 
     # 注册所有功能域蓝图
@@ -72,6 +73,7 @@ def register_blueprints(app):
     app.register_blueprint(upload_bp, url_prefix=app.config['API_PREFIX'])
     app.register_blueprint(material_bp, url_prefix=app.config['API_PREFIX'])
     app.register_blueprint(template_bp, url_prefix=app.config['API_PREFIX'])
+    app.register_blueprint(xiaohongshu_bp, url_prefix=app.config['API_PREFIX'])
 
 
 def register_error_handlers(app):

@@ -420,7 +420,7 @@ const startQrLogin = async () => {
     const checkResponse = await fetch('/api/xiaohongshu/login/check')
     const checkData = await checkResponse.json()
     
-    if (!checkData.success || !checkData.data.installed) {
+    if (!checkData.success || !checkData.data.available) {
       qrLoginState.value.loading = false
       qrLoginState.value.message = '请先安装 Playwright：pip install playwright && playwright install chromium'
       alert('扫码登录需要 Playwright 支持，请在后端执行：\npip install playwright\nplaywright install chromium')
