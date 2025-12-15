@@ -2,7 +2,7 @@
 今日头条热榜数据源
 参考 next-daily-hot 实现
 """
-from typing import List, Dict
+from typing import List
 from .base_source import BaseSource, TrendingItem
 import logging
 
@@ -19,24 +19,12 @@ class ToutiaoHotSource(BaseSource):
         self.icon = "/toutiao.svg"
         self.interval = 300  # 5分钟刷新
     
-    def get_headers(self, referer=None) -> Dict[str, str]:
-        """覆盖父类方法，添加头条特定的请求头"""
-        headers = super().get_headers(referer)
-        headers.update({
-            'Referer': 'https://www.toutiao.com/',
-        })
-        return headers
-    
     async def fetch_data(self) -> List[TrendingItem]:
         """获取今日头条热榜数据"""
         url = "https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc"
         
         try:
-            # 使用自定义headers
-            import requests
-            response = requests.get(url, headers=self.get_headers(), timeout=self.timeout)
-            response.raise_for_status()
-            data = response.json()
+            data = await self.fetch_json(url)
             
             # 检查状态
             if data.get('status') != 'success':
@@ -52,8 +40,15 @@ class ToutiaoHotSource(BaseSource):
             for index, item in enumerate(hot_list):
                 title = item.get('Title', '')
                 cluster_id_str = item.get('ClusterIdStr', '')
+                
+                # 获取图片
+                pic = ''
+                image = item.get('Image')
+                if image and isinstance(image, dict):
+                    pic = image.get('url', '')
+                
                 trending_item = TrendingItem(
-                    id=item.get('ClusterId', f"{index}"),
+                    id=str(item.get('ClusterId', f"{index}")),
                     title=title,
                     url=f"https://www.toutiao.com/trending/{cluster_id_str}/",
                     mobile_url=f"https://api.toutiaoapi.com/feoffline/amos_land/new/html/main/index.html?topic_id={cluster_id_str}",
@@ -61,7 +56,7 @@ class ToutiaoHotSource(BaseSource):
                     index=index + 1,
                     extra={
                         'label': item.get('LabelDesc', ''),
-                        'pic': item.get('Image', {}).get('url', '')
+                        'pic': pic
                     }
                 )
                 items.append(trending_item)

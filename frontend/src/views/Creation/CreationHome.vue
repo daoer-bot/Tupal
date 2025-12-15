@@ -1,18 +1,18 @@
 <template>
   <div class="creation-home">
     <div class="main-content animate-fade-in">
-      
+
       <!-- 🍭 标题区 -->
       <div class="greeting-section">
         <h1 class="greeting-title">
-          <span class="highlight-pink">Create</span> 
-          <span class="highlight-mint">Something</span> 
+          <span class="highlight-pink">Create</span>
+          <span class="highlight-mint">Something</span>
           <br>
           <span class="highlight-purple">Sweet Today</span>
         </h1>
         <p class="greeting-subtitle">✨ AI Creative Studio · 你的灵感甜品站 ✨</p>
       </div>
-      
+
       <!-- 🍬 棉花糖输入框 -->
       <div class="input-section">
         <div class="macaron-input-box glass-panel" :class="{ focused: inputFocused }">
@@ -29,7 +29,7 @@
               @keydown="handleKeydown"
             />
           </div>
-          
+
           <!-- 发送按钮 -->
           <div class="input-actions-right">
             <button
@@ -42,7 +42,7 @@
             </button>
           </div>
         </div>
-        
+
         <!-- 已选配置标签 (Chip) - 仅展示，不可直接关闭，引导下方修改 -->
         <div v-if="selectedTemplate || hasCustomImageConfig" class="selected-configs animate-pop-up">
           <div v-if="selectedTemplate" class="config-chip pink-chip">
@@ -60,15 +60,22 @@
       <!-- 🍰 底部配置面板 (直接展示) -->
       <div class="bottom-panel glass-panel">
         <div class="panel-tabs">
-          <button 
-            class="panel-tab" 
+          <button
+            class="panel-tab"
             :class="{ active: activeTab === 'templates' }"
             @click="activeTab = 'templates'"
           >
             🔥 热门模版
           </button>
-          <button 
-            class="panel-tab" 
+          <button
+            class="panel-tab"
+            :class="{ active: activeTab === 'myTemplates' }"
+            @click="activeTab = 'myTemplates'"
+          >
+            💖 我的收藏
+          </button>
+          <button
+            class="panel-tab"
             :class="{ active: activeTab === 'settings' }"
             @click="activeTab = 'settings'"
           >
@@ -77,14 +84,18 @@
         </div>
 
         <div class="panel-content-area">
-          <!-- 模版列表 -->
+          <!-- 热门模版列表 -->
           <div v-if="activeTab === 'templates'" class="templates-view">
             <div v-if="loadingTemplates" class="loading-state">
               <div class="loading-spinner-pink"></div>
             </div>
+            <div v-else-if="officialTemplates.length === 0" class="empty-state">
+              <div class="empty-icon">📑</div>
+              <p class="empty-text">暂无热门模版</p>
+            </div>
             <div v-else class="templates-grid">
-              <div 
-                v-for="tpl in officialTemplates" 
+              <div
+                v-for="tpl in officialTemplates"
                 :key="tpl.id"
                 class="template-card"
                 :class="{ selected: selectedTemplate?.id === tpl.id }"
@@ -97,6 +108,40 @@
                   <span class="tpl-name">{{ tpl.name }}</span>
                   <span class="tpl-desc">{{ tpl.description || '暂无描述' }}</span>
                 </div>
+                <div class="tpl-select-indicator" v-if="selectedTemplate?.id === tpl.id">
+                  <Check :size="14" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 我的收藏模版列表 -->
+          <div v-if="activeTab === 'myTemplates'" class="templates-view">
+            <div v-if="loadingMyTemplates" class="loading-state">
+              <div class="loading-spinner-pink"></div>
+            </div>
+            <div v-else-if="myTemplates.length === 0" class="empty-state">
+              <div class="empty-icon">💖</div>
+              <p class="empty-text">还没有收藏的模版</p>
+              <p class="empty-hint">在工作台的案例库中，可以将喜欢的案例设为模版哦~</p>
+            </div>
+            <div v-else class="templates-grid">
+              <div
+                v-for="tpl in myTemplates"
+                :key="tpl.id"
+                class="template-card user-template"
+                :class="{ selected: selectedTemplate?.id === tpl.id }"
+                @click="selectTemplate(tpl)"
+              >
+                <div class="tpl-preview">
+                  <img v-if="tpl.preview_image" :src="tpl.preview_image" alt="预览" class="tpl-preview-img" />
+                  <div v-else class="tpl-icon">💖</div>
+                </div>
+                <div class="tpl-info">
+                  <span class="tpl-name">{{ tpl.name }}</span>
+                  <span class="tpl-desc">{{ tpl.description || '我的收藏模版' }}</span>
+                </div>
+                <div class="tpl-badge">收藏</div>
                 <div class="tpl-select-indicator" v-if="selectedTemplate?.id === tpl.id">
                   <Check :size="14" />
                 </div>
@@ -120,7 +165,7 @@
                 </button>
               </div>
             </div>
-            
+
             <div class="setting-group">
               <label>比例 Aspect Ratio</label>
               <div class="options-row">
@@ -171,7 +216,7 @@ const store = useAppStore()
 const topic = ref('')
 const isCreating = ref(false)
 const inputFocused = ref(false)
-const activeTab = ref<'templates' | 'settings'>('templates')
+const activeTab = ref<'templates' | 'myTemplates' | 'settings'>('templates')
 
 // 快捷提示
 const quickTips = [
@@ -190,7 +235,9 @@ const imageConfig = ref({
 // 模板状态
 const selectedTemplate = ref<Template | null>(null)
 const loadingTemplates = ref(false)
+const loadingMyTemplates = ref(false)
 const officialTemplates = ref<Template[]>([])
+const myTemplates = ref<Template[]>([])
 
 // 选项数据
 const qualityOptions = [
@@ -254,19 +301,35 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 const startCreation = async () => {
   if (!canCreate.value || isCreating.value) return
-  
+
   isCreating.value = true
-  
+
   try {
-    const response = await generateOutline({
-      topic: topic.value,
-      generator_type: store.textModelConfig.generatorType,
-      text_model_config: store.textModelConfig
-    })
-    
-    if (response.success && response.data) {
-      store.setOutline(response.data)
-      router.push('/creation/editor')
+    // 如果选择了模板，使用模板创建
+    if (selectedTemplate.value) {
+      const response = await templateApi.useTemplate(selectedTemplate.value.id, topic.value)
+      
+      if (response.success && response.data) {
+        // 将模板生成的大纲设置到store
+        store.setOutline({
+          task_id: response.data.task_id,
+          topic: response.data.topic,
+          pages: response.data.pages
+        })
+        router.push('/creation/editor')
+      }
+    } else {
+      // 没有选择模板，使用普通方式创建
+      const response = await generateOutline({
+        topic: topic.value,
+        generator_type: store.textModelConfig.generatorType,
+        text_model_config: store.textModelConfig
+      })
+
+      if (response.success && response.data) {
+        store.setOutline(response.data)
+        router.push('/creation/editor')
+      }
     }
   } catch (error) {
     console.error('创建失败:', error)
@@ -295,6 +358,29 @@ const loadTemplates = async () => {
     loadingTemplates.value = false
   }
 }
+
+const loadMyTemplates = async () => {
+  loadingMyTemplates.value = true
+  try {
+    const res = await templateApi.getPersonalTemplates({ page_size: 50 })
+    if (res.success && res.data) {
+      myTemplates.value = res.data.items
+    }
+  } catch (error) {
+    console.error('加载我的模板失败:', error)
+    // 如果API失败，显示空列表
+    myTemplates.value = []
+  } finally {
+    loadingMyTemplates.value = false
+  }
+}
+
+// 当切换到"我的收藏"标签时加载数据
+watch(activeTab, (newTab) => {
+  if (newTab === 'myTemplates' && myTemplates.value.length === 0 && !loadingMyTemplates.value) {
+    loadMyTemplates()
+  }
+})
 
 onMounted(() => {
   loadTemplates()
@@ -339,9 +425,10 @@ onMounted(() => {
 
 .highlight-pink { color: var(--macaron-pink-deep); }
 .highlight-mint { color: #8EC5B0; }
-.highlight-purple { 
+.highlight-purple {
   background: linear-gradient(135deg, #C7CEEA 0%, #FF9AA2 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -376,7 +463,7 @@ onMounted(() => {
 .macaron-input-box.focused {
   transform: scale(1.01);
   background: #fff;
-  box-shadow: 
+  box-shadow:
     0 20px 50px -10px rgba(255, 154, 162, 0.2),
     inset 0 0 0 2px var(--macaron-pink);
 }
@@ -545,6 +632,17 @@ onMounted(() => {
   box-shadow: 0 0 0 2px var(--macaron-pink-deep);
 }
 
+/* 用户模板特殊样式 */
+.template-card.user-template {
+  border-color: #FFE0E8;
+  background: linear-gradient(135deg, #FFF5F8 0%, #FFFFFF 100%);
+}
+
+.template-card.user-template:hover {
+  border-color: var(--macaron-pink);
+  box-shadow: 0 8px 20px rgba(255, 154, 162, 0.15);
+}
+
 .tpl-preview {
   height: 80px;
   background: #f8fafc;
@@ -553,6 +651,13 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.tpl-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .tpl-icon {
@@ -580,6 +685,18 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.tpl-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #FF9AA2 0%, #FFB7B2 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
 .tpl-select-indicator {
   position: absolute;
   top: 8px;
@@ -592,6 +709,36 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.empty-hint {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin: 0;
+  max-width: 280px;
 }
 
 /* 设置面板 */
@@ -676,11 +823,29 @@ onMounted(() => {
   animation: spin 0.8s linear infinite;
 }
 
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.loading-spinner-pink {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 154, 162, 0.2);
+  border-top-color: var(--macaron-pink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* 响应式 */
 @media (max-width: 640px) {
   .greeting-title { font-size: 2.5rem; }
   .templates-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .panel-tabs { flex-wrap: wrap; }
+  .panel-tab { font-size: 0.85rem; padding: 8px 14px; }
 }
 </style>
