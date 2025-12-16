@@ -1,5 +1,7 @@
+
 <template>
   <div class="inspiration-view">
+    <!-- Hero 区域 -->
     <section class="hero glass-panel animate-fade-in">
       <div class="hero-copy">
         <p class="eyebrow">Inspiration Hub · 灵感工作室</p>
@@ -38,6 +40,129 @@
       </div>
     </section>
 
+    <!-- 小红书灵感区域 -->
+    <section class="xhs-section animate-fade-in">
+      <div class="section-header">
+        <div>
+          <p class="section-eyebrow">小红书灵感</p>
+          <h2>热门内容 · 创作参考</h2>
+        </div>
+        <div class="section-actions">
+          <div :class="['xhs-status-indicator', xhsConnected ? 'connected' : '']">
+            <span class="status-dot"></span>
+            <span>{{ xhsConnected ? '已连接' : '未连接' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 搜索和筛选 -->
+      <div class="xhs-controls glass-panel" v-if="xhsConnected">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input 
+            v-model="xhsSearchKeyword"
+            type="text"
+            placeholder="搜索小红书内容..."
+            @keyup.enter="handleXhsSearch"
+          />
+          <button 
+            v-if="xhsSearchKeyword"
+            class="clear-btn"
+            @click="xhsSearchKeyword = ''"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="filter-tabs">
+          <button 
+            v-for="tab in xhsFeedTabs" 
+            :key="tab.value"
+            :class="['filter-tab', { active: xhsActiveTab === tab.value }]"
+            @click="handleTabChange(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <div class="sort-options" v-if="xhsActiveTab === 'search' && xhsSearchKeyword">
+          <select v-model="xhsSearchSort" @change="handleXhsSearch">
+            <option value="general">综合排序</option>
+            <option value="popularity_descending">最热优先</option>
+            <option value="time_descending">最新优先</option>
+          </select>
+          <select v-model="xhsSearchNoteType" @change="handleXhsSearch">
+            <option value="0">全部类型</option>
+            <option value="1">仅视频</option>
+            <option value="2">仅图文</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 未连接提示 -->
+      <div v-if="!xhsConnected" class="xhs-placeholder glass-panel">
+        <div class="placeholder-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+          </svg>
+        </div>
+        <h3>连接小红书获取更多灵感</h3>
+        <p>配置小红书 Cookie 后，即可搜索热门笔记、浏览推荐内容。</p>
+        <button class="btn btn-primary" @click="openConfigModal">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="btn-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          立即配置
+        </button>
+        <p class="hint-text">点击上方按钮打开配置，找到「小红书」区域进行设置</p>
+      </div>
+
+      <!-- 加载状态 -->
+      <div v-else-if="xhsLoading" class="xhs-loading">
+        <div class="loading-spinner large"></div>
+        <p>正在加载小红书内容...</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <div v-else-if="xhsError" class="xhs-error glass-panel">
+        <p>{{ xhsError }}</p>
+        <button class="btn btn-secondary" @click="loadXhsContent">重试</button>
+      </div>
+
+      <!-- 笔记列表 -->
+      <div v-else-if="xhsNotes.length > 0" class="xhs-notes-grid">
+        <XhsNoteCard 
+          v-for="note in xhsNotes" 
+          :key="note.note_id"
+          :note="note"
+          @click="handleNoteClick"
+          @collect="handleNoteCollect"
+        />
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else class="xhs-empty glass-panel">
+        <p>暂无内容，请尝试搜索或切换分类</p>
+      </div>
+
+      <!-- 加载更多 -->
+      <div v-if="xhsConnected && xhsNotes.length > 0 && xhsHasMore" class="load-more">
+        <button 
+          class="btn btn-secondary"
+          @click="loadMoreXhsContent"
+          :disabled="xhsLoadingMore"
+        >
+          {{ xhsLoadingMore ? '加载中...' : '加载更多' }}
+        </button>
+      </div>
+    </section>
+
+    <!-- 实时信号区域 -->
     <section class="signals-section animate-fade-in">
       <div class="section-header">
         <div>
@@ -77,6 +202,7 @@
       </div>
     </section>
 
+    <!-- 精选案例区域 -->
     <section class="spotlight-section animate-fade-in">
       <div class="section-header">
         <div>
@@ -106,6 +232,7 @@
       </div>
     </section>
 
+    <!-- 工作流区域 -->
     <section class="workflow-section glass-panel animate-fade-in">
       <div class="section-header compact">
         <div>
@@ -127,6 +254,7 @@
       </div>
     </section>
 
+    <!-- 热榜区域 -->
     <section class="section-trending animate-fade-in">
       <div class="section-header">
         <div>
@@ -161,9 +289,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import TrendingCard from '../../components/TrendingCard.vue'
+import XhsNoteCard from '../../components/XhsNoteCard.vue'
 import { getTrendingSources, getAllTrending, type TrendingSource, type TrendingResponse } from '../../services/trendingApi'
+import { 
+  createClient,
+  searchNotes, 
+  getHomeFeed,
+  type XhsNote,
+  type FeedType,
+  type SearchSortType
+} from '../../services/xhsApi'
 
 interface LiveSignal {
   id: string
@@ -183,6 +320,50 @@ interface Spotlight {
   callout: string
 }
 
+interface XhsConfig {
+  cookie: string
+  userAgent: string
+  timeout: number
+  proxy: string
+}
+
+// 注入打开配置弹窗的方法（来自 App.vue）
+const injectedOpenConfigModal = inject<() => void>('openConfigModal')
+
+// 打开配置弹窗的方法
+const openConfigModal = () => {
+  if (injectedOpenConfigModal) {
+    injectedOpenConfigModal()
+  } else {
+    window.dispatchEvent(new CustomEvent('open-config-modal'))
+  }
+}
+
+// 小红书相关状态
+const xhsClientId = ref<string | null>(null)
+const xhsConnected = computed(() => !!xhsClientId.value)
+const xhsLoading = ref(false)
+const xhsLoadingMore = ref(false)
+const xhsError = ref('')
+const xhsNotes = ref<XhsNote[]>([])
+const xhsHasMore = ref(false)
+const xhsSearchKeyword = ref('')
+const xhsActiveTab = ref<string>('recommend')
+const xhsSearchSort = ref<SearchSortType>('general')
+const xhsSearchNoteType = ref<string>('0')
+const xhsPage = ref(1)
+
+const xhsFeedTabs = [
+  { label: '推荐', value: 'recommend' },
+  { label: '穿搭', value: 'homefeed.fashion_v3' },
+  { label: '美食', value: 'homefeed.food_v3' },
+  { label: '美妆', value: 'homefeed.cosmetics_v3' },
+  { label: '旅行', value: 'homefeed.travel_v3' },
+  { label: '家居', value: 'homefeed.household_product_v3' },
+  { label: '搜索', value: 'search' }
+]
+
+// 热榜相关状态
 const liveSignals = ref<LiveSignal[]>([])
 const curatedSpots = ref<Spotlight[]>([])
 const workflowSteps = [
@@ -209,7 +390,7 @@ const sourceMap = computed(() => {
 
 const heroMetricCards = computed(() => [
   { label: '实时信号', value: liveSignals.value.length || '—' },
-  { label: '精选案例', value: curatedSpots.value.length || '—' },
+  { label: '小红书笔记', value: xhsNotes.value.length || '—' },
   { label: '活跃数据源', value: sources.value.length || '—' }
 ])
 
@@ -279,6 +460,160 @@ const generateInsights = (data: Record<string, TrendingResponse>) => {
   curatedSpots.value = spots.slice(0, 3)
 }
 
+// 从 localStorage 获取小红书配置
+const getXhsConfig = (): XhsConfig | null => {
+  const stored = localStorage.getItem('xhsConfig')
+  if (!stored) return null
+  
+  try {
+    const config = JSON.parse(stored)
+    if (!config.cookie) return null
+    return config
+  } catch {
+    return null
+  }
+}
+
+// 初始化小红书客户端
+const initXhsClient = async () => {
+  const config = getXhsConfig()
+  if (!config) {
+    console.log('未配置小红书 Cookie，请在右上角配置中设置')
+    return
+  }
+  
+  try {
+    const result = await createClient({
+      cookie: config.cookie,
+      user_agent: config.userAgent || undefined,
+      timeout: config.timeout || 10,
+      proxies: config.proxy || undefined
+    })
+    
+    if (result.success && result.data) {
+      xhsClientId.value = result.data.client_id
+      loadXhsContent()
+    }
+  } catch (e) {
+    console.log('创建小红书客户端失败:', e)
+  }
+}
+
+// 监听 localStorage 变化（当用户在配置中保存后）
+const handleStorageChange = (e: StorageEvent) => {
+  if (e.key === 'xhsConfig') {
+    xhsClientId.value = null
+    xhsNotes.value = []
+    initXhsClient()
+  }
+}
+
+const loadXhsContent = async () => {
+  if (!xhsClientId.value) return
+  
+  xhsLoading.value = true
+  xhsError.value = ''
+  xhsPage.value = 1
+  
+  try {
+    if (xhsActiveTab.value === 'search' && xhsSearchKeyword.value) {
+      await performSearch()
+    } else {
+      await loadFeed()
+    }
+  } catch (e: any) {
+    xhsError.value = e.message || '加载失败'
+    console.error('加载小红书内容失败:', e)
+  } finally {
+    xhsLoading.value = false
+  }
+}
+
+const loadFeed = async () => {
+  if (!xhsClientId.value) return
+  
+  const feedType = xhsActiveTab.value === 'recommend' 
+    ? 'homefeed_recommend' 
+    : xhsActiveTab.value as FeedType
+  
+  const result = await getHomeFeed(xhsClientId.value, feedType)
+  
+  if (result.success && result.data) {
+    xhsNotes.value = result.data.items || []
+    xhsHasMore.value = !!result.data.cursor
+  } else {
+    throw new Error(result.error || '加载推荐内容失败')
+  }
+}
+
+const performSearch = async () => {
+  if (!xhsClientId.value || !xhsSearchKeyword.value) return
+  
+  const result = await searchNotes(xhsClientId.value, xhsSearchKeyword.value, {
+    page: xhsPage.value,
+    page_size: 20,
+    sort: xhsSearchSort.value,
+    note_type: xhsSearchNoteType.value as any
+  })
+  
+  if (result.success && result.data) {
+    if (xhsPage.value === 1) {
+      xhsNotes.value = result.data.items || []
+    } else {
+      xhsNotes.value = [...xhsNotes.value, ...(result.data.items || [])]
+    }
+    xhsHasMore.value = result.data.has_more
+  } else {
+    throw new Error(result.error || '搜索失败')
+  }
+}
+
+const loadMoreXhsContent = async () => {
+  if (!xhsClientId.value || xhsLoadingMore.value) return
+  
+  xhsLoadingMore.value = true
+  xhsPage.value++
+  
+  try {
+    if (xhsActiveTab.value === 'search' && xhsSearchKeyword.value) {
+      await performSearch()
+    } else {
+      await loadFeed()
+    }
+  } catch (e: any) {
+    console.error('加载更多失败:', e)
+    xhsPage.value--
+  } finally {
+    xhsLoadingMore.value = false
+  }
+}
+
+const handleTabChange = (tab: string) => {
+  xhsActiveTab.value = tab
+  if (tab !== 'search') {
+    loadXhsContent()
+  } else if (xhsSearchKeyword.value) {
+    loadXhsContent()
+  }
+}
+
+const handleXhsSearch = () => {
+  if (!xhsSearchKeyword.value.trim()) return
+  xhsActiveTab.value = 'search'
+  loadXhsContent()
+}
+
+const handleNoteClick = (note: XhsNote) => {
+  const url = `https://www.xiaohongshu.com/explore/${note.note_id}`
+  window.open(url, '_blank')
+}
+
+const handleNoteCollect = (note: XhsNote) => {
+  console.log('收藏笔记:', note)
+  alert('功能开发中：将笔记收藏为创作素材')
+}
+
+// 热榜相关方法
 const loadSources = async () => {
   trendingLoading.value = true
   trendingError.value = ''
@@ -315,434 +650,62 @@ const handleRefreshAll = () => {
 onMounted(() => {
   loadSources()
   refreshInsights()
+  initXhsClient()
+  
+  // 监听 storage 变化
+  window.addEventListener('storage', handleStorageChange)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange)
 })
 </script>
 
 <style scoped>
-.inspiration-view {
-  min-height: 100vh;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
+@import './inspiration-styles.css';
+
+.xhs-status-indicator {
   display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-}
-
-.hero {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-  padding: 2.5rem;
-  border-radius: 28px;
-}
-
-.hero-copy h1 {
-  margin: 0 0 0.75rem;
-  font-size: 2.5rem;
-  color: var(--text-primary);
-}
-
-.eyebrow {
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  margin-bottom: 0.5rem;
-}
-
-.hero-desc {
-  margin: 0 0 1.5rem;
-  color: var(--text-secondary);
-  line-height: 1.7;
-}
-
-.hero-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(100px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.metric {
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 16px;
-  padding: 1rem;
-  text-align: center;
-}
-
-.metric-value {
-  display: block;
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--primary-color);
-}
-
-.metric-label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.update-hint {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  align-self: center;
-}
-
-.ghost-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  color: var(--text-primary);
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 999px;
-  padding: 0.8rem 1.5rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
-.ghost-btn:disabled {
-  opacity: 0.5;
+.xhs-status-indicator .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
 }
 
-.hero-visual {
-  position: relative;
-  min-height: 280px;
-  display: flex;
+.xhs-status-indicator.connected .status-dot {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+
+.xhs-status-indicator.connected {
+  color: #22c55e;
+}
+
+.hint-text {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+}
+
+.btn-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.btn-primary {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.bubble {
-  position: absolute;
-  border-radius: 24px;
-  padding: 1.2rem 1.5rem;
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-}
-
-.bubble span {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 400;
-  opacity: 0.85;
-}
-
-.bubble-large { background: linear-gradient(135deg, #ff9aa2, #ffb17a); top: 10%; left: 10%; }
-.bubble-medium { background: linear-gradient(135deg, #b5ead7, #8fe1c2); bottom: 15%; right: 15%; }
-.bubble-small { background: linear-gradient(135deg, #c7ceea, #b197fc); top: 45%; right: 5%; }
-
-.hero-placeholder {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.section-eyebrow {
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--text-tertiary);
-  margin: 0 0 0.4rem;
-}
-
-.section-header h2 {
-  margin: 0;
-  font-size: 1.8rem;
-  color: var(--text-primary);
-}
-
-.section-desc {
-  margin: 0;
-  max-width: 360px;
-  color: var(--text-secondary);
-}
-
-.signals-grid {
-  margin-top: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.5rem;
-}
-
-.signal-card {
-  padding: 1.5rem;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.signal-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.signal-badge {
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.signal-card h3 {
-  margin: 0;
-  font-size: 1.2rem;
-}
-
-.signal-card p {
-  margin: 0;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.signal-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: auto;
-}
-
-.signal-tags span {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 999px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.signals-placeholder {
-  padding: 1.5rem;
-  border-radius: 20px;
-}
-
-.placeholder-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.placeholder-bar {
-  height: 12px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 999px;
-}
-
-.placeholder-bar.short {
-  width: 40%;
-}
-
-.placeholder-tags {
-  height: 10px;
-  width: 60%;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 999px;
-}
-
-.state-card {
-  padding: 1.5rem;
-  text-align: center;
-  border-radius: 20px;
-  color: var(--text-secondary);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
-}
-
-.retry-btn.ghost {
-  background: transparent;
-  border: 1px dashed var(--primary-color);
-  color: var(--primary-color);
-}
-
-.spotlight-grid {
-  margin-top: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.spotlight-card {
-  padding: 1.75rem;
-  border-radius: 24px;
-}
-
-.spotlight-card.skeleton-card {
-  min-height: 220px;
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.spotlight-type {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--secondary-color);
-  margin-bottom: 0.5rem;
-}
-
-.spotlight-card h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.35rem;
-  color: var(--text-primary);
-}
-
-.spotlight-summary,
-.spotlight-insight {
-  margin: 0 0 0.5rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.spotlight-insight {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.spotlight-footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  margin-top: 1rem;
-}
-
-.workflow-section {
-  padding: 2rem;
-  border-radius: 28px;
-}
-
-.workflow-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-}
-
-.workflow-step {
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 20px;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.step-icon {
-  font-size: 1.8rem;
-}
-
-.step-label {
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-  color: var(--text-tertiary);
-  margin: 0;
-}
-
-.workflow-step h3 {
-  margin: 0;
-  font-size: 1.2rem;
-}
-
-.workflow-step p {
-  margin: 0;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.section-trending .loading-container,
-.section-trending .error-container {
-  min-height: 200px;
-  border-radius: 24px;
-  text-align: center;
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem;
-}
-
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem;
-}
-
-.loading-spinner.large {
-  width: 48px;
-  height: 48px;
-  border: 3px solid rgba(255, 154, 162, 0.2);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.retry-btn {
-  padding: 0.6rem 1.4rem;
-  border-radius: 999px;
-  border: none;
-  background: var(--primary-color);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.trending-grid {
-  margin-top: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 768px) {
-  .inspiration-view {
-    padding: 1.5rem 1rem 2rem;
-  }
-
-  .hero {
-    padding: 1.5rem;
-  }
-
-  .hero-copy h1 {
-    font-size: 2rem;
-  }
-
-  .hero-metrics {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .hero-actions {
-    flex-direction: column;
-  }
-
-  .section-header {
-    flex-direction: column;
-  }
-
-  .spotlight-footer {
-    flex-direction: column;
-    gap: 0.3rem;
-  }
 }
 </style>

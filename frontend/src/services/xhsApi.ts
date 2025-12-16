@@ -3,7 +3,8 @@
  * 提供与后端小红书服务交互的接口
  */
 
-const API_BASE = '/api/xiaohongshu'
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5030/api').replace(/\/$/, '')
+const API_BASE = `${API_BASE_URL}/xiaohongshu`
 
 // ==================== 类型定义 ====================
 

@@ -19,7 +19,10 @@ from .help import (
     get_imgs_url_from_note,
     get_video_url_from_note,
     get_valid_path_name,
-    get_search_id
+    get_search_id,
+    parse_note_info,
+    extract_note_id_from_url,
+    extract_user_id_from_url
 )
 from .browser import (
     XhsBrowserLogin,
@@ -46,6 +49,9 @@ __all__ = [
     'get_video_url_from_note',
     'get_valid_path_name',
     'get_search_id',
+    'parse_note_info',
+    'extract_note_id_from_url',
+    'extract_user_id_from_url',
     # 浏览器登录
     'XhsBrowserLogin',
     'XhsBrowserLoginManager',

@@ -7,7 +7,7 @@
       <div class="bg-blob blob-3"></div>
     </div>
 
-    <!-- �️ 顶部导航栏 - 使用新的高级导航组件 -->
+    <!-- 🗺️ 顶部导航栏 - 使用新的高级导航组件 -->
     <NavigationBar @config="showConfigModal = true" />
 
     <!-- 🎨 主舞台 -->
@@ -29,13 +29,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, provide } from 'vue'
 import { useAppStore } from './store'
 import ModelConfigModal from './components/ModelConfigModal.vue'
 import NavigationBar from './components/NavigationBar.vue'
 
 const store = useAppStore()
 const showConfigModal = ref(false)
+
+// 提供打开配置弹窗的方法给子组件
+const openConfigModal = () => {
+  showConfigModal.value = true
+}
+provide('openConfigModal', openConfigModal)
+
+// 监听全局事件来打开配置弹窗
+const handleOpenConfig = () => {
+  showConfigModal.value = true
+}
 
 // 模型配置状态
 const textModels = ref<any[]>([])
@@ -83,6 +94,13 @@ const handleSaveConfig = (
 onMounted(() => {
   loadConfig()
   store.initTheme()
+  
+  // 监听全局打开配置事件
+  window.addEventListener('open-config-modal', handleOpenConfig)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('open-config-modal', handleOpenConfig)
 })
 </script>
 

@@ -273,9 +273,13 @@
                   </div>
                   
                   <div class="xhs-actions">
-                    <button class="btn btn-outline" @click="testXhsConnection" :disabled="!xhsConfig.cookie">
+                    <button class="btn btn-outline" @click="testXhsConnection">
                       🔗 测试连接
                     </button>
+                    <div v-if="xhsStatusMessage" class="test-result" :class="xhsClientStatus">
+                      <span class="result-dot"></span>
+                      <span>{{ xhsStatusMessage }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -293,7 +297,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 
 interface ModelConfig {
   name: string
@@ -393,7 +397,7 @@ const qrLoginState = ref<QrLoginState>({
 const qrLoginButtonText = computed(() => {
   if (qrLoginState.value.loading) return '准备中...'
   if (qrLoginState.value.status === 'scanning' || qrLoginState.value.status === 'scanned') return '扫码中'
-  return '扫码获取'
+  return '点击获取'
 })
 
 // 计算属性：二维码状态图标
@@ -620,16 +624,22 @@ const checkXhsStatus = async () => {
         proxies: xhsConfig.value.proxy || undefined
       })
     })
-    
+
     const data = await response.json()
+    console.log('XHS API Response:', data)
+
     if (data.success) {
       xhsClientStatus.value = 'connected'
       xhsStatusMessage.value = `已连接 (ID: ${data.data.client_id.substring(0, 8)}...)`
+      console.log('Status updated:', xhsClientStatus.value, xhsStatusMessage.value)
+      await nextTick()
+      console.log('After nextTick:', xhsClientStatus.value, xhsStatusMessage.value)
     } else {
       xhsClientStatus.value = 'error'
       xhsStatusMessage.value = data.error || '连接失败'
     }
   } catch (error) {
+    console.error('XHS Connection Error:', error)
     xhsClientStatus.value = 'error'
     xhsStatusMessage.value = '网络错误'
   }
@@ -637,6 +647,10 @@ const checkXhsStatus = async () => {
 
 // 测试小红书连接
 const testXhsConnection = async () => {
+  if (!xhsConfig.value.cookie) {
+    alert('请先输入小红书 Cookie')
+    return
+  }
   xhsClientStatus.value = 'idle'
   xhsStatusMessage.value = '正在测试连接...'
   await checkXhsStatus()
@@ -1141,9 +1155,43 @@ const saveConfig = () => {
 .xhs-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
   padding-top: 0.5rem;
   border-top: 1px solid rgba(0,0,0,0.05);
   margin-top: 0.5rem;
+}
+
+.test-result {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.test-result.idle {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.test-result.connected {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.test-result.error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.test-result .result-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .btn-outline:disabled {
